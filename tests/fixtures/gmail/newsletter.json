@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "threadId": "thread-newsletter",
+  "messages": [
+    {
+      "id": "message-newsletter",
+      "internalDate": 1760000040000,
+      "sender": "updates@newsletter.example.test",
+      "recipients": ["contact@elev8mediaky.com"],
+      "labels": ["INBOX", "CATEGORY_PROMOTIONS"],
+      "automated": true,
+      "bulk": true,
+      "interpretation": {
+        "kind": "informational",
+        "category": "business_admin",
+        "risk": "no_draft",
+        "summary": "Marketing newsletter.",
+        "confidence": 0.99
+      }
+    }
+  ]
+}

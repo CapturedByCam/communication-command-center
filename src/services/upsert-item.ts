@@ -15,6 +15,8 @@ export interface UpsertContext {
   readonly correlationId: string;
   readonly durationMs: number;
   readonly payloadHash: string;
+  /** Snapshot reconciliation compares the current projection; event intake keeps replay protection. */
+  readonly deduplication?: "event" | "current_state";
 }
 
 export interface UpsertResult {
@@ -72,48 +74,62 @@ export async function upsertCommunicationItem(
   incoming: CommunicationItem,
   context: UpsertContext,
 ): Promise<UpsertResult> {
-  return dependencies.queue.runTransaction(async () => {
-    await Promise.all([
-      dependencies.queue.verifyHeaders(),
-      dependencies.audit.verifyHeaders(),
-    ]);
+  return dependencies.queue.runTransaction(() =>
+    upsertCommunicationItemWithinTransaction(dependencies, incoming, context),
+  );
+}
 
-    const existingEntry = await dependencies.queue.findBySourceThread(
-      incoming.source,
-      incoming.source_thread_id,
-    );
-    const existing = existingEntry?.item ?? null;
-    const priorEvent = await dependencies.audit.findByCorrelationId(
-      context.correlationId,
-    );
+/** Caller must hold the same workbook transaction for queue, audit, and checkpoint. */
+export async function upsertCommunicationItemWithinTransaction(
+  dependencies: UpsertDependencies,
+  incoming: CommunicationItem,
+  context: UpsertContext,
+): Promise<UpsertResult> {
+  await Promise.all([
+    dependencies.queue.verifyHeaders(),
+    dependencies.audit.verifyHeaders(),
+  ]);
 
-    if (priorEvent) {
-      if (!existing) {
-        throw new Error(
-          "Audit correlation exists without its canonical queue item",
-        );
-      }
-      const outcome = "duplicate_suppressed" as const;
-      await dependencies.audit.append(
-        buildAuditEvent(existing, outcome, context),
+  const existingEntry = await dependencies.queue.findBySourceThread(
+    incoming.source,
+    incoming.source_thread_id,
+  );
+  const existing = existingEntry?.item ?? null;
+  const priorEvent =
+    context.deduplication === "current_state"
+      ? null
+      : await dependencies.audit.findByCorrelationId(context.correlationId);
+
+  if (
+    priorEvent ||
+    (context.deduplication === "current_state" &&
+      existing?.content_hash === incoming.content_hash)
+  ) {
+    if (!existing) {
+      throw new Error(
+        "Audit correlation exists without its canonical queue item",
       );
-      return { outcome, item: existing };
     }
+    const outcome = "duplicate_suppressed" as const;
+    await dependencies.audit.append(
+      buildAuditEvent(existing, outcome, context),
+    );
+    return { outcome, item: existing };
+  }
 
-    if (
-      existing &&
-      Date.parse(incoming.updated_at) < Date.parse(existing.updated_at)
-    ) {
-      const outcome = "stale_suppressed" as const;
-      await dependencies.audit.append(
-        buildAuditEvent(existing, outcome, context),
-      );
-      return { outcome, item: existing };
-    }
+  if (
+    existing &&
+    Date.parse(incoming.updated_at) < Date.parse(existing.updated_at)
+  ) {
+    const outcome = "stale_suppressed" as const;
+    await dependencies.audit.append(
+      buildAuditEvent(existing, outcome, context),
+    );
+    return { outcome, item: existing };
+  }
 
-    const next = existing ? mergeIncomingItem(existing, incoming) : incoming;
-    const outcome = await dependencies.queue.upsert(next, existingEntry);
-    await dependencies.audit.append(buildAuditEvent(next, outcome, context));
-    return { outcome, item: next };
-  });
+  const next = existing ? mergeIncomingItem(existing, incoming) : incoming;
+  const outcome = await dependencies.queue.upsert(next, existingEntry);
+  await dependencies.audit.append(buildAuditEvent(next, outcome, context));
+  return { outcome, item: next };
 }

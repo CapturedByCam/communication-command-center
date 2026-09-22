@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "threadId": "thread-direct-question",
+  "messages": [
+    {
+      "id": "message-question",
+      "internalDate": 1760000002000,
+      "sender": "client@example.test",
+      "recipients": ["contact@elev8mediaky.com"],
+      "labels": ["INBOX"],
+      "automated": false,
+      "bulk": false,
+      "interpretation": {
+        "kind": "question",
+        "category": "active_project",
+        "risk": "routine",
+        "summary": "Client asks for the next project step.",
+        "confidence": 0.94
+      }
+    },
+    {
+      "id": "message-earlier",
+      "internalDate": 1760000001000,
+      "sender": "CONTACT@ELEV8MEDIAKY.COM",
+      "recipients": ["client@example.test"],
+      "labels": ["SENT"],
+      "automated": false,
+      "bulk": false,
+      "interpretation": {
+        "kind": "informational",
+        "category": "active_project",
+        "risk": "routine",
+        "summary": "Cam sent the prior project update.",
+        "confidence": 0.9
+      }
+    }
+  ]
+}

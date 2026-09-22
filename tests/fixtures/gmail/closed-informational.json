@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "threadId": "thread-closed-information",
+  "messages": [
+    {
+      "id": "message-info",
+      "internalDate": 1760000030000,
+      "sender": "client@example.test",
+      "recipients": ["contact@elev8mediaky.com"],
+      "labels": ["INBOX"],
+      "automated": false,
+      "bulk": false,
+      "interpretation": {
+        "kind": "informational",
+        "category": "active_project",
+        "risk": "no_draft",
+        "summary": "Client shares a completed delivery confirmation.",
+        "confidence": 0.91
+      }
+    }
+  ]
+}

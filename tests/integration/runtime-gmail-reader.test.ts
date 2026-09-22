@@ -1,0 +1,231 @@
+import { describe, expect, it } from "vitest";
+import {
+  GmailMetadataReader,
+  type GmailMetadataGateway,
+} from "../../src/apps-script/gmail-reader.js";
+import { GmailReadError } from "../../src/adapters/gmail/reconciliation.js";
+import { ThreadSnapshotSchema } from "../../src/adapters/gmail/gmail-client.js";
+
+const approvedMailbox = "contact@elev8mediaky.com";
+const metadataHeaders = [
+  "From",
+  "To",
+  "Cc",
+  "Bcc",
+  "Auto-Submitted",
+  "Precedence",
+  "List-Id",
+  "X-Auto-Response-Suppress",
+  "X-Receipt-Type",
+];
+
+class Gateway implements GmailMetadataGateway {
+  profile = { emailAddress: approvedMailbox };
+  listResult: unknown = {
+    messages: [{ id: "message-1", threadId: "thread-1" }],
+    nextPageToken: "page-2",
+  };
+  messageResult: unknown = {
+    id: "message-1",
+    threadId: "thread-1",
+    internalDate: "1780000000000",
+    labelIds: ["INBOX"],
+    snippet: "PRIVATE SNIPPET MUST NOT ESCAPE",
+    payload: {
+      headers: [
+        { name: "From", value: "Person <person@example.com>" },
+        { name: "To", value: approvedMailbox },
+      ],
+      body: { data: "PRIVATE BODY" },
+    },
+  };
+  threadResult: unknown = {
+    id: "thread-1",
+    messages: [this.messageResult],
+  };
+  calls: Array<{ method: string; id?: string; options?: unknown }> = [];
+
+  getProfile(userId: string): unknown {
+    this.calls.push({ method: `profile:${userId}` });
+    return this.profile;
+  }
+  listMessages(userId: string, options: unknown): unknown {
+    this.calls.push({ method: `list:${userId}`, options });
+    return this.listResult;
+  }
+  getMessage(userId: string, id: string, options: unknown): unknown {
+    this.calls.push({ method: `message:${userId}`, id, options });
+    return this.messageResult;
+  }
+  getThread(userId: string, id: string, options: unknown): unknown {
+    this.calls.push({ method: `thread:${userId}`, id, options });
+    return this.threadResult;
+  }
+}
+
+function setup(gateway = new Gateway()) {
+  return { gateway, reader: new GmailMetadataReader(gateway) };
+}
+
+describe("Apps Script Gmail metadata reader", () => {
+  it("rejects any profile outside the exact approved mailbox before listing or fetching", async () => {
+    const { gateway, reader } = setup();
+    gateway.profile = { emailAddress: "other@example.com" };
+
+    await expect(reader.getThreadSnapshot("message-1")).rejects.toThrow(
+      "approved Gmail scope",
+    );
+    expect(gateway.calls).toEqual([{ method: "profile:me" }]);
+  });
+
+  it("lists a bounded half-open time window without reading message content", async () => {
+    const { gateway, reader } = setup();
+    const page = await reader.listRecentMessages({
+      mailbox: approvedMailbox,
+      from: "2026-05-28T00:00:00.000Z",
+      to: "2026-05-29T00:00:00.000Z",
+      pageToken: "page-1",
+      limit: 7,
+      excludeAutomated: true,
+      excludeBulk: true,
+    });
+
+    expect(page).toEqual({
+      messageIds: ["message-1"],
+      nextPageToken: "page-2",
+    });
+    expect(gateway.calls).toEqual([
+      { method: "profile:me" },
+      {
+        method: "list:me",
+        options: {
+          q: "after:1779926400 before:1780012800",
+          pageToken: "page-1",
+          maxResults: 7,
+        },
+      },
+    ]);
+  });
+
+  it("fetches and verifies the requested message and its thread using metadata headers only", async () => {
+    const { gateway, reader } = setup();
+    const snapshot = ThreadSnapshotSchema.parse(
+      await reader.getThreadSnapshot("message-1"),
+    );
+
+    expect(snapshot).toEqual({
+      schema_version: "1.0",
+      mailbox: approvedMailbox,
+      threadId: "thread-1",
+      messages: [
+        {
+          id: "message-1",
+          internalDate: 1780000000000,
+          sender: "person@example.com",
+          recipients: [approvedMailbox],
+          labels: ["INBOX"],
+          automated: false,
+          bulk: false,
+          receipt: false,
+          interpretation: {
+            kind: "ambiguous",
+            category: "other",
+            risk: "review_only",
+            summary: "Gmail metadata requires human review.",
+            confidence: 0,
+          },
+        },
+      ],
+    });
+    expect(gateway.calls).toEqual([
+      { method: "profile:me" },
+      {
+        method: "message:me",
+        id: "message-1",
+        options: { format: "metadata", metadataHeaders },
+      },
+      {
+        method: "thread:me",
+        id: "thread-1",
+        options: { format: "metadata", metadataHeaders },
+      },
+    ]);
+    expect(JSON.stringify(snapshot)).not.toContain("PRIVATE");
+  });
+
+  it("sets exclusion flags from metadata headers and labels without marking messages read", async () => {
+    const { gateway, reader } = setup();
+    gateway.threadResult = {
+      id: "thread-1",
+      messages: [
+        {
+          id: "message-1",
+          threadId: "thread-1",
+          internalDate: "1780000000000",
+          labelIds: ["CATEGORY_PROMOTIONS", "CATEGORY_RECEIPTS"],
+          payload: {
+            headers: [
+              { name: "From", value: "notices@example.com" },
+              { name: "To", value: approvedMailbox },
+              { name: "Auto-Submitted", value: "auto-generated" },
+              { name: "Precedence", value: "bulk" },
+            ],
+          },
+        },
+      ],
+    };
+    const snapshot = ThreadSnapshotSchema.parse(
+      await reader.getThreadSnapshot("message-1"),
+    );
+    expect(snapshot.messages[0]).toMatchObject({
+      automated: true,
+      bulk: true,
+      receipt: true,
+    });
+    expect(gateway.calls.map((call) => call.method)).toEqual([
+      "profile:me",
+      "message:me",
+      "thread:me",
+    ]);
+  });
+
+  it("maps only exact provider not-found and invalid-cursor errors, redacting all other provider details", async () => {
+    const { gateway, reader } = setup();
+    gateway.getMessage = () => {
+      throw { code: 404, message: "PRIVATE missing message" };
+    };
+    await expect(reader.getThreadSnapshot("message-1")).rejects.toEqual(
+      new GmailReadError("NOT_FOUND"),
+    );
+
+    gateway.listMessages = () => {
+      throw { code: 400, message: "Invalid page token" };
+    };
+    await expect(
+      reader.listRecentMessages({
+        mailbox: approvedMailbox,
+        from: "2026-05-28T00:00:00.000Z",
+        to: "2026-05-29T00:00:00.000Z",
+        pageToken: "page-1",
+        limit: 1,
+        excludeAutomated: true,
+        excludeBulk: true,
+      }),
+    ).rejects.toEqual(new GmailReadError("CURSOR_EXPIRED"));
+
+    gateway.listMessages = () => {
+      throw { code: 500, message: "PRIVATE provider failure" };
+    };
+    await expect(
+      reader.listRecentMessages({
+        mailbox: approvedMailbox,
+        from: "2026-05-28T00:00:00.000Z",
+        to: "2026-05-29T00:00:00.000Z",
+        pageToken: null,
+        limit: 1,
+        excludeAutomated: true,
+        excludeBulk: true,
+      }),
+    ).rejects.toThrow("Gmail metadata read failed.");
+  });
+});

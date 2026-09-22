@@ -28,6 +28,14 @@ export interface ShortcutStorage {
   ): { readonly itemId: string } | null;
 }
 
+export interface ShortcutRejectionSink {
+  /**
+   * Persist only the controlled error code. Implementations must not attach the
+   * request body, token, contact hint, model fields, or transport metadata.
+   */
+  recordRejected(event: { readonly errorCode: "invalid_payload" }): void;
+}
+
 export interface ShortcutHandlerDependencies {
   readonly storage: ShortcutStorage;
   readonly getToken: () => string | null;
@@ -36,6 +44,8 @@ export interface ShortcutHandlerDependencies {
   readonly hash: (value: string) => string;
   /** Called before JSON parsing so hostile bodies cannot consume parser work. */
   readonly allowRequest: (remoteAddress: string | null) => boolean;
+  /** Optional audit sink for malformed requests that prove knowledge of the token. */
+  readonly rejectionSink?: ShortcutRejectionSink;
   readonly maxBodyBytes?: number;
   readonly byteLength?: (body: string) => number;
 }
@@ -44,13 +54,30 @@ function utf8ByteLength(value: string): number {
   return new TextEncoder().encode(value).byteLength;
 }
 
-function normalizeDeadline(value: string | null | undefined): string | null {
-  if (!value) {
-    return null;
-  }
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+function hasAuthenticatedToken(
+  value: unknown,
+  expectedToken: string | null,
+): boolean {
+  return (
+    isObject(value) &&
+    typeof value.auth_token === "string" &&
+    expectedToken !== null &&
+    constantTimeEqual(value.auth_token, expectedToken)
+  );
+}
+
+function recordAuthenticatedSchemaRejection(
+  rejectionSink: ShortcutRejectionSink | undefined,
+): void {
+  try {
+    rejectionSink?.recordRejected({ errorCode: "invalid_payload" });
+  } catch {
+    // The write-only endpoint must return the same redacted response if audit is down.
+  }
 }
 
 function normalizeItem(
@@ -61,7 +88,9 @@ function normalizeItem(
   const idempotencyKey = intake.idempotency_key;
   const sourceId = `shortcut:${idempotencyKey}`;
   const contentHash = hash(intake.shared_text);
-  const deadlineAt = normalizeDeadline(intake.model_fields.deadline_at);
+  const hasUnverifiedDate =
+    intake.model_fields.deadline_at !== null ||
+    intake.model_fields.deadline_text !== null;
 
   return {
     idempotencyKey,
@@ -75,7 +104,8 @@ function normalizeItem(
       source_link: null,
       captured_at: intake.captured_at,
       updated_at: now.toISOString(),
-      contact: intake.contact_hint ? { name: intake.contact_hint } : undefined,
+      // A hint has no curated identifier, so it cannot establish a contact association.
+      contact: undefined,
       // Model fields may be malformed or semantically wrong despite schema validation.
       category: "other",
       project_id: null,
@@ -87,8 +117,12 @@ function normalizeItem(
       next_action: "Review manually shared content in its source app.",
       summary: "Manual Shortcut capture requires review.",
       preview: null,
-      deadline_at: deadlineAt,
-      deadline_text: deadlineAt ? intake.model_fields.deadline_text : null,
+      // Model dates lack an authoritative source-time anchor. Keep only a generic
+      // review marker; never persist a potentially echoed date phrase.
+      deadline_at: null,
+      deadline_text: hasUnverifiedDate
+        ? "Unverified model-suggested deadline"
+        : null,
       needs_date_review: true,
       follow_up_at: null,
       promised_follow_up: null,
@@ -130,21 +164,22 @@ export function createShortcutHandler(
       return rejected("invalid_payload");
     }
 
-    const intakeResult = ShortcutIntakeSchema.safeParse(parsed);
-    if (!intakeResult.success) {
-      return rejected("invalid_payload");
-    }
-
     let expectedToken: string | null;
     try {
       expectedToken = dependencies.getToken();
     } catch {
       return rejected("configuration_error");
     }
-    if (
-      !expectedToken ||
-      !constantTimeEqual(intakeResult.data.auth_token, expectedToken)
-    ) {
+    const authenticated = hasAuthenticatedToken(parsed, expectedToken);
+
+    const intakeResult = ShortcutIntakeSchema.safeParse(parsed);
+    if (!intakeResult.success) {
+      if (authenticated) {
+        recordAuthenticatedSchemaRejection(dependencies.rejectionSink);
+      }
+      return rejected("invalid_payload");
+    }
+    if (!authenticated) {
       return rejected("unauthorized");
     }
 

@@ -20,11 +20,15 @@ synchronous pure boundary suitable for Apps Script `doPost(e)`. It accepts only:
 ```
 
 Its injected dependencies are a token reader, enabled flag, rate-limit check,
-clock, SHA-256 function, byte-length function, and an atomic storage adapter.
+clock, SHA-256 function, byte-length function, atomic storage adapter, and an
+optional redacted rejection sink.
 The storage adapter must implement `createIfAbsent` atomically by the UUID and
 must provide a read-only `findByIdempotencyKey` recovery lookup. It receives a
 normalized `CommunicationItem`, UUID, and SHA-256 content hash; it must never
-persist the request body or `shared_text`.
+persist the request body or `shared_text`. The rejection sink accepts only the
+controlled `invalid_payload` error code and is invoked only when a malformed
+request proves knowledge of the configured token. It must never receive or
+persist a body, token, contact hint, model field, address, or hash.
 
 The only response shapes are:
 
@@ -62,8 +66,11 @@ controlled result, correlation UUID, and timestamp.
 - `shared_text` is hashed for deduplication/audit and immediately discarded.
 - The handler deliberately ignores model category, urgency, waiting state,
   summary, and next action. It uses safe values and returns `needs_review`.
-- A schema-valid offset date is converted to UTC ISO 8601 but remains flagged
-  `needs_date_review=true`; relative or missing dates remain null.
+- A model-suggested date has no authoritative source-time anchor, so
+  `deadline_at` remains null and `needs_date_review=true`. A generic review
+  marker replaces the model date phrase to prevent echoed source text retention.
+- An uncurated `contact_hint` is not persisted and cannot establish a contact
+  association.
 - After an uncertain storage failure, one lookup by UUID determines whether the
   write committed. The handler does not blind-retry the write.
 

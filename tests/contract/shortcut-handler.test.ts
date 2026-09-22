@@ -69,7 +69,9 @@ describe("Shortcut write-only intake contract", () => {
           category: "other",
           waiting_on: "unknown",
           needs_date_review: true,
-          deadline_at: "2026-09-23T19:00:00.000Z",
+          deadline_at: null,
+          deadline_text: "Unverified model-suggested deadline",
+          contact: undefined,
         }),
         idempotencyKey: payload.idempotency_key,
         contentHash: createHash("sha256")
@@ -79,6 +81,12 @@ describe("Shortcut write-only intake contract", () => {
     );
     expect(JSON.stringify(createIfAbsent.mock.calls)).not.toContain(
       payload.shared_text,
+    );
+    expect(JSON.stringify(createIfAbsent.mock.calls)).not.toContain(
+      payload.contact_hint,
+    );
+    expect(JSON.stringify(createIfAbsent.mock.calls)).not.toContain(
+      payload.model_fields.deadline_text,
     );
   });
 
@@ -115,12 +123,13 @@ describe("Shortcut write-only intake contract", () => {
     expect(storage.createIfAbsent).not.toHaveBeenCalled();
   });
 
-  it("rejects oversized and schema-invalid bodies before persistence", async () => {
+  it("records a redacted rejection only for an authenticated schema-invalid body", async () => {
     const storage: ShortcutStorage = {
       createIfAbsent: vi.fn(),
       findByIdempotencyKey: vi.fn(),
     };
-    const handler = handlerWith(storage);
+    const rejectionSink = { recordRejected: vi.fn() };
+    const handler = handlerWith(storage, { rejectionSink });
 
     expect(handler(request("x".repeat(24_001)))).toEqual({
       status: "rejected",
@@ -132,6 +141,32 @@ describe("Shortcut write-only intake contract", () => {
       status: "rejected",
       error_code: "invalid_payload",
     });
+    expect(rejectionSink.recordRejected).toHaveBeenCalledWith({
+      errorCode: "invalid_payload",
+    });
+    expect(
+      JSON.stringify(rejectionSink.recordRejected.mock.calls),
+    ).not.toContain(payload.shared_text);
+    expect(
+      JSON.stringify(rejectionSink.recordRejected.mock.calls),
+    ).not.toContain(payload.auth_token);
+    expect(
+      JSON.stringify(rejectionSink.recordRejected.mock.calls),
+    ).not.toContain(payload.contact_hint);
+
+    rejectionSink.recordRejected.mockClear();
+    expect(
+      handler(
+        request(
+          JSON.stringify({
+            ...payload,
+            auth_token: "x".repeat(64),
+            unexpected: true,
+          }),
+        ),
+      ),
+    ).toEqual({ status: "rejected", error_code: "invalid_payload" });
+    expect(rejectionSink.recordRejected).not.toHaveBeenCalled();
     expect(storage.createIfAbsent).not.toHaveBeenCalled();
   });
 

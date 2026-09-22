@@ -1,0 +1,70 @@
+name: Dependabot auto-merge
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    name: Evaluate Dependabot auto-merge
+    if: >-
+      github.repository == 'CapturedByCam/communication-command-center' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Clear previous automated enrollment before re-evaluation
+        run: |
+          enabled_by=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER" --jq '.auto_merge.enabled_by.login // ""')
+          if [ "$enabled_by" = 'github-actions[bot]' ]; then
+            gh pr merge "$PR_NUMBER" --disable-auto
+          fi
+
+      # pull_request_target is privileged: only check out the trusted base SHA.
+      # Never execute PR code, install dependencies, or restore caches here.
+      - name: Check out trusted policy
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: scripts
+
+      - name: Verify Dependabot identity and commit signatures
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Evaluate every update and changed file
+        id: policy
+        env:
+          DEPENDABOT_UPDATES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+        run: |
+          gh api "repos/$GH_REPO/pulls/$PR_NUMBER" > "$RUNNER_TEMP/pull.json"
+          gh api --paginate --slurp "repos/$GH_REPO/pulls/$PR_NUMBER/files" \
+            | jq 'add' > "$RUNNER_TEMP/files.json"
+          node scripts/dependabot-auto-merge-policy.mjs \
+            "$RUNNER_TEMP/pull.json" "$RUNNER_TEMP/files.json" >> "$GITHUB_OUTPUT"
+
+      - name: Enable protected auto-merge for eligible patches
+        if: steps.policy.outputs.eligible == 'true'
+        run: gh pr merge "$PR_NUMBER" --auto --squash --match-head-commit "$EXPECTED_HEAD"

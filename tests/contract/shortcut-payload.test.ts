@@ -24,6 +24,7 @@ describe("Apple Shortcut payload artifact", () => {
     );
 
     expect(inventory).toContain("12,000 characters");
-    expect(inventory).toContain("Action inventory version: `1.0`");
+    expect(inventory).toContain("Action inventory version: `1.1`");
+    expect(inventory).not.toContain("| 9 | Use Model |");
   });
 });

@@ -1,10 +1,13 @@
 # Apple Shortcut — Add to Communication Command Center
 
-Action inventory version: `1.0`
+Action inventory version: `1.1`
 
 ## V1 behavior
 
-The Shortcut accepts selected text from the Share Sheet or clipboard, asks Apple Intelligence for bounded suggestions, constructs a fixed JSON dictionary, and sends it to the write-only Apps Script endpoint.
+The Shortcut accepts selected text from the Share Sheet or clipboard, constructs
+a fixed review-only JSON dictionary, and sends it to the write-only Apps Script
+endpoint. It does not read Messages, mail, or any conversation database. It
+does not use an on-device or cloud model in V1.
 
 ## Share Sheet configuration
 
@@ -24,33 +27,16 @@ Do not accept files, images, attachments, or entire conversation databases in V1
 4. If length exceeds 12,000 characters, ask the user to select a smaller excerpt.
 5. Get current date in ISO 8601.
 6. Generate a UUID for `idempotency_key`.
-7. Run **Use Model** with On-Device first; fall back to Private Cloud Compute only when enabled by Cam.
-8. Prompt the model to return exactly these labeled lines:
-
-```text
-CATEGORY=<client_lead|active_project|aviation|business_admin|personal|other>
-URGENCY=<critical|today|this_week|later>
-WAITING_ON=<me|them|none|unknown>
-DEADLINE=<ISO-8601 date-time or NONE>
-DEADLINE_TEXT=<exact phrase or NONE>
-NEXT_ACTION=<verb-first action, max 160 characters>
-SUMMARY=<max 240 characters>
-```
-
-9. Extract each label using fixed Shortcut text matching.
-10. Validate enums with `Choose from List`/conditional branches.
-11. If any required field fails parsing:
-    - set `classification_status=needs_server_review`;
-    - use safe defaults: category other, urgency later, waiting_on unknown;
-    - include the original selected text for backend processing.
-12. Build the JSON dictionary defined in `schemas/shortcut-intake.schema.json`.
-13. POST to the endpoint using `Get Contents of URL`.
-14. Interpret only these response statuses:
-    - `created`
-    - `duplicate`
-    - `needs_review`
-    - `rejected`
-15. Show a local confirmation. Do not return queue contents or private server data.
+7. Build the JSON dictionary defined in `schemas/shortcut-intake.schema.json`.
+   Set `model_fields` to fixed safe values: `classification_status`
+   `needs_server_review`, category `other`, urgency `later`, waiting_on
+   `unknown`, `deadline_at` and `deadline_text` `null`, next action `Review in
+   source app.`, and summary `Manual Shortcut capture.`.
+8. POST to the endpoint using `Get Contents of URL`.
+9. Interpret only `needs_review`, `duplicate`, and `rejected`. A successful
+   new capture returns `needs_review`; `created` is not an endpoint response.
+10. Show a local confirmation. Do not return queue contents or private server
+    data.
 
 ## Build and install (manual, local only)
 
@@ -69,33 +55,33 @@ macOS/iOS release; preserve the inputs, validation, and order below.
 | 6 | Get Details of Text | Get character count. If greater than 12,000, Show Result `Select a smaller excerpt` and Stop This Shortcut. |
 | 7 | Current Date | Format ISO 8601 with time-zone offset as `Captured At`. |
 | 8 | Generate UUID | Save as `Idempotency Key`; keep it unchanged for any retry during this run. |
-| 9 | Use Model | Use the bounded prompt below. Prefer On-Device; allow Private Cloud Compute only if Cam enables it. |
-| 10 | Match Text / Get Group from Matched Text | Extract each required `LABEL=value` line from the model output. |
-| 11 | Choose from List / If | Validate `CATEGORY`, `URGENCY`, and `WAITING_ON` against the exact enums. On any failed parse, set `classification_status=needs_server_review`, category `other`, urgency `later`, and waiting_on `unknown`. |
-| 12 | Dictionary | Construct the exact `ShortcutIntake` JSON object. Include `shared_text` only in this request dictionary; never save it to a file, Note, or log. |
-| 13 | Get Contents of URL | POST JSON to the deployed HTTPS endpoint. Add `auth_token` from a local Text action; do not export or share this action. |
-| 14 | If | Read only `status` and optional `item_id` from the JSON response. Map `created`, `duplicate`, `needs_review`, and `rejected` to a local result. |
-| 15 | Show Result | Show `Added`, `Already added`, `Needs review`, or `Could not add; retry with the same ID`. Never display response bodies beyond those status messages. |
+| 9 | Dictionary | Construct the exact `ShortcutIntake` JSON object. Include `shared_text` only in this request dictionary; never save it to a file, Note, or log. Set `contact_hint` to `null`, `app_hint` to `Manual Share`, and the fixed `model_fields` safe values below. |
+| 10 | Get Contents of URL | POST JSON to the deployed HTTPS endpoint. Add `auth_token` from a local Text action; do not export or share this action. |
+| 11 | If | Read only `status` and optional `item_id` from the JSON response. Map `needs_review` to `Added for review`, `duplicate` to `Already added`, and `rejected` to `Could not add; retry with the same ID`. |
+| 12 | Show Result | Show only that local result. Never display response bodies beyond those status messages. |
 
-### Bounded Use Model prompt
+### Fixed review-only model fields
+
+The schema requires `model_fields`, but the V1 server treats them as untrusted
+and discards their suggested category, urgency, waiting state, summary, next
+action, and dates. Use these literal values rather than a model:
 
 ```text
-Return only these labeled lines. Do not quote or repeat the supplied text.
-CATEGORY=<client_lead|active_project|aviation|business_admin|personal|other>
-URGENCY=<critical|today|this_week|later>
-WAITING_ON=<me|them|none|unknown>
-DEADLINE=<ISO-8601 date-time with offset or NONE>
-DEADLINE_TEXT=<exact phrase or NONE>
-NEXT_ACTION=<verb-first action, max 160 characters>
-SUMMARY=<max 240 characters>
+classification_status=needs_server_review
+category=other
+urgency=later
+waiting_on=unknown
+deadline_at=null
+deadline_text=null
+next_action=Review in source app.
+summary=Manual Shortcut capture.
 ```
 
-The server treats every model field as untrusted and creates a needs-review
-record. It never retains `shared_text`, model summary, or model next action.
+The server never retains `shared_text` or these model-field values.
 
 ### Local token and endpoint configuration
 
-1. After the Apps Script web app exists, paste its exact HTTPS URL into action 13.
+1. After the Apps Script web app exists, paste its exact HTTPS URL into action 10.
 2. Generate a 256-bit token outside Git and place it in a local Text action
    immediately before the Dictionary action. Do not put it in the Shortcut name,
    comment, screenshots, exports, logs, or this repository.
@@ -107,6 +93,18 @@ record. It never retains `shared_text`, model summary, or model next action.
 
 This artifact is an installation specification, not proof that the Shortcut or
 endpoint has been installed, granted access, or activated.
+
+### Signed-file feasibility on this device
+
+The official macOS `shortcuts` command can sign an existing Shortcut file with
+`shortcuts sign --input INPUT --output OUTPUT`; it has no command to create or
+export a Shortcut. This device's `shortcuts list` currently returns `Couldn't
+communicate with a helper application.`, so a signed `.shortcut` artifact
+cannot be produced or verified offline from this repository. Do not handcraft
+a workflow file: action identifiers and signing metadata must come from the
+Shortcuts app. The device-only blocker is Shortcuts helper access plus a local
+Shortcut created in the app (or a trusted existing export) to supply as the
+signing input.
 
 ## Secret handling
 

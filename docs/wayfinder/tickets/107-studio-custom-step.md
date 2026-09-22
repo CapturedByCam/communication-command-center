@@ -2,8 +2,8 @@
 
 ## Status
 
-Accepted implementation decision. Account installation, actual starter-variable
-binding, and real-model acceptance remain gated.
+Accepted implementation decision. The private test add-on is installed; account
+step visibility, actual starter-variable binding, and real-model acceptance remain gated.
 
 ## Decision
 
@@ -44,12 +44,15 @@ A literal existing message inside the window verifies requested-message metadata
 identity and one atomic staging result. It does **not** prove that a Studio
 starter supplies the intended Gmail ID. A separate actual starter-variable run
 must prove that binding. Real model usefulness requires its own strict-schema and
-review acceptance; neither installation nor model acceptance is currently
-claimed.
+review acceptance; installation alone does not establish model acceptance.
 
-On 2026-09-22, the Studio menu did not expose a custom step and the Google Admin
-passkey action remained pending. Those are account/install gates, not evidence
-that the checked-in action is installed or usable.
+On 2026-09-22, test add-on installation was verified in Test deployments: Application
+shows Workspace Studio, the button is Uninstall, and Installed add-ons is present. No
+new scope or consent was requested. A freshly reloaded flow titled `CCC V1 — bounded
+staging acceptance` was created with Start manually only; its visible step categories
+contained no CCC/custom add-on entry. No action, run, source ID, or model input was
+added. Installation therefore does not prove account UI/admin/rollout availability,
+starter binding, or model usefulness. The Google Admin passkey action remains pending.
 
 ## Sources
 

@@ -14,10 +14,16 @@ is [Build a step](https://developers.google.com/workspace/add-ons/studio/build-a
 Older calculator quickstart material is useful background, but is not the
 installation authority for this flow shape.
 
-As of 2026-09-22, the account's Studio menu did not expose a custom-step option
-and the Google Admin passkey action remains pending. No custom step has been
-installed, no starter-variable binding has been run, and no real model output has
-been accepted.
+On 2026-09-22 at approximately 11:11 EDT, Apps Script confirmed this project's
+private test add-on was installed: its application was Workspace Studio and the
+installer showed `Uninstall` and `Installed addons`. No scope or consent expansion
+occurred. Version 5 contains the verified source and manifest.
+
+After installation and a Studio reload, the Add step menu still did not expose
+this action. The app-owned `CCC V1 — bounded staging acceptance` flow contains
+only a manual starter, with no action, input, or run. The Google Admin passkey
+action remains pending. Installation is verified; account visibility, actual
+starter-variable binding, and real model acceptance remain unresolved.
 
 ## Private action contract
 

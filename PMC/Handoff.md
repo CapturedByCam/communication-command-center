@@ -112,9 +112,11 @@ Live migration is waiting for authenticated Apps Script editor control. Scoped
 returned storage `NOT_FOUND`, and no authenticated editor control path is
 available in this environment.
 No flags/triggers or full Commitments rows were verified, and no disable,
-migration, source push or deployment occurred. Resume with read-only status and
-flags/triggers check, then run `cccDisableAll`, verify the full table is empty,
-run `cccMigrateEmptyCommitments`, verify the 17-column header/health, and deploy
-a private version with the approved safe flags only. Stop for a populated table.
+migration, source push or deployment occurred. Resume with read-only status,
+disable all controls and managed triggers, and verify they are off and the full
+Commitments table is empty. Stop for a populated table. Only after that preflight
+passes, push the reviewed source, run `cccMigrateEmptyCommitments` explicitly in
+the authenticated editor, verify the 17-column header and health, then deploy a
+private version with the approved safe flags only.
 See [chronology](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md) and
 [Commitment migration](../docs/implementation/COMMITMENT_STORAGE.md).

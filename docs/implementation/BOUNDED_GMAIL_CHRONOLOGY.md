@@ -40,10 +40,13 @@ change the phase to complete or erase missing evidence to force progress. A
 reviewed reset/migration path is required before restarting a blocked scan.
 
 PR #42 merged as `4789030589d1f0168aff87de788f29dd80155e85` after independent
-review, full repository CI and CodeQL. Version 6 remains deployed. Coordinate the
-Commitment 1.1 migration before pushing or deploying this source. A fresh private
-backup was created and verified; its ID is recorded only in ignored
-`.local/PILOT_RESOURCES.md`.
+review, full repository CI and CodeQL. Version 6 remains deployed. Complete the
+Commitment 1.1 preflight by disabling controls and managed triggers, verifying
+they are off, and confirming the full legacy table is empty. If it is empty,
+push this reviewed source, run the guarded migration explicitly in the
+authenticated editor, verify the schema and health, and deploy the accepted
+private version. A fresh private backup was created and verified; its ID is
+recorded only in ignored `.local/PILOT_RESOURCES.md`.
 
 The editor action is currently blocked by tooling: authenticated `clasp run
 cccHealth` returned storage `NOT_FOUND`, and an authenticated editor control path is

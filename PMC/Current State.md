@@ -122,9 +122,11 @@ and an extra `Sheet1` tab, which has been preserved.
 The migration is not started. `clasp` authentication identifies the approved
 account and lists Version 6, but `clasp run cccHealth` returns a server storage
 `NOT_FOUND`. The authenticated Apps Script editor control path is unavailable in this
-environment. Current script flags
-and triggers, and full Commitments-table emptiness, remain unverified. Neither
-`cccDisableAll` nor `cccMigrateEmptyCommitments` has run. Restore the supported
-authenticated editor path, verify flags/triggers are off, then run the guarded
-empty-only migration; a populated table is a hard stop. Do not push source or deploy until that preflight passes. See
+environment. Current script flags and triggers, and full Commitments-table
+emptiness, remain unverified. Neither `cccDisableAll` nor
+`cccMigrateEmptyCommitments` has run. Restore the supported authenticated editor
+path; disable all controls and managed triggers, then verify they are off and
+the full table is empty. A populated table is a hard stop. Only after this
+preflight passes, push the reviewed source, run the guarded migration explicitly
+in the editor, verify the 17-column header and health, and deploy privately. See
 [implementation and migration gates](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md).

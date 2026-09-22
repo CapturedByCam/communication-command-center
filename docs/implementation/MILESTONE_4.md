@@ -26,7 +26,8 @@ This work runs independently of the Milestone 3 Gmail pilot.
   tracks the complete milestone, and
   [draft PR #24](https://github.com/CapturedByCam/communication-command-center/pull/24)
   contains this local preparation. The PR does not close the milestone issue.
-  Merge and Google/account operations remain separate approval gates.
+  Cam subsequently authorized cleanup, merge, and continued implementation.
+  Google/account operations remain separate approval gates.
 
 ## Delivered locally
 
@@ -66,8 +67,8 @@ This work runs independently of the Milestone 3 Gmail pilot.
 
 ## Remaining gates and next actions
 
-1. Review draft PR #24 against the local scope and keep issue #23 open for
-   the remaining milestone acceptance work. No merge is authorized here.
+1. Merge reviewed PR #24 under Cam's cleanup/merge authorization and keep
+   issue #23 open for the remaining milestone acceptance work.
 2. Integrate the accepted Milestone 3 contracts, keeping authoritative Gmail
    chronology, canonical deduplication, manual overrides, and missed-event
    recovery in the backend. A stable staging key is not itself deduplication.
@@ -97,9 +98,10 @@ This work runs independently of the Milestone 3 Gmail pilot.
 - Keep the blueprint disabled because required deterministic bindings are
   unproven. A custom action or changed architecture is a proposal, not an
   accepted decision. Cost: full milestone acceptance awaits integration.
-- Keep Task 11 draft persistence separate from this independent Task 10 work.
-  The manifest records its prerequisite instead of implementing an uncoordinated
-  Gmail writer. Cost: draft lifecycle work remains before the live pilot.
+- Keep Task 11 draft persistence in a separate implementation slice from this
+  Task 10 preparation. The manifest records its prerequisite. Local draft
+  lifecycle work can proceed through injected interfaces while live Studio
+  binding and Gmail service access remain gated.
 
 No accepted product invariant changed. Proposed integration changes belong in
 the PMC Promotion Inbox until reviewed.

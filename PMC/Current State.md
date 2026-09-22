@@ -65,7 +65,8 @@ were changed by this task.
 
 Cam approved GitHub publication on 2026-09-22. The branch is published through
 draft PR #24, with issue #23 left open for live integration and acceptance.
-This approval does not authorize merge or Google/account operations.
+Cam subsequently authorized cleanup, merge, and continued implementation.
+Google/account operations remain subject to their specific approval gates.
 
 Milestone 4 is not accepted or live. Studio's deterministic validation binding,
 event metadata, draft idempotency/thread targeting, and account tests remain

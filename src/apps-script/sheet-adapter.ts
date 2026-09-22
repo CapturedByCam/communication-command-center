@@ -5,6 +5,13 @@ import {
   type SheetTableAdapter,
 } from "../adapters/sheets/sheet-table.js";
 
+export class SheetCommitUncertainError extends Error {
+  constructor() {
+    super("SHEET_COMMIT_UNCERTAIN");
+    this.name = "SheetCommitUncertainError";
+  }
+}
+
 export interface TableChange {
   sheetName: string;
   before: SheetTable;
@@ -45,11 +52,7 @@ export class RuntimeSheetAdapter implements SheetTableAdapter {
           : [{ sheetName, before, after }];
       });
       if (changes.length) {
-        try {
-          this.gateway.commit(spreadsheetId, changes);
-        } catch {
-          throw new Error("SHEET_COMMIT_UNCERTAIN");
-        }
+        this.gateway.commit(spreadsheetId, changes);
       }
       return result;
     } finally {

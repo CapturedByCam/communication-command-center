@@ -116,6 +116,16 @@ export interface GmailMetadataGateway {
   ): unknown;
 }
 
+/**
+ * `requested_message_only` is the bounded native-pilot mode. Gmail's thread
+ * endpoint cannot constrain the age of returned history, so this mode uses
+ * only the already-windowed requested message. Its one-message snapshot is
+ * deliberately generic/review-only and is not evidence of full chronology.
+ */
+export interface GmailMetadataReaderOptions {
+  readonly mode?: "full_thread" | "requested_message_only";
+}
+
 type CursorReason = "invalid_page_token" | "expired_page_token";
 
 function safeProviderFailure(error: unknown): {
@@ -240,7 +250,10 @@ function messageFromMetadata(message: z.infer<typeof MessageSchema>) {
  * below remains the final exclusion for automated and bulk mail.
  */
 export class GmailMetadataReader implements GmailReconciliationReader {
-  constructor(private readonly gateway: GmailMetadataGateway) {}
+  constructor(
+    private readonly gateway: GmailMetadataGateway,
+    private readonly options: GmailMetadataReaderOptions = {},
+  ) {}
 
   private assertApprovedProfile(): void {
     let profile: unknown;
@@ -300,6 +313,15 @@ export class GmailMetadataReader implements GmailReconciliationReader {
     const message = MessageSchema.parse(actualMessage);
     if (message.id !== requestedId)
       throw new Error("Gmail metadata read failed.");
+
+    if (this.options.mode === "requested_message_only") {
+      return ThreadSnapshotSchema.parse({
+        schema_version: "1.0",
+        mailbox: approvedMailbox,
+        threadId: message.threadId,
+        messages: [messageFromMetadata(message)],
+      });
+    }
 
     let actualThread: unknown;
     try {

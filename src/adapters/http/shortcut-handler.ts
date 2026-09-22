@@ -42,8 +42,13 @@ export interface ShortcutHandlerDependencies {
   readonly isEnabled: () => boolean;
   readonly now: () => Date;
   readonly hash: (value: string) => string;
-  /** Called before JSON parsing so hostile bodies cannot consume parser work. */
+  /** Called only after a bounded request proves knowledge of the configured token. */
   readonly allowRequest: (remoteAddress: string | null) => boolean;
+  /**
+   * Optional low global guard before parsing. Apps Script does not reliably
+   * provide a caller address, so this cannot be the authenticated quota.
+   */
+  readonly allowPreAuthRequest?: (remoteAddress: string | null) => boolean;
   /** Optional audit sink for malformed requests that prove knowledge of the token. */
   readonly rejectionSink?: ShortcutRejectionSink;
   readonly maxBodyBytes?: number;
@@ -150,7 +155,10 @@ export function createShortcutHandler(
     if (!dependencies.isEnabled()) {
       return rejected("disabled");
     }
-    if (!dependencies.allowRequest(request.remoteAddress)) {
+    if (
+      dependencies.allowPreAuthRequest &&
+      !dependencies.allowPreAuthRequest(request.remoteAddress)
+    ) {
       return rejected("rate_limited");
     }
     if (byteLength(request.body) > maxBodyBytes) {
@@ -171,7 +179,6 @@ export function createShortcutHandler(
       return rejected("configuration_error");
     }
     const authenticated = hasAuthenticatedToken(parsed, expectedToken);
-
     const intakeResult = ShortcutIntakeSchema.safeParse(parsed);
     if (!intakeResult.success) {
       if (authenticated) {
@@ -181,6 +188,9 @@ export function createShortcutHandler(
     }
     if (!authenticated) {
       return rejected("unauthorized");
+    }
+    if (!dependencies.allowRequest(request.remoteAddress)) {
+      return rejected("rate_limited");
     }
 
     let record: ShortcutStorageRecord;

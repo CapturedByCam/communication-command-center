@@ -39,6 +39,7 @@ function handlerWith(storage: ShortcutStorage, overrides = {}) {
     now: () => new Date("2026-09-22T23:01:00.000Z"),
     hash: (value) => createHash("sha256").update(value).digest("hex"),
     allowRequest: () => true,
+    allowPreAuthRequest: () => true,
     ...overrides,
   });
 }
@@ -107,12 +108,12 @@ describe("Shortcut write-only intake contract", () => {
     expect(JSON.stringify(response)).not.toContain(payload.shared_text);
   });
 
-  it("rate-limits before parsing an unauthenticated body", async () => {
+  it("uses the bounded pre-auth guard before parsing", async () => {
     const storage: ShortcutStorage = {
       createIfAbsent: vi.fn(),
       findByIdempotencyKey: vi.fn(),
     };
-    const response = handlerWith(storage, { allowRequest: () => false })(
+    const response = handlerWith(storage, { allowPreAuthRequest: () => false })(
       request("{not JSON"),
     );
 
@@ -120,6 +121,41 @@ describe("Shortcut write-only intake contract", () => {
       status: "rejected",
       error_code: "rate_limited",
     });
+    expect(storage.createIfAbsent).not.toHaveBeenCalled();
+  });
+
+  it("does not consume authenticated quota for an invalid token", () => {
+    const storage: ShortcutStorage = {
+      createIfAbsent: vi.fn(),
+      findByIdempotencyKey: vi.fn(),
+    };
+    const allowRequest = vi.fn(() => true);
+
+    const response = handlerWith(storage, { allowRequest })(
+      request(JSON.stringify({ ...payload, auth_token: "x".repeat(64) })),
+    );
+
+    expect(response).toEqual({
+      status: "rejected",
+      error_code: "unauthorized",
+    });
+    expect(allowRequest).not.toHaveBeenCalled();
+  });
+
+  it("checks authenticated quota after constant-time token validation", () => {
+    const storage: ShortcutStorage = {
+      createIfAbsent: vi.fn(),
+      findByIdempotencyKey: vi.fn(),
+    };
+    const allowRequest = vi.fn(() => false);
+
+    const response = handlerWith(storage, { allowRequest })(request());
+
+    expect(response).toEqual({
+      status: "rejected",
+      error_code: "rate_limited",
+    });
+    expect(allowRequest).toHaveBeenCalledOnce();
     expect(storage.createIfAbsent).not.toHaveBeenCalled();
   });
 

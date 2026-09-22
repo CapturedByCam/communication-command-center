@@ -153,6 +153,35 @@ describe("Apps Script Gmail metadata reader", () => {
     expect(JSON.stringify(snapshot)).not.toContain("PRIVATE");
   });
 
+  it("can form a bounded requested-message-only snapshot without reading thread history", async () => {
+    const gateway = new Gateway();
+    gateway.getThread = () => {
+      throw new Error("bounded mode must not read a Gmail thread");
+    };
+    const reader = new GmailMetadataReader(gateway, {
+      mode: "requested_message_only",
+    });
+
+    const snapshot = ThreadSnapshotSchema.parse(
+      await reader.getThreadSnapshot("message-1"),
+    );
+
+    expect(snapshot.messages).toHaveLength(1);
+    expect(snapshot.messages[0]).toMatchObject({
+      id: "message-1",
+      interpretation: {
+        kind: "ambiguous",
+        category: "other",
+        risk: "review_only",
+        confidence: 0,
+      },
+    });
+    expect(gateway.calls.map((call) => call.method)).toEqual([
+      "profile:me",
+      "message:me",
+    ]);
+  });
+
   it("rejects an oversized response, an overlong window, mismatched thread messages, duplicate IDs, and RFC-invalid headers", async () => {
     const { gateway, reader } = setup();
     gateway.listResult = {

@@ -122,17 +122,36 @@ describe("idempotent Sheet repositories", () => {
     expect(adapter.tables.get("Queue")?.rows).toHaveLength(1);
   });
 
-  it("preserves manual category, status, and waiting state", async () => {
+  it("preserves every manual decision while refreshing source chronology", async () => {
     const adapter = new FakeSheetTableAdapter();
     adapter.initializeManifest();
     const { queue, audit } = repositories(adapter);
     const manual: CommunicationItem = {
       ...baseItem,
       category: "aviation",
+      project_id: "project-manual",
+      contact: {
+        name: "Manual Contact",
+        email: "manual@example.com",
+        phone: "+15551234567",
+        handle: "@manual",
+      },
       status: "snoozed",
       waiting_on: "them",
+      urgency: "later",
+      priority_score: 12,
+      next_action_type: "follow_up",
+      next_action: "Wait for the manually selected follow-up date.",
+      deadline_at: "2026-09-26T14:00:00Z",
+      deadline_text: "Manual deadline",
+      needs_date_review: true,
+      follow_up_at: "2026-09-27T14:00:00Z",
+      promised_follow_up: "Manual promise",
       manual_override: true,
       snooze_until: "2026-09-25T12:00:00Z",
+      resolved_at: "2026-09-21T12:00:00Z",
+      draft_status: "reviewed",
+      gmail_draft_id: "manual-draft",
     };
     await upsertCommunicationItem({ queue, audit }, manual, context(1));
 
@@ -140,8 +159,28 @@ describe("idempotent Sheet repositories", () => {
       ...baseItem,
       item_id: "cc_abcdefghijkl",
       category: "personal",
+      project_id: "project-incoming",
+      contact: {
+        name: "Incoming Contact",
+        email: "incoming@example.com",
+        phone: null,
+        handle: null,
+      },
       status: "resolved",
       waiting_on: "none",
+      urgency: "critical",
+      priority_score: 99,
+      next_action_type: "reply",
+      next_action: "Incoming metadata action.",
+      deadline_at: "2026-09-23T12:00:00Z",
+      deadline_text: "Incoming deadline",
+      needs_date_review: false,
+      follow_up_at: "2026-09-24T12:00:00Z",
+      promised_follow_up: "Incoming promise",
+      snooze_until: null,
+      resolved_at: null,
+      draft_status: "needed",
+      gmail_draft_id: null,
       updated_at: "2026-09-22T13:00:00Z",
       content_hash: "b".repeat(64),
       manual_override: false,
@@ -155,12 +194,87 @@ describe("idempotent Sheet repositories", () => {
     expect(result.outcome).toBe("updated");
     expect(await queue.getBySourceThread("gmail", "thread-1")).toMatchObject({
       category: "aviation",
+      project_id: "project-manual",
+      contact: {
+        name: "Manual Contact",
+        email: "manual@example.com",
+        phone: "+15551234567",
+        handle: "@manual",
+      },
       status: "snoozed",
       waiting_on: "them",
+      urgency: "later",
+      priority_score: 12,
+      next_action_type: "follow_up",
+      next_action: "Wait for the manually selected follow-up date.",
+      deadline_at: "2026-09-26T14:00:00Z",
+      deadline_text: "Manual deadline",
+      needs_date_review: true,
+      follow_up_at: "2026-09-27T14:00:00Z",
+      promised_follow_up: "Manual promise",
+      snooze_until: "2026-09-25T12:00:00Z",
+      resolved_at: "2026-09-21T12:00:00Z",
+      draft_status: "stale",
+      gmail_draft_id: "manual-draft",
       manual_override: true,
       item_id: "cc_123456789012",
       updated_at: "2026-09-22T13:00:00Z",
       content_hash: "b".repeat(64),
+    });
+  });
+
+  it("keeps an existing Gmail draft and stales reviewed work when source state changes", async () => {
+    const adapter = new FakeSheetTableAdapter();
+    adapter.initializeManifest();
+    const { queue, audit } = repositories(adapter);
+    await upsertCommunicationItem(
+      { queue, audit },
+      {
+        ...baseItem,
+        draft_status: "reviewed",
+        gmail_draft_id: "draft-existing",
+      },
+      context(1),
+    );
+
+    const unchangedSnapshot = await upsertCommunicationItem(
+      { queue, audit },
+      {
+        ...baseItem,
+        item_id: "cc_abcdefghijkl",
+        updated_at: "2026-09-22T12:30:00Z",
+        draft_status: "needed",
+        gmail_draft_id: null,
+      },
+      context(2),
+    );
+    expect(unchangedSnapshot.item).toMatchObject({
+      draft_status: "reviewed",
+      gmail_draft_id: "draft-existing",
+    });
+
+    const result = await upsertCommunicationItem(
+      { queue, audit },
+      {
+        ...baseItem,
+        item_id: "cc_abcdefghijkl",
+        source_record_id: "message-2",
+        updated_at: "2026-09-22T13:00:00Z",
+        content_hash: "b".repeat(64),
+        draft_status: "needed",
+        gmail_draft_id: null,
+      },
+      context(3),
+    );
+
+    expect(result).toMatchObject({ outcome: "updated" });
+    expect(await queue.getBySourceThread("gmail", "thread-1")).toMatchObject({
+      item_id: "cc_123456789012",
+      source_record_id: "message-2",
+      updated_at: "2026-09-22T13:00:00Z",
+      content_hash: "b".repeat(64),
+      draft_status: "stale",
+      gmail_draft_id: "draft-existing",
     });
   });
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   RuntimeSheetAdapter,
+  SheetCommitUncertainError,
   type TableGateway,
 } from "../../src/apps-script/sheet-adapter.js";
 import type { SheetTable } from "../../src/adapters/sheets/sheet-table.js";
@@ -20,7 +21,7 @@ function setup() {
     read: () => structuredClone(table),
     commit: (_id, changes) => {
       commits++;
-      if (fail) throw new Error("provider-private-content");
+      if (fail) throw new SheetCommitUncertainError();
       table = structuredClone(changes[0].after);
     },
   };
@@ -97,4 +98,20 @@ describe("runtime atomic sheet unit of work", () => {
     ).rejects.toThrow("TRANSACTION_ACTIVE");
     expect(t.locks()).toBe(0);
   });
+});
+
+it("preserves deterministic snapshot conflicts without classifying them as uncertain", async () => {
+  const adapter = new RuntimeSheetAdapter({
+    acquire: () => {},
+    release: () => {},
+    read: () => ({ headers: ["id"], rows: [] }),
+    commit: () => {
+      throw new Error("SHEET_CHANGED");
+    },
+  });
+  await expect(
+    adapter.runTransaction("book", () =>
+      adapter.appendRow("book", "Queue", ["one"]),
+    ),
+  ).rejects.toThrow("SHEET_CHANGED");
 });

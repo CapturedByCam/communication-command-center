@@ -26,7 +26,7 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   conservative metadata reconciliation, commitments, date normalization,
   calendar candidates without event writes, and eight-section briefing persistence.
 - Owner-only Queue menu controls implement Resolve, Reopen and explicit-offset
-  Snooze through a shared lock, complete row snapshot checks and atomic audit writes.
+  Snooze and exact waiting-state updates through a shared lock, complete row snapshot checks and atomic audit writes.
   `CCC_MANUAL_WRITES` is independent and defaults off; no direct Sheet edit is needed.
 - Build fails if its real entrypoint is absent and emits Apps Script global
   functions with an explicit V8 manifest. ES2019 avoids unsupported class fields.
@@ -130,8 +130,8 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   after the verified Version 4 guarded-control checks and Version 5 same-code health.
   Fresh `cccHealth` at 11:24:50 EDT returned `ok:true`: ten valid headers,
   `CCC_MANUAL_WRITES:true`, the other six flags false, `America/New_York`, and
-  `send_capability:false`. No source or Queue mutation occurred during activation. No
-  current trigger count was then observed at about 11:32 EDT in the Apps Script Triggers
+  `send_capability:false`. No source or Queue mutation occurred during activation. A
+  current trigger count was observed at about 11:32 EDT in the Apps Script Triggers
   page: `Showing 0 triggers` with no filters set.
 - Workspace Studio test add-on installation is verified: Test deployments shows an
   Application deployment for Workspace Studio, an Uninstall button, and Installed
@@ -146,6 +146,37 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   manual controls, briefing persistence and kill-switch checks have passed. Only
   `CCC_MANUAL_WRITES` is currently enabled; automatic intake, drafting, Shortcut
   capture, and briefing delivery remain disabled. Version 1 remains available for rollback.
+
+## Version 6 waiting-state acceptance
+
+Version 6 deployed at 11:51 EDT from `e23ee3a` (integrated candidate `42fc635`).
+The immutable source SHA is
+`30ef121478437e554e485e91dcb32966a80592257a29998106f0e955c6f40853`; semantic manifest SHA
+is unchanged at `6d2df263d5686e5b903c655da411ce96d4403c71d249321f220be50ce7f0689d`.
+Both matched the verified build. Deployment remains `MYSELF` / `USER_DEPLOYING`,
+with unauthenticated Google sign-in redirect. The first post-deploy listing still
+showed Version 5; a subsequent read verified Version 6 without another deployment.
+
+At 11:52:57 EDT health returned `ok:true`, ten valid headers, New York time,
+`MANUAL_WRITES:true`, six other flags false and `send_capability:false`. The
+unfiltered Triggers page at about 11:51 EDT showed zero triggers.
+
+A bounded selected-row test changed waiting from `unknown` to `them`: only
+`waiting_on` and `updated_at` changed, other Queue rows were exact, and Audit_Log
+increased from eleven to twelve with the controlled manual actor. Repeating `them`
+left both complete bounded table snapshots unchanged. Restoring `unknown` at
+11:56:36 EDT left only `updated_at` different from the original tested row and
+Audit_Log at thirteen. Queue remains five rows; no source, draft, scope, flag,
+trigger or other data was changed. Version 5 remains the verified rollback target.
+The initial 30-day Gmail window is incomplete. The prior briefing projection
+predates these Queue items and must not be treated as current.
+
+PR #36 merged at `8f97b6b43b260534a9ee10c2f77aa403f08d3d95` after independent review
+and required CI. Its create-only native provider remains uninvoked and absent
+from the emitted runtime. The integrated waiting candidate passed 392 tests in
+39 files plus schema, formatting, lint, type, build and planning checks. Independent
+review verified prompt cancellation, lost authorization, exact enum validation,
+unchanged legacy audit hashes and atomic Queue/Audit batch coverage.
 
 ## Runtime release verification
 
@@ -200,7 +231,8 @@ source IDs and strict pre-persistence validation.
    [the action inventory](../../shortcuts/ADD_TO_COMMAND_CENTER.md). The owner-only
    pilot endpoint must not be mistaken for an anonymous phone-ready endpoint.
    Live invalid-token, replay, redaction and kill-switch tests precede access changes.
-4. Collect actual model/pilot observations and human draft-usefulness ratings,
+4. Bind outbound-promise extraction and live Commitment persistence; the native
+   metadata runtime does not supply interpreted commitments. Then collect actual model/pilot observations and human draft-usefulness ratings,
    including the required working week. [50 synthetic policy cases](../evaluation/SYNTHETIC_V1_REPORT.md)
    pass but do not satisfy those real-world thresholds.
 

@@ -22,7 +22,7 @@ the Apps Script Triggers page showed `Showing 0 triggers` with no filters set.
    > Briefing_View projection in its stored order. Use the exact source IDs for
    > any Gmail context within the 30-day window. Explain priorities, then draft
    > only unsent reply text for items I select. For a selected Queue item, use only
-   > the supported guarded Resolve, Reopen, or Snooze action I explicitly request.
+   > the supported guarded Resolve, Reopen, Snooze, or Set waiting state action I explicitly request.
    > Do not send, create a Gmail draft, infer missing source context, or directly
    > edit a row.
 
@@ -62,7 +62,7 @@ send through Gmail, Studio, Chat, or any other channel.
 ## Supported Queue changes
 
 `CCC_MANUAL_WRITES` is currently enabled, so the owner may select exactly one Queue data
-row and use the Command Center menu's guarded **Resolve**, **Reopen**, or **Snooze**
+row and use the Command Center menu's guarded **Resolve**, **Reopen**, **Snooze**, or **Set waiting state**
 action. Snooze needs a future ISO 8601
 instant with an explicit numeric offset, such as `2026-09-25T14:30:00-04:00`.
 The controls recheck the owner, workbook, flag, and full selected-row snapshot,
@@ -74,11 +74,12 @@ make no retry from the grid. Re-read the selected row and follow the controlled
 result. For an uncertain result, check the row before deciding whether another
 operator action is appropriate.
 
-`Mark <item_id> waiting on them` is a product command but has no supported guarded
-V1 Queue control. Do not edit `waiting_on` directly or represent it as completed.
-ChatGPT may explain the source chronology and record that the requested state
-change is unsupported; keep the canonical row unchanged until a reviewed,
-audited control exists.
+For `Mark <item_id> waiting on them`, locate that exact item in Queue and select
+its single row. Choose **Set selected Queue waiting state** and enter `them`.
+The control accepts only `me`, `them`, `none`, or `unknown`, for open or snoozed
+items. A resolved item must be explicitly reopened first. Identical input is a
+no-op; it changes neither timestamps nor audit rows. Do not infer the requested
+value from a message or directly edit `waiting_on`.
 
 ## Safety and recovery
 

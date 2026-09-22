@@ -32,7 +32,7 @@ See [Current State](Current%20State.md) and the [Wayfinder Map](../docs/wayfinde
 ## Blockers
 
 - None for local synthetic or sanitized Milestone 3 work.
-- Required status-check enforcement is unavailable for this private repository under the current GitHub plan; CI remains automatic but advisory.
+- `main` now requires pull requests, an up-to-date passing `Verify repository` check, and resolved review conversations. Force pushes and deletion are blocked by the active ruleset.
 - Google permissions, cloud resources, deployments, production communications, and production data remain outside the current authorization.
 
 ## Next actions
@@ -69,6 +69,8 @@ Milestone 4 complete from local tests. Merge PMC edits by preserving both
 workstreams, not replacing the other task's latest state.
 
 ## Repository evidence
+
+- Public-repository hardening authorized by Cam on 2026-09-22: issue #19 / PR #20, `.github/workflows/ci.yml`, `.github/rulesets/main.json`, `.github/dependabot.yml`, and `docs/runbooks/GITHUB_REPOSITORY_AUTOMATION.md`.
 
 - Foundation commit: `c2823de`
 - Milestone 1 merge: `c37f9f3`

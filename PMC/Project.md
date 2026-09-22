@@ -1,7 +1,7 @@
 # Project Index
 
 - Project ID: `communication-command-center`
-- Repository: `CapturedByCam/communication-command-center` (private)
+- Repository: `CapturedByCam/communication-command-center` (public)
 - Default branch: `main`
 
 ## Architecture summary
@@ -26,7 +26,7 @@ Workspace Studio handles bounded Gmail event orchestration. Apps Script owns det
 
 - Milestone 3 Gmail chronology and reconciliation using synthetic or sanitized fixtures
 - Milestone 4 local Studio configuration and validation in parallel; see [progress and next steps](../docs/implementation/MILESTONE_4.md)
-- Repository CI setup through issue #19 and PR #20
+- Repository CI and public-repository protection through issue #19 and PR #20
 - Deferred implementation gates listed in [Current State](Current%20State.md)
 
 ## Decisions and procedures
@@ -34,5 +34,6 @@ Workspace Studio handles bounded Gmail event orchestration. Apps Script owns det
 - [Project Home](Project%20Home.md)
 - [Wayfinder Map](../docs/wayfinder/MAP.md)
 - [Deployment and Operations Runbook](../docs/runbooks/DEPLOYMENT_AND_OPERATIONS_RUNBOOK.md)
+- [GitHub Repository Automation](../docs/runbooks/GITHUB_REPOSITORY_AUTOMATION.md)
 - [Coverage](Coverage.md)
 - [Handoff](Handoff.md)

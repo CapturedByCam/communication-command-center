@@ -30,12 +30,12 @@ The historical post-installation result remains valid: the custom action was abs
 from the reloaded manual-flow step menu before Admin availability was checked. It
 must not be treated as proof that the add-on can never be exposed.
 
-Admin is now authenticated. At the CapturedByCam root organizational unit, Studio
-**Custom steps access** is currently **OFF**. Directory All organizational units
-showed one active user, the approved mailbox. **Allow unpublished test steps** is
-checked but disabled while Custom steps access is off. Enabling access awaits
-action-time confirmation; no Admin setting, OAuth consent, policy, deployment, or
-runtime flag was changed.
+Admin was authenticated. At the CapturedByCam root organizational unit, Studio
+**Custom steps access** is **ON**, with **Allow unpublished (test) custom steps**
+checked. The user explicitly approved this Admin setting change. After enabling it,
+the private CCC test step appeared in Studio. Directory All organizational units
+showed one active user, the approved mailbox. No OAuth consent, deployment, or
+runtime flag was changed by this Admin update.
 
 The existing app-owned `CCC V1 — bounded staging acceptance` flow now has Start
 manually followed by Ask Gemini. Its Web search and Workspace sources are both off,

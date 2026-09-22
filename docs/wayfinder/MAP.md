@@ -30,6 +30,13 @@ Reach an implementation-ready, privacy-reviewed specification and a verified del
 - [Use curated Contacts and Projects as canonical context](tickets/105-context-registry-source.md): ChatGPT memories may suggest records during explicit review, but nothing memory-derived persists without approval and a deterministic identifier.
 - [Use the approved pilot sample and thresholds](tickets/106-pilot-evaluation.md): Evaluate at least 50 approved or sanitized examples against the specified accuracy, privacy, and no-send thresholds.
 
+Repository operations decision, 2026-09-22: Cam made the repository public and
+authorized Actions and branch protections. Require PRs and verified CI through
+one default-branch ruleset, with zero required approvals for the sole-maintainer
+repository. See [GitHub Repository Automation](../runbooks/GITHUB_REPOSITORY_AUTOMATION.md)
+for the security settings and reproducible ruleset. This does not change the
+product's private-data or deployment approval boundaries.
+
 ## Open frontier
 
 None. Implementation must still satisfy the account, data-access, and deployment gates recorded in the specification and runbook.

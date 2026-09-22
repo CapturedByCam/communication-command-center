@@ -15,12 +15,51 @@ Its `SERVER_JS` source exactly matches `dist/Code.js` after LF normalization and
 its manifest semantically matches `dist/appsscript.json`.
 
 Keep all feature flags false and do not create time-driven triggers until the
-controlled live checks and feature-specific acceptance evidence pass. `cccHealth`
-and `cccGmailReadProbe` passed on version 1. Version 2 adds default-off Queue
-controls; its live menu, health and disable checks remain pending. A later save enabling Gmail/briefing for manual
-pilot tests was interrupted by screen lock; its outcome is unknown. Inspect
-properties before further tests. No triggers exist. The manifest's Gmail scope
-is read-only; V1 has no send path.
+controlled live checks and feature-specific acceptance evidence pass. Version 1
+`cccHealth` and `cccGmailReadProbe` passed. At 08:51–08:53 EDT, Version 2 Settings
+showed the original six properties false and `CCC_MANUAL_WRITES` absent/default false;
+`cccDisableAll` then returned an empty enabled-flag list with zero managed triggers,
+and `cccHealth` returned `ok:true` with all ten headers valid. The health accessibility
+log truncates within its flags field, so it is not evidence of its unshown tail. The
+overnight save did not persist. The Mac relocked before a Version 2 Gmail worker click,
+so no worker, briefing, ingestion, manual control, or trigger action occurred. Version 2
+disabled `cccReconcileGmail` and `cccBuildBriefing` subsequently returned
+`{ok:true,status:'disabled'}` at 08:57:42 and 08:58:12 EDT. A bounded post-check found
+only headers in Queue, Briefing_View, Briefing_History, Audit_Log, Dead_Letter and
+Config. No triggers exist. The manifest's Gmail scope is read-only; V1 has no send path.
+
+On 2026-09-22, IAB Settings confirmed all seven flags false after the kill switch. A
+single enabled Gmail batch then returned zero processed, four excluded and one failed;
+it wrote one controlled `SNAPSHOT_INVALID` Dead_Letter row and a Config cursor while
+Queue and Audit_Log remained headers-only. The kill switch passed again immediately.
+A briefing-only run persisted eight sections and one history row with no delivery. That controlled failure was retained for recovery; the later Version 4 recovery and
+duplicate behavior are recorded below.
+
+The 09:05:45 EDT duplicate briefing call returned `duplicate` with the same briefing
+ID, eight sections and no delivery. A bounded Sheet read confirmed both the projection
+and history were unchanged. This verifies briefing replay suppression only; it does not
+clear the Gmail intake diagnosis.
+
+At 09:06:16 EDT `cccDisableAll` again returned no enabled flags and zero remaining
+managed triggers. IAB showed the bound workbook's Command Center menu, and disabled
+Reopen displayed the fixed disabled toast. Queue and Audit_Log were still headers-only.
+Version 4 deployed at 09:36 EDT from `fe558fc`; immutable source/manifest drift,
+owner-only deployment posture and the unauthenticated Google sign-in redirect passed.
+At 09:37:42 EDT, selected replay resolved the original Dead_Letter as
+`manual_gmail_replay`, created one Queue and one Audit_Log row, and left Config
+unchanged. Resolve, unchanged-row replay, Reopen and explicit-offset Snooze then
+passed with `manual_override:true`; the replay preserved the entire one-row Queue
+exactly while adding an audit event. At 09:41:34 EDT, cursor resume processed four
+records with zero exclusions or failures; Config reported no pending or blocked retry
+while the bounded window remained active. Direct Reopen of the Snoozed row returned
+controlled `STALE_STATE`; the supported Resolve then Reopen sequence restored it to
+`open` with `snooze_until:null` and `manual_override:true`. Bounded proof found five
+Queue rows and eleven Audit_Log rows. At 09:50:20 EDT, `cccDisableAll` returned all
+seven flags off and zero managed triggers.
+
+All feature flags must remain false while the next integration is prepared. The user has
+authorized future bounded acceptance work when its verified prerequisites are met; do not
+install a trigger or enable drafting from this pilot.
 
 ## Offline deployment-drift check
 

@@ -43,14 +43,16 @@ unbound. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
 
 ## Remaining work and user action
 
-- Resolve Workspace Studio custom-step availability. Admin is authenticated, but
-  CapturedByCam root Custom steps access is OFF and enabling it awaits action-time
-  confirmation. The historical custom-step absence is distinct from the current
-  synthetic-only manual Ask Gemini run at 12:26:22 EDT; it has no source binding,
-  custom step, or Google mutation. Its 12-field output passed strict schema validation;
-  a pure synthetic unknown-contact staging call was review-only with no persistence or
-  provider call. Stored synthetic output visibility for 40 days does not resolve input
-  retention. Project evidence, retention meaning, starter binding, and usefulness remain open.
+- Workspace Studio custom-step availability is resolved. On 2026-09-22 Cam
+  approved turning ON Custom steps access for the CapturedByCam root OU while
+  retaining unpublished test steps. The private CCC step appeared in the picker.
+  PR #45 removed an unused locale permission option; the same manifest field
+  was removed in the authenticated script editor and saved. The configuration
+  card now opens with Gmail ID and bounded JSON fields. The manual synthetic
+  flow includes that unconfigured Step 3 but has not run it. CCC_STUDIO_PROCESSING
+  is false. Real source binding, model usefulness, and exact resolved-input/source
+  retention remain open; do not feed real private content until that gate is
+  resolved. Immutable owner-only web deployment Version 7 remains unchanged.
 - Bind a privacy-compatible interpretation provider within an existing permitted
   entitlement. Prove real source IDs, strict validation, outbound-promise
   Commitments, draft eligibility and useful output. The create-only native draft
@@ -108,7 +110,7 @@ accepted manual Queue controls were restored. Final editor health passed, and
 no trigger or send capability is active.
 
 Remaining blockers are the privacy-compatible real interpretation provider and
-Workspace Studio access/retention decision, compose authorization and draft
+Workspace Studio retention/source-binding decision, compose authorization and draft
 acceptance, local Shortcut endpoint/device setup, then a real working-week
 pilot. See [Current State](Current%20State.md) and
 [V1 execution](../docs/implementation/V1_EXECUTION.md).

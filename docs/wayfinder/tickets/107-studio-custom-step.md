@@ -2,8 +2,9 @@
 
 ## Status
 
-Accepted implementation decision. The private test add-on is installed; account
-step visibility, actual starter-variable binding, and real-model acceptance remain gated.
+Accepted implementation decision. The private test add-on is installed and the
+custom step is visible and configurable. Actual starter-variable binding and
+real-model acceptance remain gated.
 
 ## Decision
 
@@ -52,13 +53,24 @@ new scope or consent was requested. Before Admin availability was inspected, the
 action was absent from the reloaded manual-flow UI; that historical absence does not
 prove permanent unavailability.
 
-Admin is authenticated. At the CapturedByCam root organizational unit, Studio Custom
-steps access is OFF; Directory All organizational units showed one active approved user.
-Allow unpublished test steps is checked but disabled while access is OFF. Enabling it
-requires action-time confirmation and has not occurred: no Admin/OAuth/policy/runtime
-change was made. The current app-owned flow is Start manually → Ask Gemini, with Web
-search and Workspace sources off, no skills, Text output, and no custom or Google
-mutation step. One synthetic-only manual run succeeded at 12:26:22 EDT.
+On 2026-09-22, Cam approved enabling Studio Custom steps access for the
+CapturedByCam root organizational unit while retaining unpublished test-step
+access. Admin saved ON with the test-step checkbox checked. The private
+Communication Command Center action then appeared in the Studio picker and was
+added to the manual synthetic flow as Step 3. Its initial configuration card
+failed on the unused script.locale permission implied by useLocaleFromApp.
+PR #45 removed that manifest option without adding an OAuth scope. The
+authenticated Apps Script editor was updated with the exact field removal and
+reported Saved to Drive. Reopening the Studio step then rendered both bounded
+input fields with no permission error. No run of the new step, source binding,
+Gmail action, or send occurred; CCC_STUDIO_PROCESSING remains false. The owner-only web
+deployment remains immutable Version 7, while this Studio fix is in the project
+editor source.
+
+The current app-owned flow is Start manually → Ask Gemini, with Web
+search and Workspace sources off, no skills, Text output, and no Google
+mutation step. The private custom step is now present but unconfigured and unrun.
+One synthetic-only manual run succeeded at 12:26:22 EDT.
 `StudioInterpretationSchema` accepted all 12 required fields with no extras; a pure
 `prepareStudioStaging` call with wholly synthetic metadata and `knownContact:false`
 returned `review_only` without persistence or provider calls. The synthetic details are

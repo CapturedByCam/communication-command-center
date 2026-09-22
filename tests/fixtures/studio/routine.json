@@ -1,0 +1,28 @@
+{
+  "source": {
+    "mailbox": "pilot@example.com",
+    "gmail_message_id": "synthetic-message-0001",
+    "flow_run_id": "synthetic-run-0001",
+    "received_at": "2026-09-22T12:00:00Z",
+    "sender_email": "sender@example.com",
+    "subject": "Synthetic project question"
+  },
+  "model": {
+    "requires_response": true,
+    "direct_response_requested": true,
+    "draft_risk": "routine",
+    "category_hint": "active_project",
+    "project_hint": null,
+    "deadline_text": null,
+    "next_action_hint": "Answer the project question.",
+    "summary_hint": "A synthetic contact asked a project question.",
+    "confidence_hint": 0.95,
+    "message_kind": null,
+    "consequences": [],
+    "model_uncertain": false
+  },
+  "context": {
+    "approvedMailbox": "pilot@example.com",
+    "knownContact": true
+  }
+}

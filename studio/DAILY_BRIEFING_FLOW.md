@@ -8,10 +8,14 @@ Deliver the deterministic queue produced by Apps Script. Studio may format the p
 
 **On a schedule**
 
-Default proposal pending decision:
+Approved configuration (Wayfinder ticket 104):
 
 - Morning: 8:00 AM America/New_York
-- Afternoon cleanup: 4:30 PM America/New_York
+- Delivery: private Google Chat notification linking the private `Briefing_View` Sheet
+- Afternoon cleanup: disabled until the first pilot week demonstrates value
+
+Keep this flow disabled. Milestone 4 prepares configuration; the briefing engine
+and live delivery verification belong to Milestone 6.
 
 ## Steps
 
@@ -24,7 +28,7 @@ Default proposal pending decision:
    - prompt must say: preserve every row, order, identifier, deadline, and status exactly;
    - if the model output omits an item, use the deterministic text instead.
 
-3. **Notify me in Chat** or the approved delivery channel.
+3. **Notify me in Chat** using the approved private delivery channel.
    - include the generated timestamp;
    - include a link to the command-center Sheet;
    - do not include full message bodies.

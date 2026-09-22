@@ -1,0 +1,32 @@
+{
+  "name": "communication-command-center",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate:schemas": "node scripts/validate-schemas.mjs",
+    "build": "node scripts/build.mjs",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm validate:schemas && pnpm test && pnpm build",
+    "validate:planning": "python3 scripts/validate_planning_pack.py ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.2",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.8",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.1"
+  }
+}

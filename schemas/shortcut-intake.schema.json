@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://capturedbycam.local/schemas/shortcut-intake.schema.json",
+  "title": "ShortcutIntake",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "auth_token",
+    "idempotency_key",
+    "captured_at",
+    "source",
+    "shared_text",
+    "model_fields"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "auth_token": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 256,
+      "writeOnly": true
+    },
+    "idempotency_key": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "const": "apple_share_sheet"
+    },
+    "shared_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 12000,
+      "writeOnly": true
+    },
+    "contact_hint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "app_hint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 100
+    },
+    "model_fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification_status",
+        "category",
+        "urgency",
+        "waiting_on",
+        "next_action",
+        "summary"
+      ],
+      "properties": {
+        "classification_status": {
+          "enum": [
+            "parsed",
+            "needs_server_review"
+          ]
+        },
+        "category": {
+          "enum": [
+            "client_lead",
+            "active_project",
+            "aviation",
+            "business_admin",
+            "personal",
+            "other"
+          ]
+        },
+        "urgency": {
+          "enum": [
+            "critical",
+            "today",
+            "this_week",
+            "later"
+          ]
+        },
+        "waiting_on": {
+          "enum": [
+            "me",
+            "them",
+            "none",
+            "unknown"
+          ]
+        },
+        "deadline_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "deadline_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "next_action": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    }
+  }
+}

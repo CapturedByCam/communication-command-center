@@ -1,0 +1,6 @@
+*.md
+docs/
+schemas/
+shortcuts/
+studio/
+pnpm-lock.yaml

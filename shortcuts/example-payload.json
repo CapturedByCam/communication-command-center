@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "auth_token": "SYNTHETIC_NOT_A_REAL_SECRET_012345678901234567890123456789",
+  "idempotency_key": "b0d4c229-8657-4df7-9c83-daf3cdca83ff",
+  "captured_at": "2026-09-21T19:00:00-04:00",
+  "source": "apple_share_sheet",
+  "shared_text": "Can you send the revised video by Wednesday afternoon?",
+  "contact_hint": "Example Client",
+  "app_hint": "Messages",
+  "model_fields": {
+    "classification_status": "parsed",
+    "category": "active_project",
+    "urgency": "this_week",
+    "waiting_on": "me",
+    "deadline_at": "2026-09-23T15:00:00-04:00",
+    "deadline_text": "by Wednesday afternoon",
+    "next_action": "Send the revised video",
+    "summary": "Example client requests the revised video by Wednesday afternoon."
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://capturedbycam.local/schemas/studio-staging.schema.json",
+  "title": "StudioStagingRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ingest_id",
+    "flow_run_id",
+    "gmail_message_id",
+    "received_at",
+    "sender_email",
+    "subject",
+    "requires_response",
+    "draft_risk",
+    "processing_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "ingest_id": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 128
+    },
+    "flow_run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "gmail_message_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sender_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "subject": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "requires_response": {
+      "type": "boolean"
+    },
+    "draft_risk": {
+      "enum": [
+        "routine",
+        "review_only",
+        "no_draft"
+      ]
+    },
+    "category_hint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 64
+    },
+    "project_hint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "deadline_text": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "next_action_hint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "summary_hint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "confidence_hint": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "processing_status": {
+      "enum": [
+        "new",
+        "processing",
+        "processed",
+        "failed"
+      ]
+    },
+    "processed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "error_code": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    }
+  }
+}

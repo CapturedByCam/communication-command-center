@@ -479,7 +479,7 @@ A miss does not trigger silent retraining. It creates a fixture and a reviewed r
 
 Exit when:
 
-- private repository exists;
+- the user-approved public repository exists; private resource IDs, credentials, source content, and exports remain excluded;
 - planning pack is committed;
 - tests run;
 - PMC is connected;
@@ -500,7 +500,7 @@ Exit when selected Gmail threads ingest and reconcile correctly with no sending.
 
 ### Milestone 4 — Workspace Studio
 
-Exit when built-in flow actions create staging records and routine drafts under review.
+Exit when the private custom step proves strict, bounded metadata staging with the actual starter variable. It creates no Gmail draft; native create-only draft acceptance remains separately gated.
 
 ### Milestone 5 — Apple Shortcut
 

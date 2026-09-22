@@ -11,12 +11,19 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
   match the verified build. Access remains `MYSELF` / `USER_DEPLOYING`;
   unauthenticated requests redirect to Google sign-in. Version 5 is the prior
   verified rollback target. No OAuth scope changed.
-- At 11:52:57 EDT, `cccHealth` returned `ok:true`: ten valid headers,
+- At 12:12:37 EDT, editor `cccHealth` returned `ok:true`: ten valid headers,
   `America/New_York`, `MANUAL_WRITES:true`, the other six flags false, and
   `send_capability:false`. At about 11:51 EDT the unfiltered Triggers page showed
-  zero triggers. Only guarded manual Queue controls are enabled.
+  zero triggers; `cccDisableAll` at 12:05:53 confirmed zero managed triggers.
+  Only guarded manual Queue controls are enabled.
 - The private workbook has ten manifest tabs and a verified private pre-activation
-  backup. The bounded Gmail recovery produced five generic metadata Queue items;
+  backup. A new private restore copy passed all ten exact manifest headers and
+  New York time checks. The owner-only deployment was switched from Version 6 to
+  retained Version 5 and back with controls disabled; both immutable builds and
+  access checks passed, and Queue/Audit snapshots were unchanged. This verifies
+  deployment rollback and a headers-only recovery point, not populated-data
+  recovery or application execution against the restored copy.
+  The bounded Gmail recovery produced five generic metadata Queue items;
   one controlled Dead_Letter is resolved. Its 30-day cursor has no pending/blocked
   retry but the initial window is incomplete. No full-thread interpretation is
   claimed and no background worker is enabled.
@@ -31,12 +38,15 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
   delivery; its replay changed nothing. That projection predates the five Queue
   items and must not be presented as a current briefing. Review Queue directly
   until a fresh accepted projection exists.
-- PR #34 and #35 are merged. The create-only draft provider PR #36 merged at
+- PR #34, #35 and #37 are merged. PR #37 merged at
+  `60beecf5f76a77edd99daf99fad3917462cdf4cf` after required CI and review. The create-only draft provider PR #36 merged at
   `8f97b6b43b260534a9ee10c2f77aa403f08d3d95`; its factory remains uninvoked and is
   absent from the emitted runtime. It adds no compose scope or live drafting.
-- Integrated waiting-control validation passed 392 tests in 39 files, schema,
-  formatting, lint, types, build and planning checks, plus independent review.
-  Its protected release merge is recorded in [V1 execution](../docs/implementation/V1_EXECUTION.md).
+- Integrated hardening validation passed 393 tests in 39 files, schema,
+  formatting, lint, types, build and planning checks. The tested
+  [Shortcut token rotation procedure](../docs/runbooks/SHORTCUT_TOKEN_ROTATION.md)
+  remains separate from live token/device acceptance. Release review and merge
+  evidence are recorded in [V1 execution](../docs/implementation/V1_EXECUTION.md).
 - No Google email or Chat send, Gmail draft, trigger installation, phone capture,
   Calendar mutation, billing upgrade, or private-content retention occurred.
 

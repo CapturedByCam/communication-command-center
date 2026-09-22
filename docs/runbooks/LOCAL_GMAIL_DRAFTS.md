@@ -1,8 +1,10 @@
 # Local Gmail draft lifecycle
 
-This implements the local orchestration portion of plan Task 11. It has no
-Google service binding or deployment and exposes no send operation. Synthetic
-tests exercise injected transports; they do not establish live Gmail behavior.
+This document describes the versioned draft lifecycle and native create-only
+provider boundary. The runtime has no send operation. The provider is implemented
+locally but remains uninvoked in production: compose authorization, eligible
+model context, deployment binding, and live create acceptance are separate gates.
+Synthetic tests do not establish live Gmail behavior. See [Decision 108](../wayfinder/tickets/108-native-draft-create-only.md) and [V1 execution](../implementation/V1_EXECUTION.md).
 
 ## Entry points and prerequisites
 
@@ -83,27 +85,23 @@ unconditional update does not satisfy this contract. `conflict` also guarantees
 no mutation and makes the recorded draft stale. A transport exception or
 malformed result is an unknown outcome, not proof that the operation failed.
 
-No production Gmail transport satisfying this conditional-write requirement is
-provided or claimed. If provider capabilities cannot satisfy it, leave automatic
-replacement/deletion unsupported and resolve the live behavior before enabling
-those operations.
+The native provider is create-only. It deliberately does not provide conditional
+replacement or deletion; those operations remain unsupported and make no Gmail
+provider call. Do not enable them unless a provider-supported full-envelope
+conditional-write contract is accepted and verified.
 
 ## Remaining integration work
 
-- Connect the accepted Gmail reconciliation and curated registry contracts to
-  the trusted context resolver. Maintain current source/risk state across writes.
-- Implement and verify private Sheet transactions and the draft-only transport,
-  including original-thread targeting and full-envelope edit protection.
-- Project ledger state into the canonical Queue without allowing reconciliation
-  to erase draft IDs, stale status, or human review. This slice deliberately
-  does not modify the parallel Milestone 3 files or Queue upsert behavior.
-- Implement reviewed uncertain-write recovery: inspect the exact mailbox,
-  thread and operation, reconcile provider evidence with the ledger, and preserve
-  user edits. There is no reset/retry endpoint in this slice. Never clear a
-  pending reservation merely because it is old.
-- Resolve the Studio/backend boundary and exercise account-level synthetic
-  tests with zero sends and no body retention. Local test success does not
-  accept Milestone 4.
+- Bind the reviewed create-only provider only after private deployment, compose
+  authorization, eligible model-context resolution, and live create acceptance
+  are separately verified.
+- Maintain the trusted resolver's current source/risk facts and preserve Queue
+  draft IDs, stale status, and human review through reconciliation.
+- Implement reviewed uncertain-write recovery against exact mailbox/thread/provider
+  evidence before offering any operator retry. Never clear a pending reservation
+  merely because it is old.
+- Resolve the Studio/model boundary and collect account-level usefulness evidence
+  with zero sends and no body retention. Local test success does not accept that gate.
 
 ## Verification
 
@@ -116,11 +114,8 @@ synthetic cleanup. Fixtures use synthetic content and example.com identities.
 Independent review must precede merge. Live runtime and longer-term pilot
 acceptance belong to the integration workstream.
 
-On 2026-09-22, full verification passed with 186 tests, including 71 draft
-contract/repository/lifecycle tests. Planning validation and the diff check
-passed. A neutral ESM bundle imported successfully and rejected invalid inputs
-without invoking dependencies; its public API contains no send operation.
-Independent review found no remaining actionable defects after full-draft
-revision, stale-cancellation, and deleted-tombstone regressions were fixed.
-The repository build check still reports no application entrypoint; it is not
-evidence of a deployable runtime.
+Run the focused lifecycle/provider tests, `pnpm verify`, `pnpm validate:planning`,
+and `git diff --check` for a candidate. Current verification counts and live
+posture belong in [V1 execution](../implementation/V1_EXECUTION.md), not this
+contract. Local success remains implementation evidence; it does not create a
+draft or prove the account/device/model gates.

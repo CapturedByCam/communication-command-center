@@ -1,195 +1,71 @@
 # Deployment and Operations Runbook — Communication Command Center
 
-## Runbook metadata
+## Operating posture
 
-- **Mode:** authorized private V1 pilot preparation; live acceptance remains open.
-- **Primary operator:** approved owner account, using the bound private workbook
-  and Apps Script project.
-- **Current resources:** the private workbook is initialized with all ten manifest
-  tabs; its time zone is `America/New_York`; a private pre-activation backup is
-  verified. The resource bindings remain in ignored local records.
-- **Current safety state:** version 1 health verified its six flags false; a later Gmail/briefing
-  pilot flag save was interrupted by screen lock and its outcome is unknown. No trigger, Shortcut
-  token, installed Shortcut, mailbox processing, or application-created draft
-  exists, and no application-created Google message has been sent.
-- **Deployment state:** immutable Apps Script version 2 is deployed as an
-  owner-only web app (`access: "MYSELF"`, `executeAs: "USER_DEPLOYING"`). The
-  deployed `Code.js` exactly matches `dist/Code.js` after LF normalization and
-  its manifest semantically matches `dist/appsscript.json`.
-- **Model state:** the privacy-compatible interpretation binding is blocked. The
-  inspected Cloud billing account is on an expired free trial; no paid upgrade
-  was authorized or made.
+This runbook describes the private V1 pilot without treating a historical deployment version or a previous feature snapshot as current. The authoritative verified state, deployment hashes, controlled live checks, and open gates are maintained in [V1 execution](../implementation/V1_EXECUTION.md) and [PMC Current State](../../PMC/Current%20State.md). Consult both before any live operation.
 
-See [Runtime operations](RUNTIME_OPERATIONS.md) for offline deployment-drift
-comparison, private backup handling, and version rollback.
+The system never sends Google email or Chat. Sheets retain bounded operational metadata, not bodies or credentials. The native Gmail pilot remains metadata-only and generic needs-review; it cannot establish full-thread interpretation, model usefulness, or draft readiness. Native draft replacement and deletion remain refused. The private Shortcut remains a separate token/device acceptance gate.
 
 ## Safety classification
 
-| Action | Current treatment |
+| Action | Treatment |
 | --- | --- |
-| Local build, tests, and offline drift comparison | Safe local work |
-| Private Apps Script test deployment | Version 2 deployed; owner-only and immutable |
-| `cccHealth` | Version 1 baseline passed: ten valid headers and six flags false at check time; version 2 check pending |
-| `cccGmailReadProbe` | Version 1 baseline passed: approved mailbox, one bounded metadata message, no mutations |
-| Pilot processing flags | Gmail/briefing save attempted; screen lock left its outcome unknown |
-| Create a trigger, provision a Shortcut token, or install a Shortcut | Not yet performed; requires its documented live acceptance evidence |
-| Bind a model provider or make a paid billing change | Blocked; no paid upgrade |
-| Send Google email or Chat, including to the owner | Prohibited |
-| Delete drafts, source messages, workbook records, or clear production ranges | Prohibited by this runbook |
+| Local tests, build, planning validation, and offline drift comparison | Safe local work |
+| Health, disable, and one-feature controlled checks | Private, bounded live operation with content-free evidence |
+| Token replacement and private Shortcut configuration | Assisted private operation; no token in repository or evidence |
+| Sending, automatic outbound delivery, source deletion, or clearing workbook data | Prohibited |
 
 ## Global stop conditions
 
-Stop the current operation and leave all flags false if the owner account,
-bound workbook, or Apps Script project is not the verified target; a log or Sheet
-would contain source content or a secret; a check would create a draft or send a
-Google message; the model path requires a paid upgrade; or a command proposes
-clearing/replacing existing workbook data.
+Stop and leave automatic features disabled if the owner, workbook, project, or deployment is not the verified target; a token or source content would enter an artifact; a test would send, draft, install a trigger, widen access, or mutate an unbounded range; or a provider response is indeterminate. Preserve only minimal content-free evidence.
 
 ## Phase 0 — Verify targets
 
-The verified target is the existing private pilot workbook and bound Apps Script
-project recorded in ignored local resource notes. Bootstrap already completed:
-it created ten manifest tabs, set `America/New_York`, and set all flags false.
-The backup is private and owned only by the approved account.
+Open the existing private bound project and workbook. Confirm the approved owner, workbook binding, owner-only deployment posture, current feature flags, and required feature gate in the execution/current-state records. Do not create or repoint a workbook as a routine check.
 
-Open the verified bound Apps Script project for controlled checks. Do not create
-a new workbook or repoint the project.
+## Before a bounded live operation
 
-## Phase 1 — Local build and offline verification
+1. Confirm the approved owner, bound workbook, and intended private Apps Script project. Stop on any mismatch.
+2. Run the checked-in verification appropriate to the candidate and compare the private deployment against `dist` with `scripts/check-deployment-drift.mjs`. Keep retrieved project content under ignored `.local/`.
+3. Run `cccHealth()` and record only controlled status/counts. Confirm the workbook headers, time zone, flags, and no-send posture.
+4. Verify a private workbook backup before a bounded test series that can mutate Sheet metadata; create one if the relevant recovery point is missing. Restore only by creating and validating a new private workbook; never clear, overwrite, import into, or replace the current workbook.
+5. Enable at most the one explicitly tested feature. Recheck its flag, owner, and workbook binding at the point of write. Do not create a trigger unless that operation is separately part of the verified test.
+6. Inspect bounded, content-free results and then run `cccDisableAll()`. Require no enabled flags and no managed triggers remaining unless the current state record explicitly authorizes a guarded manual-control posture.
 
-From the repository root, run:
+## Feature boundaries
 
-```sh
-pnpm verify
-pnpm build
-node scripts/check-deployment-drift.mjs \
-  --content .local/apps-script-project-content.json \
-  --dist dist
-```
+| Capability | Required boundary |
+| --- | --- |
+| Queue controls | Owner-only, flag-gated, selected single row, complete snapshot recheck, shared lock, atomic Queue/Audit commit. Direct grid edits can still race the final provider write. |
+| Gmail reconciliation | Approved mailbox only; bounded 30-day selected-message metadata reads; no bodies, subjects, older thread history, or automatic trigger. |
+| Briefing | Private Sheet projection/history only; no delivery transport. |
+| Drafts | Create-only provider preparation requires fresh approved source/context and separate acceptance. No send, replacement, or deletion call. |
+| Studio | Keep disabled until account availability, starter binding, strict source validation, and model usefulness are separately proven. |
+| Shortcut | Keep disabled until endpoint/device acceptance is complete. Use [token rotation](SHORTCUT_TOKEN_ROTATION.md) after exposure or before hardening; never expose a token in evidence. |
 
-Obtain the `projects.getContent` response through the approved read-only path and
-keep it under `.local/`; it can contain source. `STATUS=drift` or
-`STATUS=invalid` blocks the deployment investigation. The checker emits only
-status and hashes, never source.
+## Rollback and incidents
 
-## Phase 2 — Workbook and bootstrap state
+For unexpected behavior, suspected token exposure, source/secret retention, target mismatch, or indeterminate write:
 
-Do not rerun bootstrap as a routine operation. The verified bootstrap snapshot
-had ten manifest tabs, matching headers, `America/New_York`, empty operational
-rows, and these Script Properties set to `false`. The later interrupted pilot
-save means current Gmail/briefing flag values must be inspected again:
+1. Run `cccDisableAll()` from the authenticated private project when it is safe to do so.
+2. Preserve only minimal content-free evidence; do not copy source text, tokens, payloads, cookies, or OAuth material into logs, Sheets, fixtures, or notes.
+3. Preserve the private workbook and backup. Do not delete source messages, drafts, records, or ranges as diagnosis.
+4. If code rollback is required, repoint only the private deployment to a previously verified version, then run the kill switch again and recheck health.
 
-```text
-CCC_GMAIL_INTAKE
-CCC_STUDIO_PROCESSING
-CCC_SHORTCUT_INTAKE
-CCC_DRAFT_CREATION
-CCC_DRAFT_REPLACEMENT
-CCC_BRIEFING_DELIVERY
-```
+Rollback never sends a message, deletes source data, or proves recovery by itself. Re-enablement requires the relevant controlled acceptance evidence.
 
-If a private backup must be restored, create a **new** private workbook from it.
-Never overwrite, clear, import into, or replace the initialized workbook. Follow
-the detailed procedure in [Runtime operations](RUNTIME_OPERATIONS.md).
+## Evidence record
 
-## Phase 3 — Private Apps Script test deployment
-
-Immutable Apps Script version 2 is deployed privately with `MYSELF` /
-`USER_DEPLOYING`; exact deployed code and semantic manifest comparison against
-`dist` passed. Do not create a domain, logged-in-user, or anonymous deployment.
-No token or phone test is active.
-
-On version 1, `cccHealth()` passed at 03:14:57 EDT with all ten headers valid and all six flags
-false. `cccGmailReadProbe()` passed at 03:15:49 EDT with `ok: true`,
-`mailbox_verified: true`, `bounded_days: 30`, `sampled_messages: 1`,
-`metadata_verified: true`, `raw_content_stored: false`, and `mutations: 0`.
-
-A subsequent save enabling only Gmail/briefing for manual pilot testing was
-interrupted by screen lock. Its result is unknown and no worker ran afterward.
-After unlocking, inspect the saved Script Properties. Run `cccDisableAll()` and
-require `ok: true`, empty `flags_enabled`, and `managed_triggers_remaining: 0`
-before the next controlled feature test. Recheck health; do not infer current
-flags from the earlier successful snapshot.
-
-These checks use controlled counts/statuses. They do not enable processing,
-create drafts, or send messages. Stop if any expected result is absent.
-
-## Phase 4 — Workspace Studio and model binding
-
-Keep Studio disabled. The native metadata path is bounded and review-only; it
-does not establish a model interpretation binding, full-thread classification,
-or draft ownership. The current free-trial billing state cannot be upgraded for
-this pilot. Resume this phase only when an existing permitted entitlement can
-meet the privacy and validation requirements.
-
-## Phase 5 — Apple Shortcut
-
-No token is provisioned and no Shortcut is installed. Keep
-`CCC_SHORTCUT_INTAKE=false` and retain the owner-only test deployment. After the
-private endpoint and token live acceptance tests are complete, use the exact
-local action inventory in [Add to Command Center](../../shortcuts/ADD_TO_COMMAND_CENTER.md).
-Do not change web-app access for a phone before invalid-token, replay, redaction,
-and kill-switch behavior are evidenced.
-
-## Phase 6 — Briefing and drafts
-
-The deterministic briefing implementation writes only the private Sheet and has
-no delivery transport. Keep `CCC_BRIEFING_DELIVERY=false`. Keep
-`CCC_DRAFT_CREATION=false` and `CCC_DRAFT_REPLACEMENT=false`: there is no bound
-draft provider or compose scope. No Gmail or Chat message, including a self
-notification, may be sent.
-
-## Phase 7 — Pilot evaluation
-
-Live processing and unattended daily use are not accepted. After health and
-probe checks, provider binding, Shortcut acceptance, and each single-feature test are
-complete, collect the required working-week observations and human draft-usefulness
-ratings. The 50 synthetic cases remain implementation evidence, not real-pilot
-acceptance.
+A valid operational record contains the tested commit/version, local check result, deployment-drift status, header/time-zone/flag result, controlled fixed statuses and counts, and remaining gates. It excludes resource IDs, tokens, selected text, source bodies, model output, OAuth material, and raw provider errors. See [V1 execution](../implementation/V1_EXECUTION.md) for chronological live evidence rather than appending conflicting version snapshots here.
 
 ## Routine operations
 
-Until live acceptance completes, the only routine operational action is to keep
-the flags false and use the Sheet as a private initialized record. When resuming
-after an interruption, run `cccHealth()` and then `cccDisableAll()` before any
-new bounded test. Keep source context in Gmail and never copy bodies to Sheets,
-logs, fixtures, or operational notes.
+Use only the guarded capability that the current state explicitly permits. Before and after a controlled test, verify health and use `cccDisableAll()` unless an accepted manual-control posture remains active. Keep automatic intake, drafting, Shortcut capture, Studio processing, and briefing delivery disabled until their individual gates are satisfied.
 
 ## Incident procedures
 
-### Suspected Shortcut token exposure
-
-There is no provisioned token today. If a token later exists and exposure is
-suspected, run `cccDisableAll()`, keep the owner-only deployment private, inspect
-content-free audit metadata, and follow the assisted rotation procedure before
-any later test. Do not send a notification or delete unrelated data.
-
-### Unexpected runtime behavior
-
-Run `cccDisableAll()` from the authenticated Apps Script editor. Confirm every
-flag is false and `managed_triggers_remaining` is zero. Preserve the private
-workbook, source messages, drafts, and audit evidence. If code rollback is
-needed, repoint only the private deployment to the previously verified version;
-then run `cccDisableAll()` again. See [Runtime operations](RUNTIME_OPERATIONS.md).
-
-### Source content or secret appears in a Sheet or log
-
-Run `cccDisableAll()` and preserve minimal evidence without reproducing the
-content. Stop further processing, identify the writer and affected range, and
-fix the writer plus a regression test. Do not clear, overwrite, delete, or export
-records under this runbook.
+For token exposure, follow [Shortcut token rotation](SHORTCUT_TOKEN_ROTATION.md). For other unexpected behavior, use the rollback and incidents procedure above. Do not delete source data, clear records, export private material, or create a workaround deployment while investigating.
 
 ## Final evidence packet
 
-Before claiming an accepted pilot, record the verified commit/version, local
-check results, manifest/header check, private deployment posture, current flag
-state, controlled live-check results, model-binding evidence, Shortcut acceptance
-evidence, and unresolved gates. Include links to
-[V1 execution](../implementation/V1_EXECUTION.md), [PMC current state](../../PMC/Current%20State.md),
-and [runtime operations](RUNTIME_OPERATIONS.md). Never include resource IDs,
-tokens, source content, or OAuth material.
-
-Version 2 adds the guarded Queue menu and the independent default-off
-`CCC_MANUAL_WRITES` flag. Its source and unchanged manifest were verified against
-the immutable deployment; live menu, health and disable checks are still pending.
-The earlier six-flag health result describes version 1, not a fresh version 2 run.
+Before accepting a pilot capability, record only the candidate version/commit, local validation, drift status, target/health result, feature flag result, bounded controlled statuses/counts, and unresolved gates. Link the chronology in [V1 execution](../implementation/V1_EXECUTION.md); never duplicate secrets or source content.

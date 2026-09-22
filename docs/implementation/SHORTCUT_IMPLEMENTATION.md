@@ -81,3 +81,13 @@ after deployment is explicitly authorized. Verify one synthetic create, a retry
 with the same UUID, a wrong-token rejection, the kill switch, rate limit, and an
 oversized request. Confirm Queue and audit data have no selected text, token, or
 model output before using private communications.
+
+## Assisted rotation
+
+Decision [101](../wayfinder/tickets/101-shortcut-authentication.md) requires assisted rotation after suspected exposure, device loss, scope expansion, or before production hardening; it is not routine maintenance. Follow [Shortcut token rotation](../runbooks/SHORTCUT_TOKEN_ROTATION.md). The procedure uses only private Script Properties and the private Shortcut configuration, keeps intake disabled during setup, and records no token or source content.
+
+The handler reads its injected current token for each request. Replacing that private value immediately rejects the retired token; the replacement retains UUID idempotency. With the intake flag disabled, both tokens are rejected before parsing/persistence. `tests/integration/shortcut-runtime.test.ts` proves this locally with synthetic values. It does not provision a token, alter deployment access, or establish a working device Shortcut.
+
+## Current acceptance boundary
+
+Consult [V1 execution](V1_EXECUTION.md) and [PMC Current State](../../PMC/Current%20State.md) for the current private runtime and feature posture. The setup-blocked Shortcut template and action inventory are versioned in `shortcuts/`; no installed/exported token-bearing Shortcut, working endpoint/device capture, or live intake acceptance is implied here. Keep the endpoint/device authentication gate separate from local handler correctness, and keep no-send, no-raw-content, and review-only normalization behavior unchanged.

@@ -178,6 +178,51 @@ from the emitted runtime. The integrated waiting candidate passed 392 tests in
 review verified prompt cancellation, lost authorization, exact enum validation,
 unchanged legacy audit hashes and atomic Queue/Audit batch coverage.
 
+## M7 recovery and rotation hardening — 2026-09-22
+
+PR #37 merged at `60beecf5f76a77edd99daf99fad3917462cdf4cf` at 12:02:48 EDT after
+independent review and all required hosted checks; durable main fast-forwarded.
+The integrated rotation/runbook candidate then passed `pnpm verify` at 12:03 EDT:
+393 tests in 39 files, formatting, lint, types, JSON/Zod contracts and build.
+`pnpm validate:planning` passed. The extra synthetic regression proves retired-token
+rejection after replacement, same-UUID deduplication with the new token, and both
+tokens rejected while disabled, with exactly one persisted item/commit. It does
+not provision a token or establish live Shortcut/device acceptance. See the
+[rotation runbook](../runbooks/SHORTCUT_TOKEN_ROTATION.md).
+
+A new private workbook was copied from the verified pre-activation backup.
+Drive metadata reported `shared:false` and exactly the approved owner; spreadsheet
+metadata reported `America/New_York`. All ten manifest tables' exact header arrays
+matched repository `WORKBOOK_MANIFEST`, and the bounded first data row was empty
+in each. The inherited unused `Sheet1` was preserved. Private links are retained
+only in ignored `.local/PILOT_RESOURCES.md`. This is a verified restore-to-new-copy
+of a headers-only recovery point, not populated-data recovery. The active workbook,
+its binding and all source data were preserved; no copy was deleted.
+
+At 12:05:53 EDT, `cccDisableAll` completed with `ok:true`, no enabled flags,
+zero managed triggers deleted and zero remaining. With controls off, the same
+owner-only deployment was repointed to retained Version 5 and then back to retained
+Version 6. Each deployment metadata read confirmed the expected immutable version,
+`MYSELF` / `USER_DEPLOYING`, and unauthenticated HTTP 302 to Google sign-in. Both
+immutable code hashes and the semantic manifest matched their previously verified
+builds. No new source version, OAuth scope, token or access grant was introduced.
+
+After restoring Version 6, editor `cccHealth` at 12:10:50 EDT passed all ten headers,
+New York time, all seven flags false, and no send capability. Editor runs execute
+current project code; these health results do not independently prove execution
+of the older immutable deployment. The version metadata and retrieved immutable
+source provide the deployment rollback evidence. Bounded post-drill snapshots
+matched all five Queue rows and thirteen Audit_Log rows exactly.
+
+Only `CCC_MANUAL_WRITES` was restored. At 12:12:37 EDT editor health again passed
+all ten headers, New York time and no send capability, with manual writes true
+and the other six flags false. No trigger was installed, and no Google email,
+Chat message, Gmail draft, Calendar change, raw-content retention or phone capture
+occurred. Account/provider/device and real working-week gates remain open; M7 and
+V1 are not accepted for unattended operation. Independent review found no material
+factual contradiction or completion overclaim in the final recovery records. The
+runbook and regression changes also passed independent review.
+
 ## Runtime release verification
 
 Runtime release PR #31 merged at `25e3518` after required hosted checks and

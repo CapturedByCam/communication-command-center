@@ -3,7 +3,8 @@
 ## Verified position
 
 - Phase 0 is complete and its Wayfinder decision frontier is resolved.
-- Milestone 1 local domain work is authorized; no Google service access is authorized.
+- Milestone 1 is accepted and merged at `c37f9f3` through PR #16; its 48 tests and full verification passed before merge.
+- Milestone 2 local Sheet/backend work is authorized; no Google service access is authorized.
 - The planning pack and Phase 0 package/build/test skeleton are committed to private `main`.
 - Foundation commit: `c2823de` (`chore: initialize communication command center`).
 - The local repository root is also the approved Obsidian vault root.
@@ -39,8 +40,9 @@
 - All 13 source tickets are attached to the map as GitHub sub-issues.
 - All 13 decision tickets are closed with owner-approved resolutions.
 - The reconciled map issue is closed as completed.
-- [Milestone 1 implementation issue #15](https://github.com/CapturedByCam/communication-command-center/issues/15) is open for the local domain core.
+- [Milestone 1 implementation issue #15](https://github.com/CapturedByCam/communication-command-center/issues/15) is closed as completed.
+- [Milestone 2 implementation issue #17](https://github.com/CapturedByCam/communication-command-center/issues/17) is open for the local Sheet/backend vertical slice.
 
 ## Next action
 
-Implement issue #15 locally in a dedicated worktree and request review before merge. Stop before any Google permission request, cloud resource creation, deployment, or production communication access.
+Implement issue #17 locally in a dedicated worktree and request review before merge. Stop before any real Sheet access, Google permission request, cloud resource creation, deployment, or production communication access.

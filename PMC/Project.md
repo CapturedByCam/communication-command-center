@@ -24,7 +24,7 @@ Workspace Studio handles bounded Gmail event orchestration. Apps Script owns det
 
 ## Active workstreams
 
-- Milestone 1 local domain core: versioned contracts, deterministic state, risk, and priority rules
+- Milestone 2 Sheet/backend vertical slice using synthetic in-memory adapters
 - Deferred implementation gates listed in [Current State](Current%20State.md)
 
 ## Decisions and procedures

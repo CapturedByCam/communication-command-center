@@ -3,7 +3,8 @@
 | Area | Status | Source |
 | --- | --- | --- |
 | Product behavior | Covered | `docs/spec/PRODUCT_AND_ARCHITECTURE_SPEC.md` |
-| Domain model | Covered | Spec and `schemas/` |
+| Domain model | Implemented and tested locally | Spec, `schemas/`, and `src/domain/` |
+| Sheet persistence | Milestone 2 active; synthetic only | Issue #17 and implementation plan Tasks 4–5 |
 | Privacy and security | Covered for planning | Spec, Wayfinder decisions, runbook |
 | Gmail ingestion | Designed, not deployed | Spec and Studio flow artifact |
 | Workspace Studio | Designed; actions visible, test-run gate deferred | `studio/` and Wayfinder 102 |

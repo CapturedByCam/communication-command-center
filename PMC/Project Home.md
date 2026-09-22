@@ -4,7 +4,7 @@ Communication Command Center is a privacy-conscious, human-reviewed system for t
 
 ## Current milestone
 
-Phase 0 — establish the private repository, durable project memory, and GitHub decision map. No cloud resources or production integrations are part of this milestone.
+Milestone 2 — implement and verify the Sheet/backend vertical slice entirely against synthetic in-memory adapters. No cloud resources or production integrations are part of this milestone.
 
 ## Start here
 
@@ -27,4 +27,4 @@ Phase 0 — establish the private repository, durable project memory, and GitHub
 
 ## Next safe action
 
-Resolve an open Wayfinder decision before implementing the behavior it controls. Do not begin Phase 1 without a separate approval.
+Implement [Milestone 2 issue #17](https://github.com/CapturedByCam/communication-command-center/issues/17) in a dedicated worktree, open a PR, and stop for review before merge or any Google integration.

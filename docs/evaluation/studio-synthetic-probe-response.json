@@ -1,0 +1,14 @@
+{
+  "requires_response": true,
+  "direct_response_requested": true,
+  "draft_risk": "routine",
+  "category_hint": "active_project",
+  "project_hint": null,
+  "deadline_text": "No rush",
+  "next_action_hint": "Reply to Avery with preference for JPEG or PNG image format.",
+  "summary_hint": "Avery is asking for a preference between JPEG or PNG for reference images.",
+  "confidence_hint": 1,
+  "message_kind": null,
+  "consequences": [],
+  "model_uncertain": false
+}

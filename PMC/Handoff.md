@@ -32,9 +32,14 @@ initial 30-day cursor is incomplete and intake remains disabled.
 
 ## Remaining work and user action
 
-- Complete the pending Google Admin passkey action and resolve Workspace Studio
-  custom-step availability. The private test add-on is installed, but the own
-  manual flow has no available CCC step, action, source binding or run.
+- Resolve Workspace Studio custom-step availability. Admin is authenticated, but
+  CapturedByCam root Custom steps access is OFF and enabling it awaits action-time
+  confirmation. The historical custom-step absence is distinct from the current
+  synthetic-only manual Ask Gemini run at 12:26:22 EDT; it has no source binding,
+  custom step, or Google mutation. Its 12-field output passed strict schema validation;
+  a pure synthetic unknown-contact staging call was review-only with no persistence or
+  provider call. Stored synthetic output visibility for 40 days does not resolve input
+  retention. Project evidence, retention meaning, starter binding, and usefulness remain open.
 - Bind a privacy-compatible interpretation provider within an existing permitted
   entitlement. Prove real source IDs, strict validation, outbound-promise
   Commitments, draft eligibility and useful output. The create-only native draft

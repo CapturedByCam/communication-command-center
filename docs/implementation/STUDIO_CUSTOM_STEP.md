@@ -19,11 +19,40 @@ private test add-on was installed: its application was Workspace Studio and the
 installer showed `Uninstall` and `Installed addons`. No scope or consent expansion
 occurred. Version 5 contains the verified source and manifest.
 
-After installation and a Studio reload, the Add step menu still did not expose
-this action. The app-owned `CCC V1 — bounded staging acceptance` flow contains
-only a manual starter, with no action, input, or run. The Google Admin passkey
-action remains pending. Installation is verified; account visibility, actual
+After installation and a Studio reload, the Add step menu did not expose this
+action. The historical result and the subsequent Admin/synthetic-run evidence are
+recorded below. Installation is verified; account visibility, actual
 starter-variable binding, and real model acceptance remain unresolved.
+
+## Admin and synthetic-run evidence — 2026-09-22
+
+The historical post-installation result remains valid: the custom action was absent
+from the reloaded manual-flow step menu before Admin availability was checked. It
+must not be treated as proof that the add-on can never be exposed.
+
+Admin is now authenticated. At the CapturedByCam root organizational unit, Studio
+**Custom steps access** is currently **OFF**. Directory All organizational units
+showed one active user, the approved mailbox. **Allow unpublished test steps** is
+checked but disabled while Custom steps access is off. Enabling access awaits
+action-time confirmation; no Admin setting, OAuth consent, policy, deployment, or
+runtime flag was changed.
+
+The existing app-owned `CCC V1 — bounded staging acceptance` flow now has Start
+manually followed by Ask Gemini. Its Web search and Workspace sources are both off,
+it has no skills, and it uses Text output. It has no custom step, Google mutation
+step, Gmail starter, private message ID, or bound source content. One manual
+synthetic-only run completed successfully at 12:26:22 EDT. Its JSON had the 12
+required fields and no extras, and `StudioInterpretationSchema` accepted it. A pure
+`prepareStudioStaging` call with wholly synthetic metadata and `knownContact:false`
+returned `review_only`; it made no persistence or provider call. The model proposed
+`active_project`, `routine`, confidence `1.0`, and deadline text `No rush`; the pure
+result preserves that synthetic phrase, but absent project evidence leaves semantic
+review open. This is not model-usefulness acceptance. See [Studio synthetic probe](../evaluation/STUDIO_SYNTHETIC_PROBE.md) rather than duplicating its prompt or output here.
+
+The Studio activity panel says Data available for 40 days, and an expanded completed
+run visibly contains its full synthetic JSON output. That proves stored-output
+visibility only. Exact resolved-input or source-body retention remains unknown; do not
+apply general Workspace retention figures to Studio or infer source access from the panel.
 
 ## Private action contract
 

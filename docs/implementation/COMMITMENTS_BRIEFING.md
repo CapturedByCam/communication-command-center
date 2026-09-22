@@ -1,0 +1,48 @@
+# Commitments and Briefing Local Contracts
+
+This module is pure local domain logic. The integration layer may persist its
+results to the existing `Commitments` and `Briefing_View` tabs, but these APIs do
+not write Sheets, create Calendar events, access Google services, or send
+messages.
+
+## Commitments
+
+`upsertCommitment(existing, proposal)` creates an open commitment from an
+outbound-promise observation. Its idempotency key is the immutable
+`sourceEvidenceId`; retrying that source evidence returns
+`duplicate_suppressed`. Existing manual overrides are preserved.
+
+`resolveCommitment(commitment, resolution)` requires either a fulfillment
+source-evidence ID or a named manual actor. It never infers fulfillment from a
+new inbound message. Manual resolution sets `manualOverride` and records the
+actor.
+
+## Deadline normalization
+
+`normalizeDeadlineSuggestion({ text, anchorAt })` retains at most 200 characters
+of original text. It recognizes only explicit ISO calendar dates, `today`,
+`tomorrow`, `in N days`, and `next weekday`, interpreted using the required
+`America/New_York` anchor. A date without a time means 5:00 PM New York local
+time. Missing anchors, unsupported language, DST spring gaps, and DST fall folds
+return `deadlineAt: null` with `needsDateReview: true`.
+
+## Calendar candidates
+
+`buildCalendarCandidate()` returns a candidate record only. The
+`creationEligible` flag expresses a future integration precondition
+(`calendarApproved && calendarWritesEnabled`); `writePerformed` is always
+`false`, and this module contains no Calendar client.
+
+## Briefing
+
+`buildBriefing(items, commitments, health, generatedAt, options)` returns the
+eight product sections in fixed order. Resolved, snoozed, and explicitly snoozed
+items are excluded. Every remaining active item is assigned exactly once.
+`Handle first` has at most five entries; remaining active work appears in its
+next applicable section, with unclassified overflow placed under `Needs
+judgment` as `active item awaiting triage`. Commitment and system-health rows
+are supplementary and do not duplicate an item assignment.
+
+`writeBriefingView()` exposes adapter-neutral ordered sections for the future
+Sheet writer. `renderBriefingMarkdown()` is deterministic and contains item IDs
+where an item is present.

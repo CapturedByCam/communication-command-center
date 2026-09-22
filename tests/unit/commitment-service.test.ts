@@ -32,6 +32,31 @@ describe("commitments", () => {
     expect(upsertCommitment([manual], proposal).commitments).toEqual([manual]);
   });
 
+  it("updates an open commitment by its stable ID without duplicating it, and never reopens fulfillment", () => {
+    const original = upsertCommitment([], proposal).commitments[0]!;
+    const revised = upsertCommitment([original], {
+      ...proposal,
+      sourceEvidenceId: "gmail-message-outbound-2",
+      promiseText: "I will send the estimate Friday.",
+    });
+    expect(revised.outcome).toBe("updated");
+    expect(revised.commitments).toHaveLength(1);
+    expect(revised.commitments[0]).toMatchObject({
+      commitmentId: proposal.commitmentId,
+      sourceEvidenceId: "gmail-message-outbound-2",
+    });
+
+    const fulfilled = resolveCommitment(original, {
+      fulfillmentEvidenceId: "gmail-message-inbound-3",
+      resolvedAt: "2026-09-23T16:00:00-04:00",
+    });
+    const afterFulfillment = upsertCommitment([fulfilled], {
+      ...proposal,
+      sourceEvidenceId: "gmail-message-outbound-4",
+    });
+    expect(afterFulfillment.commitments).toEqual([fulfilled]);
+  });
+
   it("only resolves with explicit source fulfillment evidence or manual action", () => {
     const commitment = upsertCommitment([], proposal).commitments[0]!;
     expect(() => resolveCommitment(commitment, {})).toThrow(

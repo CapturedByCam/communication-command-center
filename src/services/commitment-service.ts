@@ -31,7 +31,10 @@ export interface CommitmentProposal {
 
 export interface CommitmentUpsertResult {
   readonly outcome:
-    "created" | "duplicate_suppressed" | "manual_override_preserved";
+    | "created"
+    | "updated"
+    | "duplicate_suppressed"
+    | "manual_override_preserved";
   readonly commitments: readonly Commitment[];
 }
 
@@ -91,6 +94,20 @@ export function upsertCommitment(
   );
   if (sameCommitment?.manualOverride) {
     return { outcome: "manual_override_preserved", commitments: existing };
+  }
+  if (sameCommitment?.status === "fulfilled") {
+    return { outcome: "duplicate_suppressed", commitments: existing };
+  }
+  if (sameCommitment) {
+    const updated = newCommitment(proposal);
+    return {
+      outcome: "updated",
+      commitments: existing.map((commitment) =>
+        commitment.commitmentId === proposal.commitmentId
+          ? updated
+          : commitment,
+      ),
+    };
   }
 
   return {
@@ -201,17 +218,30 @@ function fromNewYorkLocal(value: LocalDateTime): string | null {
   return `${datePart}T${timePart}${isoOffset(candidate)}`;
 }
 
-function parseTime(value: string): { hour: number; minute: number } | null {
+type ParsedTime =
+  | { readonly kind: "absent" }
+  | { readonly kind: "invalid" }
+  | { readonly kind: "valid"; readonly hour: number; readonly minute: number };
+
+function parseTime(value: string): ParsedTime {
   const match =
     /(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(a\.?(?:m)\.?|p\.?(?:m)\.?)\b/i.exec(
       value,
     );
-  if (!match) return null;
+  if (!match) {
+    return /\b\d{1,2}:\d{2}\b/.test(value)
+      ? { kind: "invalid" }
+      : { kind: "absent" };
+  }
   const rawHour = Number(match[1]);
   const minute = Number(match[2] ?? "0");
-  if (rawHour < 1 || rawHour > 12 || minute > 59) return null;
+  if (rawHour < 1 || rawHour > 12 || minute > 59) return { kind: "invalid" };
   const meridiem = match[3]!.toLowerCase().startsWith("p") ? "pm" : "am";
-  return { hour: (rawHour % 12) + (meridiem === "pm" ? 12 : 0), minute };
+  return {
+    kind: "valid",
+    hour: (rawHour % 12) + (meridiem === "pm" ? 12 : 0),
+    minute,
+  };
 }
 
 function dateFromAnchor(anchorAt: string): LocalDateTime | null {
@@ -232,9 +262,11 @@ function addDays(date: LocalDateTime, days: number): LocalDateTime {
 
 function parseSuggestedLocal(
   text: string,
-  anchor: LocalDateTime,
+  anchor: LocalDateTime | null,
 ): LocalDateTime | null {
-  const time = parseTime(text) ?? { hour: 17, minute: 0 };
+  const parsedTime = parseTime(text);
+  if (parsedTime.kind !== "valid") return null;
+  const time = parsedTime;
   const absolute = /\b(\d{4})-(\d{2})-(\d{2})\b/.exec(text);
   if (absolute)
     return {
@@ -243,48 +275,50 @@ function parseSuggestedLocal(
       day: Number(absolute[3]),
       ...time,
     };
+  if (!anchor) return null;
   if (/\btomorrow\b/i.test(text)) return { ...addDays(anchor, 1), ...time };
   if (/\btoday\b/i.test(text)) return { ...anchor, ...time };
   const inDays = /\bin\s+(\d{1,3})\s+days?\b/i.exec(text);
   if (inDays) return { ...addDays(anchor, Number(inDays[1])), ...time };
-  const nextWeekday =
-    /\bnext\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.exec(
+  return null;
+}
+
+function parseAbsoluteIso(text: string): string | null {
+  if (
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/i.test(
       text,
-    );
-  if (!nextWeekday) return null;
-  const target = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-  ].indexOf(nextWeekday[1]!.toLowerCase());
-  const anchorDay = new Date(
-    Date.UTC(anchor.year, anchor.month - 1, anchor.day),
-  ).getUTCDay();
-  const delta = (target - anchorDay + 7) % 7 || 7;
-  return { ...addDays(anchor, delta), ...time };
+    )
+  ) {
+    return null;
+  }
+  const date = new Date(text);
+  if (Number.isNaN(date.valueOf())) return null;
+  return fromNewYorkLocal(localParts(date));
 }
 
 /**
  * Deliberately small parser: unsupported language remains reviewable instead
- * of producing a plausible but wrong date. Date-only promises use 5 PM NY.
+ * of producing a plausible but wrong date. A time must be stated explicitly.
  */
 export function normalizeDeadlineSuggestion(
   suggestion: DeadlineSuggestion,
 ): NormalizedDeadline {
   const deadlineText = boundedText(suggestion.text);
-  if (!deadlineText || !suggestion.anchorAt) {
+  if (!deadlineText) {
     return {
       deadlineAt: null,
       deadlineText,
-      needsDateReview: Boolean(deadlineText),
+      needsDateReview: false,
     };
   }
-  const anchor = dateFromAnchor(suggestion.anchorAt);
-  const local = anchor ? parseSuggestedLocal(deadlineText, anchor) : null;
+  const absoluteIso = parseAbsoluteIso(deadlineText);
+  if (absoluteIso) {
+    return { deadlineAt: absoluteIso, deadlineText, needsDateReview: false };
+  }
+  const anchor = suggestion.anchorAt
+    ? dateFromAnchor(suggestion.anchorAt)
+    : null;
+  const local = parseSuggestedLocal(deadlineText, anchor);
   const deadlineAt = local ? fromNewYorkLocal(local) : null;
   return { deadlineAt, deadlineText, needsDateReview: deadlineAt === null };
 }

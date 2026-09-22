@@ -4,6 +4,7 @@ import {
   renderBriefingMarkdown,
 } from "../../src/services/briefing-service.js";
 import type { CommunicationItem } from "../../src/domain/types.js";
+import type { Commitment } from "../../src/services/commitment-service.js";
 
 function item(
   id: string,
@@ -86,5 +87,65 @@ describe("buildBriefing", () => {
       "# Communication briefing",
     );
     expect(renderBriefingMarkdown(briefing)).toContain("## Handle first");
+  });
+
+  it("restores expired snoozes and orders same-priority items with no deadline last", () => {
+    const now = "2026-09-22T12:00:00-04:00";
+    const briefing = buildBriefing(
+      [
+        item("cc_no_deadline01", { priority_score: 50 }),
+        item("cc_later_deadline", {
+          priority_score: 50,
+          deadline_at: "2026-09-24T09:00:00-04:00",
+        }),
+        item("cc_early_deadline", {
+          priority_score: 50,
+          deadline_at: "2026-09-23T09:00:00-04:00",
+        }),
+        item("cc_expired_snooze", {
+          status: "snoozed",
+          snooze_until: "2026-09-22T11:59:00-04:00",
+        }),
+        item("cc_active_snooze", {
+          status: "snoozed",
+          snooze_until: "2026-09-22T12:01:00-04:00",
+        }),
+      ],
+      [],
+      {},
+      now,
+    );
+    expect(briefing.sections[0]!.entries.map((entry) => entry.itemId)).toEqual([
+      "cc_expired_snooze",
+      "cc_early_deadline",
+      "cc_later_deadline",
+      "cc_no_deadline01",
+    ]);
+  });
+
+  it("includes promises due later today in New York", () => {
+    const commitment: Commitment = {
+      commitmentId: "com_due_today",
+      itemId: "cc_abcdefghijkl",
+      sourceThreadId: "thread",
+      promiseText: "Send it today",
+      sourceEvidenceId: "source",
+      observedAt: "2026-09-22T09:00:00-04:00",
+      deadlineAt: "2026-09-22T17:00:00-04:00",
+      deadlineText: "today",
+      status: "open",
+      fulfilledAt: null,
+      fulfillmentEvidenceId: null,
+      manualOverride: false,
+      resolvedBy: null,
+      updatedAt: "2026-09-22T09:00:00-04:00",
+    };
+    const briefing = buildBriefing(
+      [],
+      [commitment],
+      {},
+      "2026-09-22T09:00:00-04:00",
+    );
+    expect(briefing.sections[2]!.entries).toHaveLength(1);
   });
 });

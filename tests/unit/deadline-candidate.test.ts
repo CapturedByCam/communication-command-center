@@ -16,6 +16,18 @@ describe("normalizeDeadlineSuggestion", () => {
       needsDateReview: false,
     });
     expect(
+      normalizeDeadlineSuggestion({ text: "2026-03-09 at 3:30 PM" }),
+    ).toMatchObject({
+      deadlineAt: "2026-03-09T15:30:00-04:00",
+      needsDateReview: false,
+    });
+    expect(
+      normalizeDeadlineSuggestion({ text: "2026-03-09T19:30:00Z" }),
+    ).toMatchObject({
+      deadlineAt: "2026-03-09T15:30:00-04:00",
+      needsDateReview: false,
+    });
+    expect(
       normalizeDeadlineSuggestion({ text: "tomorrow at 9am", anchorAt }),
     ).toMatchObject({
       deadlineAt: "2026-03-07T09:00:00-05:00",
@@ -40,6 +52,21 @@ describe("normalizeDeadlineSuggestion", () => {
         anchorAt,
       }),
     ).toMatchObject({ deadlineAt: null, needsDateReview: true });
+  });
+
+  it("rejects date-only, invalid, and ambiguous time language instead of assigning a default hour", () => {
+    for (const text of [
+      "2026-03-09",
+      "tomorrow",
+      "tomorrow at 25:00",
+      "tomorrow at 9:30",
+      "next Friday at 9 AM",
+    ]) {
+      expect(normalizeDeadlineSuggestion({ text, anchorAt })).toMatchObject({
+        deadlineAt: null,
+        needsDateReview: true,
+      });
+    }
   });
 });
 

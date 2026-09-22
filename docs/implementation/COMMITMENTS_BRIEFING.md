@@ -22,9 +22,11 @@ actor.
 `normalizeDeadlineSuggestion({ text, anchorAt })` retains at most 200 characters
 of original text. It recognizes only explicit ISO calendar dates, `today`,
 `tomorrow`, `in N days`, and `next weekday`, interpreted using the required
-`America/New_York` anchor. A date without a time means 5:00 PM New York local
-time. Missing anchors, unsupported language, DST spring gaps, and DST fall folds
-return `deadlineAt: null` with `needsDateReview: true`.
+`America/New_York` anchor. Absolute ISO timestamps and explicit local calendar
+dates with a valid AM/PM time can be normalized without an anchor. A date without
+a time, missing relative-date anchor, unsupported/ambiguous language, invalid
+time, DST spring gap, or DST fall fold returns `deadlineAt: null` with
+`needsDateReview: true`.
 
 ## Calendar candidates
 

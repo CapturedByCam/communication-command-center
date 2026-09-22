@@ -57,13 +57,24 @@ const SECTION_TITLES: Readonly<Record<BriefingSectionKey, string>> = {
 };
 
 function sortItems(items: readonly CommunicationItem[]): CommunicationItem[] {
-  return [...items].sort(
-    (left, right) =>
-      right.priority_score - left.priority_score ||
-      left.deadline_at?.localeCompare(right.deadline_at ?? "") ||
+  return [...items].sort((left, right) => {
+    const priority = right.priority_score - left.priority_score;
+    if (priority !== 0) return priority;
+    const deadline =
+      deadlineTimestamp(left.deadline_at) -
+      deadlineTimestamp(right.deadline_at);
+    if (deadline !== 0) return deadline;
+    return (
       left.updated_at.localeCompare(right.updated_at) ||
-      left.item_id.localeCompare(right.item_id),
-  );
+      left.item_id.localeCompare(right.item_id)
+    );
+  });
+}
+
+function deadlineTimestamp(value: string | null | undefined): number {
+  if (!value) return Number.POSITIVE_INFINITY;
+  const timestamp = new Date(value).valueOf();
+  return Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp;
 }
 
 function itemEntry(item: CommunicationItem, reason: string): BriefingEntry {
@@ -76,8 +87,32 @@ function itemEntry(item: CommunicationItem, reason: string): BriefingEntry {
   };
 }
 
-function isActive(item: CommunicationItem): boolean {
-  return item.status === "open" && !item.snooze_until;
+function isActive(item: CommunicationItem, now: Date): boolean {
+  if (item.status === "resolved" || item.status === "archived") return false;
+  if (!item.snooze_until) return item.status === "open";
+  const snoozeUntil = new Date(item.snooze_until);
+  return !Number.isNaN(snoozeUntil.valueOf()) && snoozeUntil <= now;
+}
+
+function newYorkDate(value: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((entry) => entry.type === type)?.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+function isDueOnOrBeforeToday(deadlineAt: string | null, now: Date): boolean {
+  if (!deadlineAt) return false;
+  const deadline = new Date(deadlineAt);
+  return (
+    !Number.isNaN(deadline.valueOf()) &&
+    newYorkDate(deadline) <= newYorkDate(now)
+  );
 }
 
 function withinWeek(deadlineAt: string | null | undefined, now: Date): boolean {
@@ -113,7 +148,10 @@ export function buildBriefing(
   if (Number.isNaN(now.valueOf()))
     throw new Error("generatedAt must be an ISO timestamp");
   const unassigned = new Map(
-    sortItems(items.filter(isActive)).map((item) => [item.item_id, item]),
+    sortItems(items.filter((item) => isActive(item, now))).map((item) => [
+      item.item_id,
+      item,
+    ]),
   );
   const take = (
     predicate: (item: CommunicationItem) => boolean,
@@ -141,8 +179,7 @@ export function buildBriefing(
     .filter(
       (commitment) =>
         commitment.status === "open" &&
-        commitment.deadlineAt &&
-        new Date(commitment.deadlineAt) <= now,
+        isDueOnOrBeforeToday(commitment.deadlineAt, now),
     )
     .sort(
       (left, right) =>

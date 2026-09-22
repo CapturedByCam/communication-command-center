@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "threadId": "thread-aviation",
+  "messages": [
+    {
+      "id": "message-aviation",
+      "internalDate": 1760000070000,
+      "sender": "recruiter@example.test",
+      "recipients": ["contact@elev8mediaky.com"],
+      "labels": ["INBOX"],
+      "automated": false,
+      "bulk": false,
+      "interpretation": {
+        "kind": "question",
+        "category": "aviation",
+        "risk": "review_only",
+        "summary": "Recruiter asks about an aviation opportunity.",
+        "confidence": 0.88
+      }
+    }
+  ]
+}

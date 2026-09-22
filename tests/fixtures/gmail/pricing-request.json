@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "threadId": "thread-pricing",
+  "messages": [
+    {
+      "id": "message-pricing",
+      "internalDate": 1760000060000,
+      "sender": "lead@example.test",
+      "recipients": ["contact@elev8mediaky.com"],
+      "labels": ["INBOX"],
+      "automated": false,
+      "bulk": false,
+      "interpretation": {
+        "kind": "question",
+        "category": "client_lead",
+        "risk": "review_only",
+        "summary": "Lead requests pricing details.",
+        "confidence": 0.89
+      }
+    }
+  ]
+}

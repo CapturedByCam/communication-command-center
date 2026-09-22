@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "threadId": "thread-outbound-promise",
+  "messages": [
+    {
+      "id": "message-promise",
+      "internalDate": 1760000020000,
+      "sender": "contact@elev8mediaky.com",
+      "recipients": ["client@example.test"],
+      "labels": ["SENT"],
+      "automated": false,
+      "bulk": false,
+      "interpretation": {
+        "kind": "promise",
+        "category": "active_project",
+        "risk": "routine",
+        "summary": "Cam promised to send the updated gallery.",
+        "confidence": 0.92
+      }
+    }
+  ]
+}

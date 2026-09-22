@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "threadId": "thread-complaint",
+  "messages": [
+    {
+      "id": "message-complaint",
+      "internalDate": 1760000050000,
+      "sender": "customer@example.test",
+      "recipients": ["contact@elev8mediaky.com"],
+      "labels": ["INBOX"],
+      "automated": false,
+      "bulk": false,
+      "interpretation": {
+        "kind": "question",
+        "category": "active_project",
+        "risk": "review_only",
+        "summary": "Customer asks for a response to a service complaint.",
+        "confidence": 0.87
+      }
+    }
+  ]
+}

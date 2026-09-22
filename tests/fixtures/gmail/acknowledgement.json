@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "threadId": "thread-acknowledgement",
+  "messages": [
+    {
+      "id": "message-ack",
+      "internalDate": 1760000010000,
+      "sender": "client@example.test",
+      "recipients": ["contact@elev8mediaky.com"],
+      "labels": ["INBOX"],
+      "automated": false,
+      "bulk": false,
+      "interpretation": {
+        "kind": "acknowledgement",
+        "category": "active_project",
+        "risk": "no_draft",
+        "summary": "Client confirms receipt.",
+        "confidence": 0.96
+      }
+    }
+  ]
+}

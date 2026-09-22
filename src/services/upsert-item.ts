@@ -28,10 +28,26 @@ function mergeIncomingItem(
   existing: CommunicationItem,
   incoming: CommunicationItem,
 ): CommunicationItem {
+  const sourceChanged =
+    existing.source_record_id !== incoming.source_record_id ||
+    existing.content_hash !== incoming.content_hash;
+  const preserveDraftState =
+    existing.manual_override ||
+    existing.gmail_draft_id !== null ||
+    ["generated", "reviewed", "stale", "sent"].includes(existing.draft_status);
   const next: CommunicationItem = {
     ...incoming,
     item_id: existing.item_id,
     captured_at: existing.captured_at,
+    gmail_draft_id: existing.gmail_draft_id ?? incoming.gmail_draft_id,
+    draft_status:
+      sourceChanged &&
+      (existing.draft_status === "generated" ||
+        existing.draft_status === "reviewed")
+        ? "stale"
+        : preserveDraftState
+          ? existing.draft_status
+          : incoming.draft_status,
   };
 
   if (!existing.manual_override) {
@@ -41,8 +57,19 @@ function mergeIncomingItem(
   return {
     ...next,
     category: existing.category,
+    project_id: existing.project_id,
+    contact: existing.contact,
     status: existing.status,
     waiting_on: existing.waiting_on,
+    urgency: existing.urgency,
+    priority_score: existing.priority_score,
+    next_action_type: existing.next_action_type,
+    next_action: existing.next_action,
+    deadline_at: existing.deadline_at,
+    deadline_text: existing.deadline_text,
+    needs_date_review: existing.needs_date_review,
+    follow_up_at: existing.follow_up_at,
+    promised_follow_up: existing.promised_follow_up,
     manual_override: true,
     snooze_until: existing.snooze_until,
     resolved_at: existing.resolved_at,

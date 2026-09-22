@@ -10,8 +10,12 @@ Prototype + grilling
 
 ## Status
 
-Closed
+Closed; resolution superseded by Cam's explicit no-Google-messages instruction
+on 2026-09-22.
 
 ## Resolution
 
-Send a private Google Chat notification at 8:00 AM `America/New_York` linking the private `Briefing_View` Sheet, which remains the full viewing surface and source of truth. On Mac, use the Chat/Gmail notification plus a pinned Sheet tab. On iPhone, use the Chat notification plus a Home Screen or Shortcut link to the Sheet. Keep the 4:30 PM briefing disabled initially and enable it only if the first week shows value. Preserve the on-demand ChatGPT `Run comms` view.
+Generate the deterministic eight-section briefing in the private `Briefing_View`
+Sheet with on-demand ChatGPT review. Google Chat and email delivery remain
+disabled. Do not install the earlier 8:00 AM self-notification flow. The original
+8:00 AM New York proposal is historical only; no afternoon notification is enabled.

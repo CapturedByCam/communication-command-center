@@ -69,8 +69,8 @@ Apple Share Sheet ──> Apple Shortcut ──HTTPS POST───────�
        │
 Calendar / Drive / Contacts ───────────────> context registries
 
-Google Sheets ──> deterministic briefing engine ──> Workspace Studio schedule
-                                                └─> Google Chat / email / Doc
+Google Sheets ──> deterministic briefing engine ──> private Briefing_View
+                                                └─> on-demand review; no messages
 
 ChatGPT ──connected Gmail/Calendar/Drive/Sheet──> review, prioritization,
                                                  difficult drafts, updates
@@ -98,16 +98,23 @@ V1 uses two versioned flows:
    - asks Gemini whether a response/action is needed;
    - extracts bounded fields;
    - appends one event to `Studio_Inbox`;
-   - creates a Gmail draft only for routine, low-risk items;
+   - never creates drafts directly; Apps Script must enforce ownership and freshness;
    - never sends.
 
 2. **Daily Briefing Delivery**
    - runs on a schedule;
    - reads the precomputed `Briefing_View`;
-   - sends a private 8:00 AM `America/New_York` Google Chat notification linking the private `Briefing_View` Sheet;
+   - remains disabled under the current no-Google-messages instruction;
    - does not reorder or silently omit items.
 
-Studio is a fast reaction layer. It is not the canonical database.
+Studio is a fast reaction layer. It is not the canonical database. Actual account
+inspection did not establish a strict code binding, API ID equivalence or returned
+draft revisions. Leave flows disabled until these are verified. Apps Script owns
+validation and draft lifecycle safety. The current native metadata pilot reads only
+selected-message metadata within 30 days and emits generic needs-review records;
+it does not classify full threads or generate drafts. Private model-provider
+binding and live acceptance remain explicit gates. All Google messages remain
+unsent, superseding the original self-alert proposal (Cam, 2026-09-22).
 
 ### 6.2 Apps Script
 

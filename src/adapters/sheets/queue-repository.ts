@@ -17,7 +17,7 @@ export interface QueueEntry {
   readonly expectedRow: readonly CellValue[];
 }
 
-function toRecord(
+export function itemToRecord(
   item: CommunicationItem,
 ): Record<string, CellValue | undefined> {
   return {
@@ -61,7 +61,7 @@ function toRecord(
   };
 }
 
-function fromRow(
+export function queueItemFromRow(
   headers: readonly string[],
   row: readonly CellValue[],
 ): CommunicationItem {
@@ -139,7 +139,7 @@ export class QueueRepository {
   async list(): Promise<CommunicationItem[]> {
     const table = await this.adapter.readTable(this.spreadsheetId, sheetName);
     const headers = assertHeaders(sheetName, table.headers);
-    return table.rows.map((row) => fromRow(headers, row));
+    return table.rows.map((row) => queueItemFromRow(headers, row));
   }
 
   async getBySourceThread(
@@ -158,7 +158,7 @@ export class QueueRepository {
     const table = await this.adapter.readTable(this.spreadsheetId, sheetName);
     const headers = assertHeaders(sheetName, table.headers);
     for (const [rowIndex, row] of table.rows.entries()) {
-      const item = fromRow(headers, row);
+      const item = queueItemFromRow(headers, row);
       if (item.source === source && item.source_thread_id === sourceThreadId) {
         return { item, rowIndex, expectedRow: row };
       }
@@ -173,11 +173,11 @@ export class QueueRepository {
     const validated = CommunicationItemSchema.parse(item);
     const table = await this.adapter.readTable(this.spreadsheetId, sheetName);
     const headers = assertHeaders(sheetName, table.headers);
-    const nextRow = recordToRow(headers, toRecord(validated));
+    const nextRow = recordToRow(headers, itemToRecord(validated));
 
     if (!expected) {
       const duplicateExists = table.rows.some((row) => {
-        const candidate = fromRow(headers, row);
+        const candidate = queueItemFromRow(headers, row);
         return (
           candidate.source === validated.source &&
           candidate.source_thread_id === validated.source_thread_id

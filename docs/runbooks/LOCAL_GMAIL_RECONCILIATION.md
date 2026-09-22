@@ -1,6 +1,6 @@
 # Local Gmail chronology and reconciliation
 
-This is the local implementation for issue #21, Tasks 7 and 8. It runs only with injected snapshot and workbook adapters. No production Gmail reader, Google authorization, trigger installer, deployment entrypoint, draft action, or send action is included. The full Milestone 3 mailbox pilot is still gated.
+This document describes the chronology/reconciliation contracts introduced for issue #21, Tasks 7 and 8. The original local implementation now has a deployed owner-only Apps Script metadata binding and approved Google authorization. The full interpreted-mailbox pilot remains incomplete. Current live evidence and feature posture are authoritative in [V1 execution](../implementation/V1_EXECUTION.md).
 
 ## Interfaces and source boundaries
 
@@ -8,13 +8,17 @@ This is the local implementation for issue #21, Tasks 7 and 8. It runs only with
 - `deriveThreadState(snapshot, commitments, now)` orders internal timestamps, validates commitment references, excludes automated/bulk/no-reply/spam/draft/receipt messages, and derives waiting state. Equal timestamps with conflicting interpretations require review. Unaddressed and self-addressed messages remain ambiguous. An overdue open outbound commitment survives acknowledgements and ambiguous chronology.
 - `normalizeStagingItem` builds a canonical version 1.0 item. Both intake paths use authoritative snapshots rather than trusting Studio's state/category hints. Interpretation enums and short summaries are validated; bodies and subjects are not accepted in snapshots. Manual category, status, waiting state, snooze, and resolution overrides are preserved by the existing upsert service.
 - `GmailReconciler.processStudioInbox(now, batchSize)` processes pending, failed, or previously claimed staging records using current snapshots. It updates staging status and a fixed error code in the same transaction as queue/audit writes. A message exactly at `now` is eligible.
-- `GmailReconciler.reconcileRecentGmail(now, batchSize)` recovers messages absent from Studio. Readers receive the fixed mailbox, filtering flags, a half-open time window, a page token, and an explicit limit. The requested message must be inside that window. Full context for the selected thread may include earlier messages.
+- `GmailReconciler.reconcileRecentGmail(now, batchSize)` recovers messages absent from Studio. Readers receive the fixed mailbox, filtering flags, a half-open time window, a page token, and an explicit limit. The requested message must be inside that window. Local fixture readers may verify a full selected thread; the native Apps Script pilot uses only the requested metadata message and does not read thread history.
 
-Models supply only validated meaning/category/risk/summary/confidence. They do not supply direction, chronology, IDs, hashes, cursors, retries, or persistence decisions. Automated/bulk/receipt flags and labels must come from the trusted reader's filtering logic. No extraction model or real-mail classifier is connected by this implementation. Commitment extraction, date interpretation, and the `Commitments` repository are deferred; the chronology accepts already normalized, explicitly supplied commitments.
+Models supply only validated meaning/category/risk/summary/confidence. They do not supply direction, chronology, IDs, hashes, cursors, retries, or persistence decisions. Automated/bulk/receipt flags and labels must come from the trusted reader's filtering logic. No extraction model or real-mail classifier is connected by this implementation. Commitment/date domain services and briefing reads now exist, but provider extraction and live commitment persistence are not bound; chronology accepts already normalized, explicitly supplied commitments.
 
 ## Bounded recovery
 
-The initial window is 30 days. After completing a window, the next window overlaps the previous completion by one day, capped at the current 30-day lookback. One invocation fetches at most one page and processes at most `batchSize` references (default 20, maximum 100). Each snapshot is capped at 1,000 messages. Exceeding a bound is an explicit failure; snapshots must never be silently truncated by a future reader.
+The initial window is 30 days. After completing a window, the next window overlaps the previous completion by one day, capped at the current 30-day lookback. One invocation fetches at most one page and processes at most `batchSize` references (default 20, maximum 100). Each full-thread fixture snapshot is capped at 1,000 messages. Exceeding a bound is an explicit failure; snapshots must never be silently truncated by a future reader.
+
+### Native Apps Script metadata pilot caveat
+
+Advanced Gmail `Threads.get` can return older thread messages outside the requested search window. To preserve the native pilot's 30-day boundary, the Apps Script runtime never calls that endpoint. It constructs a one-message snapshot from the requested `Messages.get` metadata record only. That partial snapshot is explicitly generic (`ambiguous` / `other` / `review_only`, confidence `0`) and must not be treated as complete thread chronology, interpreted content, or a basis for drafting. Full-thread chronology and model interpretation remain blocked until a provider-supported bounded thread-read design is approved.
 
 The window end remains fixed while pages are being consumed. Pending IDs, the next-page token, and retry timing survive worker recreation in `Config`. Already processed references are removed from the pending page. Completion advances the watermark only after all pending references are handled or have durable dead-letter evidence. A page cursor can restart once within the same bounded window; repeated expiration blocks the window. Backwards worker time and malformed checkpoints fail closed.
 
@@ -43,6 +47,21 @@ Operational records include IDs or hashed staging IDs, fixed error codes, timing
 
 ## Local verification and remaining gate
 
-Run focused chronology/reconciliation and contract tests, `pnpm verify`, and `pnpm validate:planning`. Bundle the reconciliation entry module with esbuild's neutral platform as a local smoke check; the repository's normal build still has no deployed entrypoint. Test evidence covers missed-event recovery, current-state idempotency, reply transitions, manual overrides, pagination, restart/retry/dead-letter behavior, failed checkpoint rollback, redaction, and concurrent workers.
+Run focused chronology/reconciliation and contract tests, `pnpm verify`, and `pnpm validate:planning`. The normal build emits functional Apps Script entrypoints, which are checked by callable-bundle tests. The native runtime is deployed privately; worker/replay acceptance remains unverified. Test evidence covers missed-event recovery, current-state idempotency, reply transitions, manual overrides, pagination, restart/retry/dead-letter behavior, failed checkpoint rollback, redaction, and concurrent workers.
 
-Before any Google permission request, real mailbox read, trigger installation, Apps Script deployment, draft creation, or production communication access, present the exact OAuth scopes, account, query/lookback, redaction rules, and rollback plan for Cam's approval. Workspace Studio configuration remains Milestone 4; Shortcut work remains Milestone 5. PMC acceptance records are updated only when the milestone is accepted, not when this local PR is opened.
+The 2026-09-22 standing authorization covers minimum in-scope Google permissions, private deployment and bounded pilot tests. Record exact scopes, approved account, 30-day query bounds, redaction and rollback before exercising each operation; do not repeat approval for the same authorized scope. Workspace Studio, Shortcut installation and live feature acceptance remain open as detailed in the V1 execution record. No Google email or Chat message may be sent.
+
+## Google runtime transaction limits
+
+The live Sheet adapter buffers writes and sends one atomic Sheets batch after
+revalidating every changed table. Deterministic conflicts return before mutation.
+A transport failure during the batch is indeterminate; no blind retry is allowed.
+Recovery must re-read durable source IDs/checkpoints before choosing another write.
+
+Google Sheets has no conditional compare-and-swap against simultaneous owner edits.
+The script lock serializes this application's writers only. All operational Queue
+edits must go through script-controlled actions using the same lock; direct owner
+editing during a transaction can race the final network call. Background Queue
+mutation remains disabled until this guarded manual-control workflow is accepted.
+Header drift, table overflow, or a batch above 200 changed rows, 10,000 cells, or
+500,000 serialized characters fails closed. These are bounded pilot limits.

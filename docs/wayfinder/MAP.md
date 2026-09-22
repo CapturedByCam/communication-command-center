@@ -26,7 +26,7 @@ Reach an implementation-ready, privacy-reviewed specification and a verified del
 - [Use a shared secret for the single-user Shortcut pilot](tickets/101-shortcut-authentication.md): Use a high-entropy write-only secret with a kill switch and incident-driven or automated rotation rather than routine manual maintenance.
 - [Treat visible Workspace Studio actions as provisionally available](tickets/102-studio-capability-check.md): Required actions are visible; Skills remain out of V1, and successful test runs are the later account-policy gate.
 - [Limit Gmail V1 to the primary work mailbox and verified aliases](tickets/103-gmail-scope.md): Exclude automated and bulk mail; exact identities and pilot lookback are deployment configuration.
-- [Deliver the morning alert through private Google Chat](tickets/104-briefing-delivery.md): Send an 8:00 AM alert linking the private `Briefing_View` Sheet; keep afternoon delivery off until the first week demonstrates value.
+- [Keep briefing delivery disabled under the current no-send instruction](tickets/104-briefing-delivery.md): Generate the private Sheet view on demand; no Google Chat or email transport.
 - [Use curated Contacts and Projects as canonical context](tickets/105-context-registry-source.md): ChatGPT memories may suggest records during explicit review, but nothing memory-derived persists without approval and a deterministic identifier.
 - [Use the approved pilot sample and thresholds](tickets/106-pilot-evaluation.md): Evaluate at least 50 approved or sanitized examples against the specified accuracy, privacy, and no-send thresholds.
 
@@ -57,3 +57,13 @@ None. Implementation must still satisfy the account, data-access, and deployment
 - Full-content archival in Sheets.
 - Unattended Apple Messages database scraping.
 - Automatic contractual, pricing, refund, complaint, or aviation-employment commitments.
+
+## Accepted V1 execution decisions — 2026-09-22
+
+Cam authorized minimum Workspace/Cloud connection, private resources and reviewed
+V1 release work. All Google messages, including the earlier self-alert exception,
+remain unsent. Apps Script owns deterministic validation, source IDs and draft
+ownership; visible Studio steps alone do not prove those capabilities. The native
+metadata pilot reads selected messages only within its bounded query and always
+requires review. Full interpretation and drafts need a verified provider binding.
+See [execution record](../implementation/V1_EXECUTION.md) for evidence and gates.

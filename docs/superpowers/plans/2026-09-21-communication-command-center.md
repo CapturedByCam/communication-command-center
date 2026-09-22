@@ -4,15 +4,25 @@
 
 **Goal:** Build a privacy-conscious single-user communication command center that turns Gmail and explicitly shared Apple text into a deterministic queue, review-only drafts, commitments, and daily briefings.
 
-**Architecture:** Workspace Studio performs fast Gmail-triggered extraction and routine draft creation. Apps Script validates, reconciles, deduplicates, persists to a private Google Sheet, and exposes a write-only Shortcut endpoint. ChatGPT provides judgment-heavy review and natural-language operation; Codex owns implementation and verification.
+**Architecture:** Workspace Studio prepares bounded Gmail events only when verified. Apps Script owns safe draft lifecycle and deterministic validation. Apps Script validates, reconciles, deduplicates, persists to a private Google Sheet, and exposes a write-only Shortcut endpoint. ChatGPT provides judgment-heavy review and natural-language operation; Codex owns implementation and verification.
 
 **Tech Stack:** TypeScript, Node.js LTS, pnpm, Zod, Vitest, ESLint, Prettier, esbuild, clasp, Apps Script V8, Gmail/Sheets/Calendar/Drive services, Workspace Studio, Apple Shortcuts.
 
 **Spec:** `docs/spec/PRODUCT_AND_ARCHITECTURE_SPEC.md`
 
+## Execution status — 2026-09-22
+
+This original checklist is an implementation guide, not live acceptance evidence.
+Follow [the V1 execution record](../../implementation/V1_EXECUTION.md) and
+[PMC Handoff](../../../PMC/Handoff.md) for completed work and exact remaining gates.
+The standing authorization covers in-scope Google resources and reviewed merges;
+all Google messages, including the former self-alert, remain prohibited. No paid
+upgrade is authorized. Native metadata reads remain generic/review-only pending a
+verified interpretation provider. Do not activate Studio draft or Chat actions.
+
 ## Global Constraints
 
-- Repository: `CapturedByCam/communication-command-center`, private, default branch `main`.
+- Repository: `CapturedByCam/communication-command-center`, intentionally public with private runtime data, default branch `main`.
 - Time zone: `America/New_York`.
 - V1 never sends outbound communications.
 - Full message bodies and attachments are not persisted in Sheets or logs.

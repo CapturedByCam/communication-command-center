@@ -1,3 +1,4 @@
+import "./runtime-polyfills.js";
 import {
   WORKBOOK_MANIFEST,
   headersEqual,
@@ -16,7 +17,12 @@ import {
 import { literalCell } from "./google-sheet-gateway.js";
 import { runBriefing } from "./briefing-runtime.js";
 import { runGmailReconciliation, runtimeReconciler } from "./gmail-runtime.js";
+import {
+  replaySelectedGmailQueueItem,
+  retrySelectedGmailSnapshotInvalid,
+} from "./gmail-replay.js";
 import type { GmailMetadataGateway } from "./gmail-reader.js";
+import { selectedSnapshotInvalidDeadLetter } from "../adapters/sheets/gmail-sync-repository.js";
 import {
   applyManualQueueControl,
   selectedQueueSnapshot,
@@ -60,6 +66,15 @@ export function onOpen() {
     .addItem("Resolve selected Queue row", "cccResolveSelectedQueueRow")
     .addItem("Reopen selected Queue row", "cccReopenSelectedQueueRow")
     .addItem("Snooze selected Queue row", "cccSnoozeSelectedQueueRow")
+    .addSeparator()
+    .addItem(
+      "Retry selected Gmail snapshot failure",
+      "cccRetrySelectedGmailSnapshotFailure",
+    )
+    .addItem(
+      "Replay selected Gmail Queue item",
+      "cccReplaySelectedGmailQueueItem",
+    )
     .addToUi();
 }
 export function doPost(e: GoogleAppsScript.Events.DoPost) {
@@ -378,6 +393,136 @@ export function cccReopenSelectedQueueRow() {
 }
 export function cccSnoozeSelectedQueueRow() {
   return controlSelectedQueueRow("snooze");
+}
+
+function gmailReplayResult(
+  active: GoogleAppsScript.Spreadsheet.Spreadsheet | null,
+  result: unknown,
+): unknown {
+  const outcome = result as { status?: string; error_code?: string };
+  const message =
+    outcome.status === "replayed"
+      ? "Selected Gmail row replayed."
+      : outcome.status === "disabled"
+        ? "Manual Gmail replay controls are disabled."
+        : outcome.status === "cancelled"
+          ? "Gmail replay cancelled."
+          : outcome.error_code === "SELECTION_CHANGED"
+            ? "Selected row changed; no replay was made."
+            : outcome.error_code === "WRITE_UNCERTAIN"
+              ? "Gmail replay could not be confirmed. Check the row before retrying."
+              : "Gmail replay did not run.";
+  try {
+    active?.toast(message, "Communication Command Center", 5);
+  } catch {
+    // UI feedback does not alter recovery state.
+  }
+  console.info(JSON.stringify(result));
+  return result;
+}
+
+async function controlSelectedGmailReplay(target: "failure" | "queue") {
+  try {
+    assertOwner();
+    const active = SpreadsheetApp.getActiveSpreadsheet();
+    if (!flag("MANUAL_WRITES") || !flag("GMAIL_INTAKE"))
+      return gmailReplayResult(active, { ok: true, status: "disabled" });
+    const id = workbookId();
+    if (!active || active.getId() !== id)
+      return gmailReplayResult(active, {
+        ok: false,
+        error_code: "WORKBOOK_MISMATCH",
+      });
+    const sheetName = target === "failure" ? "Dead_Letter" : "Queue";
+    const range = active.getActiveRange();
+    if (
+      !range ||
+      range.getSheet().getName() !== sheetName ||
+      range.getNumRows() !== 1 ||
+      range.getRow() < 2
+    )
+      return gmailReplayResult(active, {
+        ok: false,
+        error_code: "INVALID_SELECTION",
+      });
+    const gateway = googleGateway();
+    const before = gateway.read(id, sheetName);
+    const selectedRow =
+      target === "failure"
+        ? selectedSnapshotInvalidDeadLetter(
+            before.headers,
+            before.rows,
+            range.getRow() - 2,
+          )
+        : selectedQueueSnapshot(
+            before.headers,
+            before.rows,
+            range.getRow() - 2,
+          );
+    if (!selectedRow)
+      return gmailReplayResult(active, {
+        ok: false,
+        error_code: "INVALID_SELECTION",
+      });
+    const ui = SpreadsheetApp.getUi();
+    const response = ui.prompt(
+      target === "failure"
+        ? "Retry selected Gmail snapshot failure"
+        : "Replay selected Gmail Queue item",
+      "Confirm this selected Gmail metadata-only replay.",
+      ui.ButtonSet.OK_CANCEL,
+    );
+    if (response.getSelectedButton() !== ui.Button.OK)
+      return gmailReplayResult(active, { ok: true, status: "cancelled" });
+    const selection = {
+      selectedRowIndex: range.getRow() - 2,
+      selectedRow,
+      authorize: () => {
+        try {
+          assertOwner();
+          const current = SpreadsheetApp.getActiveSpreadsheet();
+          return (
+            flag("MANUAL_WRITES") &&
+            flag("GMAIL_INTAKE") &&
+            Boolean(current && current.getId() === id && workbookId() === id)
+          );
+        } catch {
+          return false;
+        }
+      },
+    };
+    const result =
+      target === "failure"
+        ? await retrySelectedGmailSnapshotInvalid(
+            gateway,
+            nativeGmail(),
+            id,
+            new Date().toISOString(),
+            sha256,
+            selection,
+          )
+        : await replaySelectedGmailQueueItem(
+            gateway,
+            nativeGmail(),
+            id,
+            new Date().toISOString(),
+            sha256,
+            selection,
+          );
+    return gmailReplayResult(active, result);
+  } catch {
+    return gmailReplayResult(null, {
+      ok: false,
+      error_code: "OPERATION_FAILED",
+    });
+  }
+}
+
+export function cccRetrySelectedGmailSnapshotFailure() {
+  return controlSelectedGmailReplay("failure");
+}
+export function cccReplaySelectedGmailQueueItem() {
+  return controlSelectedGmailReplay("queue");
 }
 export function cccBuildBriefing() {
   return codeResult(() => {

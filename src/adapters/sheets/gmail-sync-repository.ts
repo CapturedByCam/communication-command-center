@@ -3,10 +3,11 @@ import {
   assertHeaders,
   recordToRow,
   rowToRecord,
+  type CellValue,
   type SheetTableAdapter,
 } from "./sheet-table.js";
 
-const DeadLetterSchema = z
+export const GmailDeadLetterSchema = z
   .object({
     dead_letter_id: z.string().regex(/^dl_[a-f0-9]{64}$/),
     received_at: z.string().datetime({ offset: true }),
@@ -26,7 +27,34 @@ const DeadLetterSchema = z
   })
   .strict();
 
-export type GmailDeadLetter = z.infer<typeof DeadLetterSchema>;
+export type GmailDeadLetter = z.infer<typeof GmailDeadLetterSchema>;
+
+export interface GmailDeadLetterEntry {
+  readonly event: GmailDeadLetter;
+  readonly rowIndex: number;
+  readonly expectedRow: readonly CellValue[];
+}
+
+/** Validates only a selectable Gmail recovery row before the confirmation prompt. */
+export function selectedSnapshotInvalidDeadLetter(
+  headers: readonly string[],
+  rows: readonly (readonly CellValue[])[],
+  selectedRowIndex: number,
+): readonly CellValue[] | null {
+  try {
+    assertHeaders("Dead_Letter", headers);
+    const row = rows[selectedRowIndex];
+    if (!row) return null;
+    const parsed = GmailDeadLetterSchema.safeParse(rowToRecord(headers, row));
+    return parsed.success &&
+      parsed.data.status === "open" &&
+      parsed.data.error_code === "SNAPSHOT_INVALID"
+      ? [...row]
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 /** All mutations must run inside the caller's workbook transaction. */
 export class GmailSyncRepository {
@@ -43,6 +71,16 @@ export class GmailSyncRepository {
       "Audit_Log",
       "Studio_Inbox",
     ]) {
+      assertHeaders(
+        name,
+        (await this.adapter.readTable(this.spreadsheetId, name)).headers,
+      );
+    }
+  }
+
+  /** Recovery deliberately avoids Config and Studio_Inbox, so it cannot move a cursor. */
+  async verifyRecoveryHeaders(): Promise<void> {
+    for (const name of ["Dead_Letter", "Queue", "Audit_Log"]) {
       assertHeaders(
         name,
         (await this.adapter.readTable(this.spreadsheetId, name)).headers,
@@ -105,7 +143,7 @@ export class GmailSyncRepository {
   }
 
   async deadLetter(event: GmailDeadLetter): Promise<void> {
-    const validated = DeadLetterSchema.parse(event);
+    const validated = GmailDeadLetterSchema.parse(event);
     const table = await this.adapter.readTable(
       this.spreadsheetId,
       "Dead_Letter",
@@ -127,5 +165,61 @@ export class GmailSyncRepository {
         table.rows[index],
       );
     }
+  }
+
+  /** Rechecks the complete selected row under the caller's shared transaction. */
+  async selectedOpenSnapshotInvalid(
+    rowIndex: number,
+    expectedRow: readonly CellValue[],
+  ): Promise<GmailDeadLetterEntry | null> {
+    const table = await this.adapter.readTable(
+      this.spreadsheetId,
+      "Dead_Letter",
+    );
+    const headers = assertHeaders("Dead_Letter", table.headers);
+    const current = table.rows[rowIndex];
+    if (
+      !Number.isInteger(rowIndex) ||
+      rowIndex < 0 ||
+      !current ||
+      JSON.stringify(current) !== JSON.stringify(expectedRow)
+    )
+      return null;
+    const parsed = GmailDeadLetterSchema.safeParse(
+      rowToRecord(headers, current),
+    );
+    if (
+      !parsed.success ||
+      parsed.data.status !== "open" ||
+      parsed.data.error_code !== "SNAPSHOT_INVALID"
+    )
+      return null;
+    return { event: parsed.data, rowIndex, expectedRow: current };
+  }
+
+  /** Resolves an existing failure without replacing its historical evidence. */
+  async resolve(
+    entry: GmailDeadLetterEntry,
+    now: string,
+    actor: string,
+  ): Promise<void> {
+    const resolved = GmailDeadLetterSchema.parse({
+      ...entry.event,
+      status: "resolved",
+      resolved_at: now,
+      resolution_actor: actor,
+    });
+    const table = await this.adapter.readTable(
+      this.spreadsheetId,
+      "Dead_Letter",
+    );
+    const headers = assertHeaders("Dead_Letter", table.headers);
+    await this.adapter.updateRow(
+      this.spreadsheetId,
+      "Dead_Letter",
+      entry.rowIndex,
+      recordToRow(headers, resolved),
+      entry.expectedRow,
+    );
   }
 }

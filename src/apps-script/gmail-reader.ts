@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   APPROVED_GMAIL_MAILBOX,
   ThreadSnapshotSchema,
+  SourceEmailSchema,
 } from "../adapters/gmail/gmail-client.js";
 import {
   GmailReadError,
@@ -175,14 +176,54 @@ function headerMap(headers: z.infer<typeof HeaderSchema>[]) {
 function parseAddress(value: string): string | null {
   const trimmed = value.trim();
   const bracketed = /<([^<>\s]+@[^<>\s]+)>$/.exec(trimmed)?.[1] ?? trimmed;
-  const parsed = EmailSchema.safeParse(bracketed.toLowerCase());
+  const parsed = SourceEmailSchema.safeParse(bracketed.toLowerCase());
   return parsed.success ? parsed.data : null;
+}
+
+/** Split only list delimiters, preserving commas inside quoted names or local parts. */
+function splitAddressList(value: string): string[] | null {
+  const parts: string[] = [];
+  let start = 0;
+  let quoted = false;
+  let escaped = false;
+  let angle = false;
+  for (let index = 0; index < value.length; index++) {
+    const character = value[index];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quoted && character === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (character === '"') {
+      quoted = !quoted;
+      continue;
+    }
+    if (quoted) continue;
+    if (character === "<") {
+      if (angle) return null;
+      angle = true;
+    } else if (character === ">") {
+      if (!angle) return null;
+      angle = false;
+    } else if (character === "," && !angle) {
+      parts.push(value.slice(start, index));
+      start = index + 1;
+    }
+  }
+  if (quoted || escaped || angle) return null;
+  parts.push(value.slice(start));
+  return parts;
 }
 
 function parseRecipients(values: string[]): string[] | null {
   const addresses: string[] = [];
   for (const value of values) {
-    for (const part of value.split(",")) {
+    const parts = splitAddressList(value);
+    if (!parts) return null;
+    for (const part of parts) {
       const address = parseAddress(part);
       if (!address) return null;
       addresses.push(address);
@@ -316,7 +357,7 @@ export class GmailMetadataReader implements GmailReconciliationReader {
 
     if (this.options.mode === "requested_message_only") {
       return ThreadSnapshotSchema.parse({
-        schema_version: "1.0",
+        schema_version: "1.1",
         mailbox: approvedMailbox,
         threadId: message.threadId,
         messages: [messageFromMetadata(message)],
@@ -343,7 +384,7 @@ export class GmailMetadataReader implements GmailReconciliationReader {
       throw new Error("Gmail metadata read failed.");
     }
     return ThreadSnapshotSchema.parse({
-      schema_version: "1.0",
+      schema_version: "1.1",
       mailbox: approvedMailbox,
       threadId: thread.id,
       messages: thread.messages.map(messageFromMetadata),

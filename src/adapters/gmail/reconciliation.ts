@@ -6,8 +6,14 @@ import {
   checkedHash,
   type Sha256,
 } from "../../services/normalize-staging-item.js";
-import { upsertCommunicationItemWithinTransaction } from "../../services/upsert-item.js";
-import { QueueRepository } from "../sheets/queue-repository.js";
+import {
+  upsertCommunicationItemWithinTransaction,
+  type UpsertResult,
+} from "../../services/upsert-item.js";
+import {
+  queueItemFromRow,
+  QueueRepository,
+} from "../sheets/queue-repository.js";
 import { AuditRepository } from "../sheets/audit-repository.js";
 import {
   GmailSyncRepository,
@@ -17,6 +23,7 @@ import {
   assertHeaders,
   recordToRow,
   rowToRecord,
+  type CellValue,
   type SheetTableAdapter,
 } from "../sheets/sheet-table.js";
 import {
@@ -117,6 +124,20 @@ export interface ReconciliationResult {
   excluded: number;
   failed: number;
 }
+
+export interface SelectedGmailReplay {
+  readonly selectedRowIndex: number;
+  readonly selectedRow: readonly CellValue[];
+  /** Checked under the shared transaction lock before replay reads or writes. */
+  readonly authorize: () => boolean;
+}
+
+export type GmailReplayResult =
+  | { readonly ok: true; readonly status: "disabled" | "replayed" }
+  | {
+      readonly ok: false;
+      readonly error_code: "SELECTION_CHANGED" | "NOT_ELIGIBLE";
+    };
 
 function validateRun(now: string, batchSize: number): string {
   z.number().int().min(1).max(100).parse(batchSize);
@@ -224,22 +245,140 @@ export class GmailReconciler {
     }
   }
 
-  private async persist(item: CommunicationItem, now: string): Promise<void> {
-    if (!item) return;
+  private async persist(
+    item: CommunicationItem,
+    now: string,
+    actor = "gmail_reconciliation",
+    correlationSuffix = "",
+  ): Promise<UpsertResult> {
     const correlationId = `gmail_${this.hash(`${item.item_id}:${item.content_hash}`)}`;
-    await upsertCommunicationItemWithinTransaction(
+    const auditSeed = correlationSuffix
+      ? `${correlationId}:${now}:${correlationSuffix}`
+      : `${correlationId}:${now}`;
+    return upsertCommunicationItemWithinTransaction(
       { queue: this.queue, audit: this.audit },
       item,
       {
-        auditEventId: `gmail_${this.hash(`${correlationId}:${now}`)}`,
+        auditEventId: `gmail_${this.hash(auditSeed)}`,
         eventAt: now,
-        actor: "gmail_reconciliation",
+        actor,
         correlationId,
         durationMs: 0,
         payloadHash: item.content_hash,
         deduplication: "current_state",
       },
     );
+  }
+
+  private currentWindow(now: string): { from: string; to: string } {
+    return {
+      from: new Date(Date.parse(now) - 30 * day).toISOString(),
+      to: now,
+    };
+  }
+
+  /**
+   * Retries exactly the selected historical SNAPSHOT_INVALID record. It neither
+   * reads nor updates Config, and it never widens the original eligibility window.
+   */
+  async replaySelectedSnapshotInvalid(
+    request: SelectedGmailReplay,
+    at: string,
+  ): Promise<GmailReplayResult> {
+    const now = validateRun(at, 1);
+    const { adapter, spreadsheetId } = this.dependencies;
+    return adapter.runTransaction(spreadsheetId, async () => {
+      if (!request.authorize()) return { ok: true, status: "disabled" };
+      await this.sync.verifyRecoveryHeaders();
+      const entry = await this.sync.selectedOpenSnapshotInvalid(
+        request.selectedRowIndex,
+        request.selectedRow,
+      );
+      if (!entry) return { ok: false, error_code: "SELECTION_CHANGED" };
+
+      const current = this.currentWindow(now);
+      const from = new Date(
+        Math.max(
+          Date.parse(current.from),
+          Date.parse(entry.event.received_at) - 30 * day,
+        ),
+      ).toISOString();
+      const to = new Date(
+        Math.min(Date.parse(current.to), Date.parse(entry.event.received_at)),
+      ).toISOString();
+      if (Date.parse(from) >= Date.parse(to))
+        return { ok: false, error_code: "NOT_ELIGIBLE" };
+      const prepared = await this.prepare(
+        entry.event.source_record_id,
+        now,
+        from,
+        to,
+      );
+      if (prepared.error || !prepared.item)
+        return { ok: false, error_code: "NOT_ELIGIBLE" };
+      await this.persist(
+        prepared.item,
+        now,
+        "manual_gmail_replay",
+        entry.event.dead_letter_id,
+      );
+      await this.sync.resolve(entry, now, "manual_gmail_replay");
+      return { ok: true, status: "replayed" };
+    });
+  }
+
+  /** Replays only a current selected Gmail Queue item; no cursor/list operation is involved. */
+  async replaySelectedQueueItem(
+    request: SelectedGmailReplay,
+    at: string,
+  ): Promise<GmailReplayResult> {
+    const now = validateRun(at, 1);
+    const { adapter, spreadsheetId } = this.dependencies;
+    return adapter.runTransaction(spreadsheetId, async () => {
+      if (!request.authorize()) return { ok: true, status: "disabled" };
+      await Promise.all([
+        this.queue.verifyHeaders(),
+        this.audit.verifyHeaders(),
+      ]);
+      const table = await adapter.readTable(spreadsheetId, "Queue");
+      const headers = assertHeaders("Queue", table.headers);
+      const selected = table.rows[request.selectedRowIndex];
+      if (
+        !Number.isInteger(request.selectedRowIndex) ||
+        request.selectedRowIndex < 0 ||
+        !selected ||
+        JSON.stringify(selected) !== JSON.stringify(request.selectedRow)
+      )
+        return { ok: false, error_code: "SELECTION_CHANGED" };
+      const item = queueItemFromRow(headers, selected);
+      const window = this.currentWindow(now);
+      if (
+        item.source !== "gmail" ||
+        Date.parse(item.captured_at) < Date.parse(window.from) ||
+        Date.parse(item.captured_at) >= Date.parse(window.to)
+      )
+        return { ok: false, error_code: "NOT_ELIGIBLE" };
+      const prepared = await this.prepare(
+        item.source_record_id,
+        now,
+        window.from,
+        window.to,
+      );
+      if (prepared.error || !prepared.item)
+        return { ok: false, error_code: "NOT_ELIGIBLE" };
+      if (
+        prepared.item.item_id !== item.item_id ||
+        prepared.item.source_thread_id !== item.source_thread_id
+      )
+        return { ok: false, error_code: "NOT_ELIGIBLE" };
+      await this.persist(
+        prepared.item,
+        now,
+        "manual_gmail_replay",
+        `queue:${item.item_id}`,
+      );
+      return { ok: true, status: "replayed" };
+    });
   }
 
   async reconcileRecentGmail(

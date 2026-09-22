@@ -36,6 +36,7 @@ describe("Studio custom-step deployment contract", () => {
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/script.scriptapp",
     ]);
+    expect(manifest.addOns?.common?.useLocaleFromApp).toBeUndefined();
     expect(manifest.exceptionLogging).toBe("NONE");
   });
 });

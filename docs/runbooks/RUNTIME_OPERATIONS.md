@@ -12,16 +12,16 @@ message.
 The checked-in manifest configures the web app with
 `webapp.access: "MYSELF"` and `webapp.executeAs: "USER_DEPLOYING"`. That is a
 private operator deployment: only the deploying operator can access it and it
-runs as that operator. Immutable Version 6 is deployed with this configuration. Its
-`SERVER_JS` source exactly matches `dist/Code.js` after LF normalization and its manifest
+runs as that operator. Immutable Version 7 is deployed with this configuration. Its `SERVER_JS`
+source exactly matches `dist/Code.js` after LF normalization and its manifest
 semantically matches `dist/appsscript.json`; see the chronological evidence in
 [V1 execution](../implementation/V1_EXECUTION.md).
 
 The current live posture is `CCC_MANUAL_WRITES:true`; the other six feature flags remain
-false. Fresh Version 6 `cccHealth` at 11:52:57 EDT returned `ok:true`, ten valid headers,
-`America/New_York`, and `send_capability:false`. That read-only health check preceded
-the bounded Version 6 waiting-state acceptance. At about 11:51 EDT, the Apps Script Triggers page showed `Showing 0 triggers`
-with no filters set. Do not create time-driven triggers, enable an automatic feature, or
+false. Post-deployment editor `cccHealth` at 15:07:25 EDT returned `ok:true`, ten
+valid headers, `America/New_York`, and `send_capability:false`; only
+`CCC_MANUAL_WRITES` was true. The unfiltered Apps Script Triggers page showed
+`Showing 0 triggers`. Do not create time-driven triggers, enable an automatic feature, or
 enable drafting from this pilot. The manifest's Gmail scope is read-only; V1 has no send
 path. Historical Version 1–4 checks, including all-off kill-switch and disabled-worker
 evidence, remain below and in [V1 execution](../implementation/V1_EXECUTION.md).
@@ -94,11 +94,13 @@ existing workbook as a restore procedure.
 
 ## Rollback
 
-If a private deployment behaves unexpectedly, first run `cccDisableAll()` on
-the current private deployment to turn off flags and remove managed triggers.
-Then repoint the private deployment to the previously verified Apps Script
-version (Version 5 for the current Version 6 release). Run `cccDisableAll()` again after rollback when available, and verify
-all flags are false and managed trigger count is zero.
+If a private deployment behaves unexpectedly, first run `cccDisableAll()` in the authenticated Apps Script editor to turn off
+flags and remove managed triggers.
+Do not point an older version at the migrated 1.1 active workbook. Preserve
+it and verify a new private copy of the pre-migration backup before coordinating
+any Version 6-or-older deployment and workbook binding. Run `cccDisableAll()`
+again after recovery when available, and verify all flags are false and managed
+trigger count is zero.
 
 Rollback does not notify Google contacts, send messages, delete Gmail drafts,
 delete source messages, or delete workbook records. Preserve logs and the

@@ -2,8 +2,10 @@
 
 This release supplies the missing persistence boundary for outbound promises.
 It does not activate model extraction, Gmail reconciliation, or a new manual UI.
-The current owner-only Version 6 deployment remains on the prior workbook
-contract until a coordinated release is accepted.
+The guarded empty-table migration completed on 2026-09-22. The existing
+owner-only deployment now points to verified immutable Version 7; the
+Commitments table has the 17-column 1.1 header and remains empty. Automatic
+promise extraction and provider reconciliation remain disabled and unaccepted.
 
 ## Data contract
 
@@ -59,7 +61,9 @@ legacy header and cannot pass its Commitment health/briefing checks on 1.1.
 Keep controls off and preserve the migrated workbook. Restore the pre-migration
 backup to a new private copy and verify its header/data before coordinating an
 older deployment and binding; later accepted records must be reconciled, never
-discarded. No live migration or deployment is claimed by the source release.
+discarded. The private pre-migration backup is retained. Version 6 is not a direct
+rollback target on the migrated active workbook; it requires a separately
+verified new copy of the legacy backup and coordinated binding.
 
 ## Remaining V1 integration
 

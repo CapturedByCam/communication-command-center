@@ -4,18 +4,17 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
 
 ## Verified position
 
-- Immutable owner-only Apps Script Version 6 deployed at 11:51 EDT from source
-  `e23ee3a` (integrated candidate `42fc635`). Source SHA
-  `30ef121478437e554e485e91dcb32966a80592257a29998106f0e955c6f40853` and semantic
-  manifest SHA `6d2df263d5686e5b903c655da411ce96d4403c71d249321f220be50ce7f0689d`
-  match the verified build. Access remains `MYSELF` / `USER_DEPLOYING`;
-  unauthenticated requests redirect to Google sign-in. Version 5 is the prior
-  verified rollback target. No OAuth scope changed.
-- At 12:12:37 EDT, editor `cccHealth` returned `ok:true`: ten valid headers,
+- Existing owner-only Apps Script deployment updated to immutable Version 7 at
+  about 15:04 EDT. Cloning Version 7 reproduced the reviewed bundle exactly
+  (LF-normalized SHA-256 `40e8a3afe7595104d7ba05fc87088360d0f92c569abe430bdd8ecfb246739383`)
+  and the same semantic manifest. Access remains `MYSELF` /
+  `USER_DEPLOYING`; an anonymous request redirected to Google sign-in. The
+  manifest introduces no new OAuth scope. Version 6 cannot directly run
+  against the migrated 1.1 workbook; see the recovery gate below.
+- At 15:07:25 EDT, editor `cccHealth` returned `ok:true`: ten valid headers,
   `America/New_York`, `MANUAL_WRITES:true`, the other six flags false, and
-  `send_capability:false`. At about 11:51 EDT the unfiltered Triggers page showed
-  zero triggers; `cccDisableAll` at 12:05:53 confirmed zero managed triggers.
-  Only guarded manual Queue controls are enabled.
+  `send_capability:false`. The unfiltered Triggers page showed zero triggers.
+  Only previously accepted guarded manual Queue controls are enabled.
 - The private workbook has ten manifest tabs and a verified private pre-activation
   backup. A new private restore copy passed all ten exact manifest headers and
   New York time checks. The owner-only deployment was switched from Version 6 to
@@ -50,15 +49,19 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
 - No Google email or Chat send, Gmail draft, trigger installation, phone capture,
   Calendar mutation, billing upgrade, or private-content retention occurred.
 
-## Commitment source update awaiting deployment
+## Commitment storage released; provider integration pending
 
-The repository now includes a strict 1.1 Commitment storage contract, immutable
-outbound provenance, a guarded observation writer, and an explicit empty-only
-header migration. Briefing consumes actual persisted provenance and accepts a
-named manual resolver. See [storage and migration](../docs/implementation/COMMITMENT_STORAGE.md).
-This source update is not deployed: Version 6 and the live eleven-column
-Commitments table remain unchanged. Provider binding, automatic outbound
-extraction and complete chronology remain open; no promise was captured live.
+The repository and private Version 7 deployment include strict 1.1 Commitment
+storage, bounded outbound chronology, a guarded observation writer, and
+briefing provenance validation. After a verified empty-table preflight and private
+backup, `cccMigrateEmptyCommitments` returned `migrated` with schema 1.1 at
+14:58 EDT. A direct bounded Sheet read confirmed the exact 17-column header
+and no populated Commitment rows. The migration code touches only six trailing
+header cells; a direct comparison with the backup confirmed all five Queue
+rows and thirteen Audit_Log rows unchanged. Post-migration health passed all
+other manifest headers. See [storage and migration](../docs/implementation/COMMITMENT_STORAGE.md).
+No promise was captured live. Provider binding, automatic extraction,
+reconciliation and real working-week acceptance remain open.
 
 ## Accepted decisions
 
@@ -83,9 +86,10 @@ All Google messages remain unsent; Codex coordination is authorized.
    free-tier private-message workaround is authorized.
 2. Draft creation needs compose authorization, a trusted eligible context resolver
    and bounded live acceptance. Native replacement/deletion return unsupported to
-   protect human edits. Outbound promise extraction and the new Commitment storage writer
-   still need migration, deployment and a verified interpretation/runtime binding;
-   local integration tests alone do not establish that product behavior.
+   protect human edits. The new Commitment storage schema is migrated and deployed; outbound
+   promise extraction and the guarded writer still need a verified
+   interpretation/runtime binding and live acceptance; local integration tests alone do not establish
+   that product behavior.
 3. The native Shortcut is a setup-blocked two-action template, with a verified local
    setup-only export and no endpoint/token configuration, network request or device acceptance. Complete
    device setup and prove the write-only authentication path without exposing Queue
@@ -106,27 +110,27 @@ private Queue review and the accepted guarded controls.
 - [Synthetic evaluation](../docs/evaluation/SYNTHETIC_V1_REPORT.md)
 - Private resource links and bindings: ignored `.local/PILOT_RESOURCES.md`.
 
-## Bounded chronology source merged; private migration pending
+## Bounded chronology release evidence
 
 PR #42 merged as `4789030589d1f0168aff87de788f29dd80155e85` after independent
 review, repository verification and CodeQL. Local required checks passed,
-including 423 tests across 45 files. The current Apps Script deployment remains
-Version 6; PR #42 has not been pushed to that project or deployed.
+including 423 tests across 45 files. The fresh private backup was verified
+before the migration, and its resource ID remains in ignored
+`.local/PILOT_RESOURCES.md`.
 
-The approved-account Drive profile and exact private pilot workbook were
-verified. Its Commitments header remains the legacy eleven columns. A fresh
-private workbook backup was created and verified; its resource ID is kept only
-in ignored `.local/PILOT_RESOURCES.md`. Metadata shows the same manifest tabs
-and an extra `Sheet1` tab, which has been preserved.
+With all seven flags off and zero managed triggers, a full
+`Commitments!A2:Q6000` `userEnteredValue` scan found no populated cells,
+including formulas that render blank. The reviewed source was pushed to the
+approved Apps Script project. The authenticated editor ran
+`cccMigrateEmptyCommitments` once and reported
+`{"ok":true,"status":"migrated","schema_version":"1.1"}`.
+Direct Sheet reads confirmed the exact 17-column header and an empty data
+range. The 15:00:42 editor health check passed all ten manifest headers,
+New York time, all seven flags off and no send capability.
 
-The migration is not started. `clasp` authentication identifies the approved
-account and lists Version 6, but `clasp run cccHealth` returns a server storage
-`NOT_FOUND`. The authenticated Apps Script editor control path is unavailable in this
-environment. Current script flags and triggers, and full Commitments-table
-emptiness, remain unverified. Neither `cccDisableAll` nor
-`cccMigrateEmptyCommitments` has run. Restore the supported authenticated editor
-path; disable all controls and managed triggers, then verify they are off and
-the full table is empty. A populated table is a hard stop. Only after this
-preflight passes, push the reviewed source, run the guarded migration explicitly
-in the editor, verify the 17-column header and health, and deploy privately. See
-[implementation and migration gates](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md).
+Immutable Version 7 exactly matches the reviewed build and private manifest;
+the existing owner-only deployment now points to it. Anonymous access redirects
+to Google sign-in. Only the accepted manual-control flag was restored; the
+15:07:25 health check and unfiltered zero-trigger page verified the final safe
+posture. Queue and Audit_Log populated rows matched the private backup exactly.
+Automatic provider features remain disabled pending the gates above.

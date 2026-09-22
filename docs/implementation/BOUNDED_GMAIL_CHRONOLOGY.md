@@ -2,7 +2,7 @@
 
 Decision: [111](../wayfinder/tickets/111-bounded-gmail-chronology.md).
 
-## Merged source; private activation pending
+## Source deployed privately; provider activation pending
 
 The native intake candidate enumerates eligible ID/thread ID references in a
 fixed 30-day window, twenty per invocation. Only after enumeration finishes does
@@ -40,20 +40,17 @@ change the phase to complete or erase missing evidence to force progress. A
 reviewed reset/migration path is required before restarting a blocked scan.
 
 PR #42 merged as `4789030589d1f0168aff87de788f29dd80155e85` after independent
-review, full repository CI and CodeQL. Version 6 remains deployed. Complete the
-Commitment 1.1 preflight by disabling controls and managed triggers, verifying
-they are off, and confirming the full legacy table is empty. If it is empty,
-push this reviewed source, run the guarded migration explicitly in the
-authenticated editor, verify the schema and health, and deploy the accepted
-private version. A fresh private backup was created and verified; its ID is
-recorded only in ignored `.local/PILOT_RESOURCES.md`.
-
-The editor action is currently blocked by tooling: authenticated `clasp run
-cccHealth` returned storage `NOT_FOUND`, and an authenticated editor control path is
-unavailable in this environment. Thus live flags/triggers and full-table emptiness are
-unverified; the guarded migration and disable function have not run. No source
-push or deployment occurred. Provider interpretation, Studio installation,
-live bounded acceptance and pilot usefulness remain release requirements.
+review, full repository CI and CodeQL. The reviewed source was pushed after
+all controls and managed triggers were disabled, the legacy Commitment table
+was confirmed empty, and a fresh private backup was verified. The guarded
+Commitment 1.1 migration returned `migrated` once. Direct Sheet reads verified
+the exact 17-column header and empty data range; editor health passed. Immutable
+Version 7 matched the reviewed bundle and private manifest, and the existing
+owner-only deployment was updated. Only accepted manual Queue controls were
+restored. The backup ID remains only in ignored `.local/PILOT_RESOURCES.md`.
+Provider interpretation, Studio access and retention, live bounded acceptance
+and pilot usefulness remain release requirements. No automatic ingestion or
+reconciliation worker is enabled.
 
 Studio processing and selected replay use the same bounded projection when a v2
 checkpoint exists. They require completed enumeration and an exact requested

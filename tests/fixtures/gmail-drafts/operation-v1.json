@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "item_id": "cc_draftfixture01",
+  "mailbox": "drafts@example.com",
+  "thread_id": "synthetic-thread-001",
+  "source_message_id": "synthetic-message-001",
+  "source_content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "operation_id": "123e4567-e89b-42d3-a456-426614174000",
+  "operation": "create",
+  "status": "pending",
+  "draft_id": null,
+  "draft_revision": null,
+  "body_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "expected_body_hash": null,
+  "synthetic": true,
+  "stale_requested": false,
+  "updated_at": "2026-09-22T12:00:00Z",
+  "error_code": null
+}

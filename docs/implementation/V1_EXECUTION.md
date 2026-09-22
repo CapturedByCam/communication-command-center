@@ -325,9 +325,49 @@ covers 423 tests in 45 files, formatting, lint, types, schema, build and plannin
 checks; the updated bundle suite passed after correcting two old flow expectations.
 See [implementation and migration boundaries](BOUNDED_GMAIL_CHRONOLOGY.md).
 PR #42 merged at `4789030589d1f0168aff87de788f29dd80155e85`; local verification,
-required CI, CodeQL and independent review passed. Version 6 remains deployed.
-A fresh private backup is recorded in ignored `.local/PILOT_RESOURCES.md`.
-Migration preflight is blocked because `clasp run cccHealth` returned storage
+required CI, CodeQL and independent review passed. At that point, Version 6
+remained deployed. A fresh private backup is recorded in ignored `.local/PILOT_RESOURCES.md`.
+Migration preflight was then blocked because `clasp run cccHealth` returned storage
 `NOT_FOUND`, and no authenticated editor control path was available. Flags,
-triggers and full Commitments-table emptiness are unverified. No disable,
-migration, source push or deployment was performed.
+triggers and full Commitments-table emptiness were unverified at that point.
+No disable, migration, source push or deployment had been performed.
+
+## 2026-09-22 private Commitment 1.1 release
+
+After PR #42 and migration-order PR #43 merged, the approved account and exact
+private pilot workbook were reverified. A fresh private backup passed the
+owner-only and workbook-metadata checks; its ID is only in ignored
+`.local/PILOT_RESOURCES.md`. At about 14:46 EDT, `cccDisableAll` returned all
+seven flags off and zero managed triggers. The unfiltered Triggers page showed
+zero. A direct `userEnteredValue` scan of `Commitments!A2:Q6000` found no
+populated cells, including blank-rendering formulas. The legacy header had
+exactly eleven columns.
+
+`clasp push` updated the reviewed bundle and manifest in the existing Apps Script
+project. The authenticated editor ran `cccMigrateEmptyCommitments` once at
+14:58 EDT and logged `ok:true`, `status:migrated`, `schema_version:1.1`.
+Direct bounded Sheet reads confirmed the exact seventeen headers and no
+populated Commitment rows. The 15:00:42 editor health check returned ten
+valid manifest headers, all seven flags false, New York time and
+`send_capability:false`. A direct comparison to the fresh backup found all
+five Queue and thirteen Audit_Log rows unchanged. The migration implementation
+only writes the six new Commitment header cells; no other table headers drifted.
+
+The existing project created immutable Version 7. Cloning that version matched
+`dist/Code.js` byte-for-byte after LF normalization (SHA-256
+`40e8a3afe7595104d7ba05fc87088360d0f92c569abe430bdd8ecfb246739383`)
+and the semantic `appsscript.json` manifest. Its web app access remains
+`MYSELF` / `USER_DEPLOYING` with no new OAuth scope. The existing private
+deployment was updated to Version 7, not replaced with a new public endpoint.
+Deployment inventory reported Version 7, and an anonymous request returned
+HTTP 302 to `accounts.google.com`.
+
+Only the previously accepted `CCC_MANUAL_WRITES` property was restored. At
+15:07:25 EDT, editor health returned ten valid headers, New York time, manual
+writes true, the other six flags false and no send capability. The unfiltered
+Triggers page showed zero. No Google message, Gmail draft, trigger, provider
+activation, Shortcut capture or Calendar mutation occurred. Automatic
+outbound promise extraction, reconciliation and the real working-week pilot
+remain unaccepted. Version 6 cannot be repointed directly at the migrated
+active workbook; older-runtime recovery requires the verified legacy backup
+restored to a new private workbook and coordinated binding.

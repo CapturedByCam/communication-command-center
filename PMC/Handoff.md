@@ -4,11 +4,11 @@ Updated 2026-09-22. V1 is not yet accepted for daily unattended use.
 
 ## Working now
 
-The private Queue has five metadata-pilot items. Owner-only Version 6 is deployed
-from `e23ee3a`, with source/manifest drift verified and unchanged private access.
-At 12:12:37 EDT editor health passed all ten headers, New York time, no send capability,
-and only `CCC_MANUAL_WRITES` enabled. The latest unfiltered trigger check found zero;
-the 12:05:53 disable drill also confirmed zero managed triggers.
+The private Queue has five metadata-pilot items. The existing owner-only
+deployment now points to verified immutable Version 7, with the 1.1
+Commitments workbook migration complete. At 15:07:25 EDT editor health passed
+all ten headers, New York time and no send capability, with only
+`CCC_MANUAL_WRITES` enabled. The unfiltered trigger check found zero.
 
 Select one Queue row and use **Resolve**, **Reopen**, **Snooze**, or **Set waiting
 state**. All use owner/flag checks, full-row conflict detection, the shared lock,
@@ -30,21 +30,16 @@ reply text. The existing briefing projection predates current Queue items;
 review Queue directly until a fresh accepted briefing is available. Gmail's
 initial 30-day cursor is incomplete and intake remains disabled.
 
-## Prepared Commitment storage release
+## Commitment storage release
 
-The source implements version 1.1 persisted outbound message/evidence IDs,
-observation time, a manual resolver and date-review status. A guarded writer
-validates selected outbound metadata before an atomic Commitment/audit write.
-The explicit migration appends headers only to an unchanged empty legacy table;
-populated legacy rows stop without mutation. Briefing reads real persisted
-provenance. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
-This is not deployed or provider-bound. Current Version 6 and private table data
-are unchanged; do not run the new source against old headers without the
-coordinated migration gate. Automatic promise extraction is still required.
-The integrated candidate passed 404 tests across 42 files, formatting, lint,
-type checking, schema validation, bundle build and planning validation. The exact
-verify subcommands ran directly against installed dependencies because pnpm
-attempted an unnecessary shared-module reinstall. Independent review found no actionable material issues; required CI remains the merge gate.
+Version 7 includes 1.1 persisted outbound provenance, a guarded observation
+writer, bounded chronology and briefing validation. The empty-only migration
+returned `migrated` once at 14:58 EDT. Direct Sheet reads verified the exact
+17-column Commitment header and no populated rows. Queue and Audit_Log rows
+matched the verified pre-migration backup. The immutable Version 7 bundle and
+manifest matched the reviewed build; the existing deployment retained private
+owner-only access. Automatic promise extraction and reconciliation remain
+unbound. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
 
 ## Remaining work and user action
 
@@ -92,31 +87,28 @@ and deployment authorization remain valid.
 
 Run `cccDisableAll` in the authenticated Apps Script editor to disable every flag
 and remove only this app's managed triggers. Verify the controlled all-off result.
-For code rollback, repoint the existing private deployment to verified Version 5
-and verify immutable version/source and private access. Editor health runs current
-project code, so it does not prove execution of the deployed older version. Restore workbook data
-only into a new private copy of the verified backup. Preserve current rows,
+Do not repoint Version 6 or older at the migrated active workbook: their
+legacy Commitment contract is incompatible. For an older-runtime recovery,
+restore the private pre-migration backup into a **new** private workbook, verify
+it, then coordinate the deployment and binding under the runbook. Editor health
+runs current project code and does not prove older deployed-version execution. Preserve current rows,
 source messages, drafts and audit evidence. Nothing in this procedure sends a
 message or clears records.
 
 ## Current release state
 
-Bounded chronology PR #42 is merged at `4789030589d1f0168aff87de788f29dd80155e85`;
-review, required CI and CodeQL passed. Local required checks passed, including
-423 tests across 45 files. Live deployment remains Version 6. A fresh private
-pre-migration backup is verified and its ID is in ignored
-`.local/PILOT_RESOURCES.md`.
+Bounded chronology PR #42 and migration-order PR #43 are merged after review
+and required CI. The fresh pre-migration backup is verified and retained
+privately. On 2026-09-22, all controls and managed triggers were disabled;
+the complete Commitment data range was empty. The reviewed source was pushed,
+the guarded 1.1 migration succeeded once, and the exact header plus empty rows
+were verified directly. Immutable Version 7 matches the reviewed source and
+manifest, and the existing owner-only deployment points to it. Only previously
+accepted manual Queue controls were restored. Final editor health passed, and
+no trigger or send capability is active.
 
-Live migration is waiting for authenticated Apps Script editor control. Scoped
-`clasp` credentials identify the approved account, but `clasp run cccHealth`
-returned storage `NOT_FOUND`, and no authenticated editor control path is
-available in this environment.
-No flags/triggers or full Commitments rows were verified, and no disable,
-migration, source push or deployment occurred. Resume with read-only status,
-disable all controls and managed triggers, and verify they are off and the full
-Commitments table is empty. Stop for a populated table. Only after that preflight
-passes, push the reviewed source, run `cccMigrateEmptyCommitments` explicitly in
-the authenticated editor, verify the 17-column header and health, then deploy a
-private version with the approved safe flags only.
-See [chronology](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md) and
-[Commitment migration](../docs/implementation/COMMITMENT_STORAGE.md).
+Remaining blockers are the privacy-compatible real interpretation provider and
+Workspace Studio access/retention decision, compose authorization and draft
+acceptance, local Shortcut endpoint/device setup, then a real working-week
+pilot. See [Current State](Current%20State.md) and
+[V1 execution](../docs/implementation/V1_EXECUTION.md).

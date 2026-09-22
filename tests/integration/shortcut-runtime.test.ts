@@ -4,6 +4,68 @@ import { WORKBOOK_MANIFEST } from "../../src/adapters/sheets/workbook-manifest.j
 import { createShortcutHandler } from "../../src/adapters/http/shortcut-handler.js";
 import { createHash } from "node:crypto";
 describe("synchronous Shortcut persistence", () => {
+  it("rechecks authorization while holding the persistence lock", () => {
+    let table = {
+      headers: [...WORKBOOK_MANIFEST[0].headers] as string[],
+      rows: [] as (string | number | boolean | null)[][],
+    };
+    let held = false;
+    let commits = 0;
+    let enabledReads = 0;
+    const storage = createShortcutStorage(
+      {
+        acquire: () => {
+          expect(held).toBe(false);
+          held = true;
+        },
+        release: () => {
+          held = false;
+        },
+        read: () => structuredClone(table),
+        commit: (_id, changes) => {
+          commits++;
+          table = structuredClone(changes[0].after);
+        },
+      },
+      "book",
+    );
+    const handler = createShortcutHandler({
+      storage,
+      getToken: () => "x".repeat(64),
+      isEnabled: () => ++enabledReads === 1,
+      now: () => new Date("2026-09-22T12:00:00Z"),
+      hash: (value) => createHash("sha256").update(value).digest("hex"),
+      allowRequest: () => true,
+    });
+    const body = JSON.stringify({
+      schema_version: "1.0",
+      auth_token: "x".repeat(64),
+      idempotency_key: "e6c2e652-fbaa-4f34-86a9-d7e54efb2111",
+      captured_at: "2026-09-22T12:00:00Z",
+      source: "apple_share_sheet",
+      shared_text: "private synthetic source",
+      model_fields: {
+        classification_status: "needs_server_review",
+        category: "other",
+        urgency: "later",
+        waiting_on: "unknown",
+        deadline_at: null,
+        deadline_text: null,
+        next_action: "Review source",
+        summary: "Requires review",
+      },
+    });
+
+    expect(handler({ body, remoteAddress: null })).toEqual({
+      status: "rejected",
+      error_code: "disabled",
+    });
+    expect(enabledReads).toBe(3);
+    expect(held).toBe(false);
+    expect(commits).toBe(0);
+    expect(table.rows).toHaveLength(0);
+  });
+
   it("atomically stores one normalized row and treats repeated UUID as duplicate", () => {
     let table = {
       headers: [...WORKBOOK_MANIFEST[0].headers] as string[],

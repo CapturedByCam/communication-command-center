@@ -79,6 +79,7 @@ describe("Shortcut write-only intake contract", () => {
           .update(payload.shared_text)
           .digest("hex"),
       }),
+      expect.any(Function),
     );
     expect(JSON.stringify(createIfAbsent.mock.calls)).not.toContain(
       payload.shared_text,
@@ -177,9 +178,12 @@ describe("Shortcut write-only intake contract", () => {
       status: "rejected",
       error_code: "invalid_payload",
     });
-    expect(rejectionSink.recordRejected).toHaveBeenCalledWith({
-      errorCode: "invalid_payload",
-    });
+    expect(rejectionSink.recordRejected).toHaveBeenCalledWith(
+      {
+        errorCode: "invalid_payload",
+      },
+      expect.any(Function),
+    );
     expect(
       JSON.stringify(rejectionSink.recordRejected.mock.calls),
     ).not.toContain(payload.shared_text);
@@ -204,6 +208,48 @@ describe("Shortcut write-only intake contract", () => {
     ).toEqual({ status: "rejected", error_code: "invalid_payload" });
     expect(rejectionSink.recordRejected).not.toHaveBeenCalled();
     expect(storage.createIfAbsent).not.toHaveBeenCalled();
+  });
+
+  it("applies the authenticated quota before persisting malformed requests", () => {
+    const storage: ShortcutStorage = {
+      createIfAbsent: vi.fn(),
+      findByIdempotencyKey: vi.fn(),
+    };
+    const rejectionSink = { recordRejected: vi.fn() };
+    const allowRequest = vi.fn(() => false);
+
+    const response = handlerWith(storage, {
+      allowRequest,
+      rejectionSink,
+    })(request(JSON.stringify({ ...payload, unexpected: true })));
+
+    expect(response).toEqual({
+      status: "rejected",
+      error_code: "rate_limited",
+    });
+    expect(allowRequest).toHaveBeenCalledOnce();
+    expect(rejectionSink.recordRejected).not.toHaveBeenCalled();
+  });
+
+  it("returns disabled when authorization is lost before persistence", () => {
+    const createIfAbsent = vi.fn((_record, stillAuthorized) => {
+      expect(stillAuthorized?.()).toBe(false);
+      return "authorization_lost" as const;
+    });
+    const storage: ShortcutStorage = {
+      createIfAbsent,
+      findByIdempotencyKey: vi.fn(),
+    };
+    let enabledReads = 0;
+    const response = handlerWith(storage, {
+      isEnabled: () => ++enabledReads === 1,
+    })(request());
+
+    expect(response).toEqual({
+      status: "rejected",
+      error_code: "disabled",
+    });
+    expect(createIfAbsent).toHaveBeenCalledOnce();
   });
 
   it("returns duplicate only and recovers safely after an uncertain write", async () => {

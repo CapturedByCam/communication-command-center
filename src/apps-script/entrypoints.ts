@@ -114,9 +114,10 @@ export function doPost(e: GoogleAppsScript.Events.DoPost) {
         }
       },
       rejectionSink: {
-        recordRejected: () => {
+        recordRejected: (_event, stillAuthorized = () => true) => {
           gateway.acquire();
           try {
+            if (!stillAuthorized()) return false;
             const before = gateway.read(id, "Dead_Letter"),
               headers = assertHeaders("Dead_Letter", before.headers);
             const eventId = "dl_" + Utilities.getUuid().replace(/-/g, "");
@@ -138,6 +139,7 @@ export function doPost(e: GoogleAppsScript.Events.DoPost) {
                 after: { headers: [...headers], rows: [...before.rows, row] },
               },
             ]);
+            return true;
           } finally {
             gateway.release();
           }
@@ -289,28 +291,34 @@ export function cccHealth() {
 export function cccDisableAll() {
   return codeResult(() => {
     assertOwner();
-    const props = PropertiesService.getScriptProperties();
-    for (const name of FLAGS) props.setProperty("CCC_" + name, "false");
-    const managed = new Set([
-      "cccReconcileGmail",
-      "cccProcessStudio",
-      "cccBuildBriefing",
-    ]);
-    let deleted = 0;
-    for (const trigger of ScriptApp.getProjectTriggers())
-      if (managed.has(trigger.getHandlerFunction())) {
-        ScriptApp.deleteTrigger(trigger);
-        deleted++;
-      }
-    const remaining = ScriptApp.getProjectTriggers().filter((trigger) =>
-      managed.has(trigger.getHandlerFunction()),
-    ).length;
-    return {
-      ok: remaining === 0,
-      flags_enabled: [],
-      managed_triggers_deleted: deleted,
-      managed_triggers_remaining: remaining,
-    };
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(5000)) throw new Error("BUSY");
+    try {
+      const props = PropertiesService.getScriptProperties();
+      for (const name of FLAGS) props.setProperty("CCC_" + name, "false");
+      const managed = new Set([
+        "cccReconcileGmail",
+        "cccProcessStudio",
+        "cccBuildBriefing",
+      ]);
+      let deleted = 0;
+      for (const trigger of ScriptApp.getProjectTriggers())
+        if (managed.has(trigger.getHandlerFunction())) {
+          ScriptApp.deleteTrigger(trigger);
+          deleted++;
+        }
+      const remaining = ScriptApp.getProjectTriggers().filter((trigger) =>
+        managed.has(trigger.getHandlerFunction()),
+      ).length;
+      return {
+        ok: remaining === 0,
+        flags_enabled: [],
+        managed_triggers_deleted: deleted,
+        managed_triggers_remaining: remaining,
+      };
+    } finally {
+      lock.releaseLock();
+    }
   });
 }
 function manualResult(

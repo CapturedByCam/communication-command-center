@@ -4,12 +4,60 @@ import vm from "node:vm";
 import { z } from "zod";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { WORKBOOK_MANIFEST } from "../../src/adapters/sheets/workbook-manifest.js";
+import { itemToRecord } from "../../src/adapters/sheets/queue-repository.js";
 import { recordToRow } from "../../src/adapters/sheets/sheet-table.js";
 import { selectedSnapshotInvalidDeadLetter } from "../../src/adapters/sheets/gmail-sync-repository.js";
+import type { CommunicationItem } from "../../src/domain/types.js";
 
 interface MockTable {
   headers: string[];
   rows: unknown[][];
+}
+
+function selectedQueueRow(
+  waitingOn: CommunicationItem["waiting_on"] = "me",
+): unknown[] {
+  const headers = WORKBOOK_MANIFEST.find(
+    (sheet) => sheet.name === "Queue",
+  )!.headers;
+  const item: CommunicationItem = {
+    schema_version: "1.0",
+    item_id: "cc_bundlewaiting01",
+    source: "gmail",
+    source_record_id: "synthetic-message-1",
+    source_thread_id: "synthetic-thread-1",
+    source_link: "https://mail.google.com/mail/u/0/#all/synthetic-thread-1",
+    captured_at: "2026-09-22T12:00:00-04:00",
+    updated_at: "2026-09-22T12:00:00-04:00",
+    contact: { email: "synthetic@example.test" },
+    category: "active_project",
+    project_id: "project-1",
+    status: "open",
+    waiting_on: waitingOn,
+    urgency: "today",
+    priority_score: 85,
+    next_action_type: "reply",
+    next_action: "Reply to the synthetic message",
+    summary: "Synthetic Queue item",
+    preview: "Synthetic preview",
+    deadline_at: null,
+    deadline_text: null,
+    needs_date_review: false,
+    follow_up_at: null,
+    promised_follow_up: null,
+    draft_status: "needed",
+    gmail_draft_id: null,
+    confidence: 0.9,
+    classifier_version: "test",
+    content_hash: "a".repeat(64),
+    manual_override: false,
+    snooze_until: null,
+    resolved_at: null,
+    raw_content_stored: false,
+    last_error_code: null,
+  };
+  const record = itemToRecord(item);
+  return headers.map((header) => record[header] ?? null);
 }
 let code: string;
 beforeAll(() => {
@@ -135,7 +183,12 @@ function createRuntime(
       readonly row: number;
       readonly numRows?: number;
     };
-    readonly onPrompt?: (properties: Map<string, string>) => void;
+    readonly promptButton?: "OK" | "CANCEL";
+    readonly promptText?: string;
+    readonly onPrompt?: (
+      properties: Map<string, string>,
+      reads: readonly string[],
+    ) => void;
   } = {},
 ) {
   const properties = new Map(Object.entries(options.properties ?? {}));
@@ -150,7 +203,9 @@ function createRuntime(
   );
   const queue = tables.get("Queue")!;
   queue.headers = [...(options.queueHeaders ?? queue.headers)];
-  queue.rows = options.queueRows ?? [];
+  queue.rows = (options.queueRows ?? []).map((row) =>
+    row.map((value) => (value === null ? "" : value)),
+  );
   tables.get("Dead_Letter")!.rows = (options.deadLetterRows ?? []).map((row) =>
     row.map((value) => (value === null ? "" : value)),
   );
@@ -164,10 +219,10 @@ function createRuntime(
   const logs = vi.fn();
   const toast = vi.fn();
   const prompt = vi.fn(() => {
-    options.onPrompt?.(properties);
+    options.onPrompt?.(properties, reads);
     return {
-      getSelectedButton: () => "OK",
-      getResponseText: () => "2026-09-25T14:30:00-04:00",
+      getSelectedButton: () => options.promptButton ?? "OK",
+      getResponseText: () => options.promptText ?? "2026-09-25T14:30:00-04:00",
     };
   });
   const gmailGets = vi.fn();
@@ -324,6 +379,7 @@ describe("deployable Apps Script bundle", () => {
       "cccResolveSelectedQueueRow",
       "cccReopenSelectedQueueRow",
       "cccSnoozeSelectedQueueRow",
+      "cccSetSelectedQueueWaiting",
       "cccRetrySelectedGmailSnapshotFailure",
       "cccReplaySelectedGmailQueueItem",
     ])
@@ -421,7 +477,17 @@ describe("deployable Apps Script bundle", () => {
       "Resolve selected Queue row",
       "cccResolveSelectedQueueRow",
     );
+    expect(runtime.menu.addItem).toHaveBeenCalledWith(
+      "Set selected Queue waiting state",
+      "cccSetSelectedQueueWaiting",
+    );
     await expect(runtime.context.cccResolveSelectedQueueRow()).resolves.toEqual(
+      {
+        ok: true,
+        status: "disabled",
+      },
+    );
+    await expect(runtime.context.cccSetSelectedQueueWaiting()).resolves.toEqual(
       {
         ok: true,
         status: "disabled",
@@ -442,6 +508,74 @@ describe("deployable Apps Script bundle", () => {
     ).resolves.toEqual({ ok: true, status: "disabled" });
     expect(runtime.reads).toEqual([]);
     expect(runtime.prompt).toHaveBeenCalledTimes(0);
+  });
+
+  it("passes an exact waiting state through the native prompt and fails closed after cancellation or prompt-time disable", async () => {
+    const configured = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_MANUAL_WRITES: "true",
+      },
+      selection: { sheetName: "Queue", row: 2 },
+      queueRows: [selectedQueueRow("me")],
+      promptText: "them",
+    });
+    await expect(
+      configured.context.cccSetSelectedQueueWaiting(),
+    ).resolves.toEqual({ ok: true, status: "waiting_updated" });
+    expect(configured.prompt).toHaveBeenCalledWith(
+      "Set selected Queue waiting state",
+      "Enter exactly one value: me, them, none, or unknown.",
+      "OK_CANCEL",
+    );
+    expect(configured.batchUpdate).toHaveBeenCalledOnce();
+    const changedSheetIds =
+      configured.batchUpdate.mock.calls[0]![0].requests.map(
+        (request: { updateCells: { start: { sheetId: number } } }) =>
+          request.updateCells.start.sheetId,
+      );
+    expect(changedSheetIds).toEqual(
+      ["Queue", "Audit_Log"].map(
+        (name) =>
+          WORKBOOK_MANIFEST.findIndex((sheet) => sheet.name === name) + 1,
+      ),
+    );
+    expect(JSON.stringify(configured.batchUpdate.mock.calls)).toContain("them");
+
+    const cancelled = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_MANUAL_WRITES: "true",
+      },
+      selection: { sheetName: "Queue", row: 2 },
+      queueRows: [selectedQueueRow("me")],
+      promptButton: "CANCEL",
+    });
+    await expect(
+      cancelled.context.cccSetSelectedQueueWaiting(),
+    ).resolves.toEqual({ ok: true, status: "cancelled" });
+    expect(cancelled.batchUpdate).not.toHaveBeenCalled();
+
+    let readsAtPrompt = -1;
+    const disabledDuringPrompt = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_MANUAL_WRITES: "true",
+      },
+      selection: { sheetName: "Queue", row: 2 },
+      queueRows: [selectedQueueRow("me")],
+      promptText: "them",
+      onPrompt: (properties, reads) => {
+        readsAtPrompt = reads.length;
+        properties.set("CCC_MANUAL_WRITES", "false");
+      },
+    });
+    await expect(
+      disabledDuringPrompt.context.cccSetSelectedQueueWaiting(),
+    ).resolves.toEqual({ ok: true, status: "disabled" });
+    expect(readsAtPrompt).toBeGreaterThan(0);
+    expect(disabledDuringPrompt.reads).toHaveLength(readsAtPrompt);
+    expect(disabledDuringPrompt.batchUpdate).not.toHaveBeenCalled();
   });
 
   it("does not inspect a selected row when Gmail intake is disabled", async () => {

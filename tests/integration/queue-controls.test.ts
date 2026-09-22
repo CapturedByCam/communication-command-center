@@ -186,3 +186,89 @@ describe("manual Queue controls", () => {
     expect(t.tables.get("Audit_Log")!.rows).toHaveLength(0);
   });
 });
+
+describe("manual waiting-state control", () => {
+  it.each(["me", "them", "none", "unknown"] as const)(
+    "sets %s while preserving every unrelated Queue value and appending one hashed audit event",
+    async (waitingOn) => {
+      const t = setup(
+        item({
+          status: "snoozed",
+          snooze_until: "2026-09-25T12:00:00-04:00",
+          waiting_on: waitingOn === "unknown" ? "me" : "unknown",
+        }),
+      );
+      const before = structuredClone(t.tables.get("Queue")!.rows[0]!);
+      await expect(
+        applyManualQueueControl(t.gateway, {
+          ...t.request("set_waiting"),
+          waitingOn,
+        }),
+      ).resolves.toEqual({ ok: true, status: "waiting_updated" });
+      const after = t.tables.get("Queue")!.rows[0]!;
+      const headers = t.tables.get("Queue")!.headers;
+      for (const [index, header] of headers.entries()) {
+        if (["waiting_on", "manual_override", "updated_at"].includes(header))
+          continue;
+        expect(after[index]).toEqual(before[index]);
+      }
+      expect(after[headers.indexOf("waiting_on")]).toBe(waitingOn);
+      expect(after[headers.indexOf("manual_override")]).toBe(true);
+      const audit = t.tables.get("Audit_Log")!;
+      expect(audit.rows).toHaveLength(1);
+      expect(audit.rows[0]![audit.headers.indexOf("payload_hash")]).toBe(
+        sha256(
+          JSON.stringify({
+            operation: "set_waiting",
+            waiting_on: waitingOn,
+            item_id: "cc_queuecontrol01",
+          }),
+        ),
+      );
+      expect(JSON.stringify(audit.rows)).not.toContain(waitingOn);
+    },
+  );
+
+  it("rejects invalid or stale states and makes identical values a true no-op", async () => {
+    const invalid = setup();
+    await expect(
+      applyManualQueueControl(invalid.gateway, {
+        ...invalid.request("set_waiting"),
+        waitingOn: "model-guessed",
+      }),
+    ).resolves.toEqual({ ok: false, error_code: "INVALID_WAITING_STATE" });
+    expect(invalid.reads()).toBe(0);
+
+    const closed = setup(item({ status: "resolved" }));
+    await expect(
+      applyManualQueueControl(closed.gateway, {
+        ...closed.request("set_waiting"),
+        waitingOn: "them",
+      }),
+    ).resolves.toEqual({ ok: false, error_code: "STALE_STATE" });
+    expect(closed.commits()).toBe(0);
+
+    const unchanged = setup();
+    const before = structuredClone(unchanged.tables.get("Queue")!.rows[0]!);
+    await expect(
+      applyManualQueueControl(unchanged.gateway, {
+        ...unchanged.request("set_waiting"),
+        waitingOn: "me",
+      }),
+    ).resolves.toEqual({ ok: true, status: "unchanged" });
+    expect(unchanged.tables.get("Queue")!.rows[0]).toEqual(before);
+    expect(unchanged.tables.get("Audit_Log")!.rows).toHaveLength(0);
+    expect(unchanged.commits()).toBe(0);
+
+    const disabled = setup();
+    await expect(
+      applyManualQueueControl(disabled.gateway, {
+        ...disabled.request("set_waiting"),
+        waitingOn: "them",
+        authorize: () => false,
+      }),
+    ).resolves.toEqual({ ok: true, status: "disabled" });
+    expect(disabled.reads()).toBe(0);
+    expect(disabled.commits()).toBe(0);
+  });
+});

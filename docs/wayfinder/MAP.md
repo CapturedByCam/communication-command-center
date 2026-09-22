@@ -73,7 +73,9 @@ The private Studio-step design is documented, while account installation and
 starter-variable acceptance remain separate gates; see [Studio custom Apps Script
 step](../implementation/STUDIO_CUSTOM_STEP.md). See [execution record](../implementation/V1_EXECUTION.md) for evidence and gates.
 
-Queue operator decision, 2026-09-22: owner-only Resolve, Reopen and explicit-offset
-Snooze menu actions use a separate default-off flag and the shared transaction
+Queue operator decision, 2026-09-22: owner-only Resolve, Reopen, explicit-offset
+Snooze and exact waiting-state menu actions use a separate default-off flag and the shared transaction
 lock. Recheck authorization and the complete selected row after the prompt;
 commit Queue and Audit_Log together. See [Queue operator controls](../implementation/QUEUE_OPERATOR_CONTROLS.md).
+
+Manual waiting-state decision, 2026-09-22: complete the documented waiting command through the guarded selected-row transaction. See [decision 109](tickets/109-manual-waiting-state.md).

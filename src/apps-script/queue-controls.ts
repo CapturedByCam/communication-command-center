@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WaitingOnSchema } from "../domain/schemas.js";
 import { AuditRepository } from "../adapters/sheets/audit-repository.js";
 import {
   queueItemFromRow,
@@ -15,7 +16,8 @@ const SnoozeTimestampSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?[+-]\d{2}:\d{2}$/)
   .datetime({ offset: true });
 
-export type ManualQueueOperation = "resolve" | "reopen" | "snooze";
+export type ManualQueueOperation =
+  "resolve" | "reopen" | "snooze" | "set_waiting";
 
 export interface ManualQueueControlRequest {
   readonly operation: ManualQueueOperation;
@@ -23,6 +25,7 @@ export interface ManualQueueControlRequest {
   readonly selectedRowIndex: number;
   readonly selectedRow: readonly CellValue[];
   readonly snoozeUntil?: string;
+  readonly waitingOn?: string;
   readonly now: () => Date;
   readonly sha256: (value: string) => string;
   /** Trusted runtime gate rechecked after the prompt, while the shared lock is held. */
@@ -32,7 +35,13 @@ export interface ManualQueueControlRequest {
 export type ManualQueueControlResult =
   | {
       readonly ok: true;
-      readonly status: "resolved" | "open" | "snoozed" | "disabled";
+      readonly status:
+        | "resolved"
+        | "open"
+        | "snoozed"
+        | "waiting_updated"
+        | "unchanged"
+        | "disabled";
     }
   | { readonly ok: false; readonly error_code: string };
 
@@ -51,6 +60,7 @@ function transition(
   item: ReturnType<typeof queueItemFromRow>,
   now: Date,
   snoozeUntil: string | undefined,
+  waitingOn: string | undefined,
 ) {
   const timestamp = now.toISOString();
   if (item.status === "archived") return null;
@@ -76,6 +86,18 @@ function transition(
       updated_at: timestamp,
     };
   }
+  if (operation === "set_waiting") {
+    const requested = WaitingOnSchema.safeParse(waitingOn);
+    if (!requested.success) return undefined;
+    if (item.status !== "open" && item.status !== "snoozed") return null;
+    if (item.waiting_on === requested.data) return "unchanged" as const;
+    return {
+      ...item,
+      waiting_on: requested.data,
+      manual_override: true,
+      updated_at: timestamp,
+    };
+  }
   const explicitSnooze = validSnooze(snoozeUntil, now);
   if (item.status !== "open" || !explicitSnooze) return undefined;
   return {
@@ -96,9 +118,14 @@ export async function applyManualQueueControl(
   if (
     !Number.isInteger(request.selectedRowIndex) ||
     request.selectedRowIndex < 0 ||
-    !["resolve", "reopen", "snooze"].includes(request.operation)
+    !["resolve", "reopen", "snooze", "set_waiting"].includes(request.operation)
   )
     return rejected("INVALID_SELECTION");
+  if (
+    request.operation === "set_waiting" &&
+    !WaitingOnSchema.safeParse(request.waitingOn).success
+  )
+    return rejected("INVALID_WAITING_STATE");
 
   const now = request.now();
   if (Number.isNaN(now.getTime())) return rejected("INVALID_CLOCK");
@@ -123,8 +150,15 @@ export async function applyManualQueueControl(
         item,
         now,
         request.snoozeUntil,
+        request.waitingOn,
       );
-      if (updated === undefined) return rejected("INVALID_SNOOZE_TIMESTAMP");
+      if (updated === undefined)
+        return rejected(
+          request.operation === "set_waiting"
+            ? "INVALID_WAITING_STATE"
+            : "INVALID_SNOOZE_TIMESTAMP",
+        );
+      if (updated === "unchanged") return { ok: true, status: "unchanged" };
       if (updated === null) return rejected("STALE_STATE");
 
       await audit.verifyHeaders();
@@ -144,19 +178,29 @@ export async function applyManualQueueControl(
         result: "updated",
         error_code: null,
         payload_hash: request.sha256(
-          JSON.stringify({
-            operation: request.operation,
-            item_id: item.item_id,
-          }),
+          JSON.stringify(
+            request.operation === "set_waiting"
+              ? {
+                  operation: request.operation,
+                  waiting_on: request.waitingOn,
+                  item_id: item.item_id,
+                }
+              : { operation: request.operation, item_id: item.item_id },
+          ),
         ),
         duration_ms: 0,
         actor: "manual_queue_control",
         correlation_id: `manual_queue_control:${auditIdentity}`,
       });
-      return {
-        ok: true,
-        status: updated.status,
-      };
+      if (request.operation === "set_waiting")
+        return { ok: true, status: "waiting_updated" };
+      if (
+        updated.status !== "resolved" &&
+        updated.status !== "open" &&
+        updated.status !== "snoozed"
+      )
+        return rejected("STALE_STATE");
+      return { ok: true, status: updated.status };
     });
   } catch {
     // Provider uncertainty is deliberately not retried; neither source values nor errors escape.

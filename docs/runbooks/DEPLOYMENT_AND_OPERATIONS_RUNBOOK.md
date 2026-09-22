@@ -8,11 +8,11 @@
 - **Current resources:** the private workbook is initialized with all ten manifest
   tabs; its time zone is `America/New_York`; a private pre-activation backup is
   verified. The resource bindings remain in ignored local records.
-- **Current safety state:** health verified every flag false; a later Gmail/briefing
+- **Current safety state:** version 1 health verified its six flags false; a later Gmail/briefing
   pilot flag save was interrupted by screen lock and its outcome is unknown. No trigger, Shortcut
   token, installed Shortcut, mailbox processing, or application-created draft
   exists, and no application-created Google message has been sent.
-- **Deployment state:** immutable Apps Script version 1 is deployed as an
+- **Deployment state:** immutable Apps Script version 2 is deployed as an
   owner-only web app (`access: "MYSELF"`, `executeAs: "USER_DEPLOYING"`). The
   deployed `Code.js` exactly matches `dist/Code.js` after LF normalization and
   its manifest semantically matches `dist/appsscript.json`.
@@ -28,9 +28,9 @@ comparison, private backup handling, and version rollback.
 | Action | Current treatment |
 | --- | --- |
 | Local build, tests, and offline drift comparison | Safe local work |
-| Private Apps Script test deployment | Version 1 deployed; owner-only and immutable |
-| `cccHealth` | Passed: ten valid headers and all six flags false at check time |
-| `cccGmailReadProbe` | Passed: approved mailbox, one bounded metadata message, no mutations |
+| Private Apps Script test deployment | Version 2 deployed; owner-only and immutable |
+| `cccHealth` | Version 1 baseline passed: ten valid headers and six flags false at check time; version 2 check pending |
+| `cccGmailReadProbe` | Version 1 baseline passed: approved mailbox, one bounded metadata message, no mutations |
 | Pilot processing flags | Gmail/briefing save attempted; screen lock left its outcome unknown |
 | Create a trigger, provision a Shortcut token, or install a Shortcut | Not yet performed; requires its documented live acceptance evidence |
 | Bind a model provider or make a paid billing change | Blocked; no paid upgrade |
@@ -94,12 +94,12 @@ the detailed procedure in [Runtime operations](RUNTIME_OPERATIONS.md).
 
 ## Phase 3 — Private Apps Script test deployment
 
-Immutable Apps Script version 1 is deployed privately with `MYSELF` /
+Immutable Apps Script version 2 is deployed privately with `MYSELF` /
 `USER_DEPLOYING`; exact deployed code and semantic manifest comparison against
 `dist` passed. Do not create a domain, logged-in-user, or anonymous deployment.
 No token or phone test is active.
 
-`cccHealth()` passed at 03:14:57 EDT with all ten headers valid and all six flags
+On version 1, `cccHealth()` passed at 03:14:57 EDT with all ten headers valid and all six flags
 false. `cccGmailReadProbe()` passed at 03:15:49 EDT with `ok: true`,
 `mailbox_verified: true`, `bounded_days: 30`, `sampled_messages: 1`,
 `metadata_verified: true`, `raw_content_stored: false`, and `mutations: 0`.
@@ -188,3 +188,8 @@ evidence, and unresolved gates. Include links to
 [V1 execution](../implementation/V1_EXECUTION.md), [PMC current state](../../PMC/Current%20State.md),
 and [runtime operations](RUNTIME_OPERATIONS.md). Never include resource IDs,
 tokens, source content, or OAuth material.
+
+Version 2 adds the guarded Queue menu and the independent default-off
+`CCC_MANUAL_WRITES` flag. Its source and unchanged manifest were verified against
+the immutable deployment; live menu, health and disable checks are still pending.
+The earlier six-flag health result describes version 1, not a fresh version 2 run.

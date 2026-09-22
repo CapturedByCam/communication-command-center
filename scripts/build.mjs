@@ -8,6 +8,7 @@ await mkdir("dist", { recursive: true });
 const entrypoints = [
   "doGet",
   "doPost",
+  "onOpen",
   "cccInitializePilot",
   "cccHealth",
   "cccDisableAll",
@@ -15,6 +16,9 @@ const entrypoints = [
   "cccGmailReadProbe",
   "cccReconcileGmail",
   "cccProcessStudio",
+  "cccResolveSelectedQueueRow",
+  "cccReopenSelectedQueueRow",
+  "cccSnoozeSelectedQueueRow",
 ];
 await build({
   entryPoints: [entrypoint],

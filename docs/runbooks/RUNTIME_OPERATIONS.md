@@ -10,13 +10,14 @@ or send a Google message.
 The checked-in manifest configures the web app with
 `webapp.access: "MYSELF"` and `webapp.executeAs: "USER_DEPLOYING"`. That is a
 private operator deployment: only the deploying operator can access it and it
-runs as that operator. Immutable version 1 is deployed with this configuration.
+runs as that operator. Immutable version 2 is deployed with this configuration.
 Its `SERVER_JS` source exactly matches `dist/Code.js` after LF normalization and
 its manifest semantically matches `dist/appsscript.json`.
 
 Keep all feature flags false and do not create time-driven triggers until the
 controlled live checks and feature-specific acceptance evidence pass. `cccHealth`
-and `cccGmailReadProbe` passed. A later save enabling Gmail/briefing for manual
+and `cccGmailReadProbe` passed on version 1. Version 2 adds default-off Queue
+controls; its live menu, health and disable checks remain pending. A later save enabling Gmail/briefing for manual
 pilot tests was interrupted by screen lock; its outcome is unknown. Inspect
 properties before further tests. No triggers exist. The manifest's Gmail scope
 is read-only; V1 has no send path.
@@ -64,3 +65,17 @@ Rollback does not notify Google contacts, send messages, delete Gmail drafts,
 delete source messages, or delete workbook records. Preserve logs and the
 private backup for diagnosis. Re-enabling any flag, trigger, or changing deployment access requires the
 applicable live-test evidence. Preserve owner-only access.
+
+## Guarded Queue operations
+
+Use the owner-only Command Center menu after its live acceptance checks. Select
+one Queue data row, then Resolve, Reopen or Snooze. Snooze requires a future ISO
+timestamp with a numeric offset. `CCC_MANUAL_WRITES` defaults false and
+`cccDisableAll` disables it. The command checks owner and enablement before reading
+Queue and again after the prompt within the shared lock. It rejects a changed row
+and atomically commits Queue plus Audit_Log. Controlled toasts report the result.
+
+Prefer these controls for status updates while workers are active. The Sheets API
+has no atomic compare-and-swap against a simultaneous raw manual Sheet edit; the
+shared Script Lock coordinates application writers only. Do not interpret these
+controls as protection against concurrent edits made directly in the grid.

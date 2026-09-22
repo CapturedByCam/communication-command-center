@@ -25,6 +25,9 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   batches, synchronous write-only HTTP handling, guarded bootstrap and kill switch,
   conservative metadata reconciliation, commitments, date normalization,
   calendar candidates without event writes, and eight-section briefing persistence.
+- Owner-only Queue menu controls implement Resolve, Reopen and explicit-offset
+  Snooze through a shared lock, complete row snapshot checks and atomic audit writes.
+  `CCC_MANUAL_WRITES` is independent and defaults off; no direct Sheet edit is needed.
 - Build fails if its real entrypoint is absent and emits Apps Script global
   functions with an explicit V8 manifest. ES2019 avoids unsupported class fields.
 - Independent reviews and regression fixes cover draft/manual override retention,
@@ -46,29 +49,38 @@ No email or Chat send transport exists in this runtime. No draft is created by i
 - Created a pre-activation workbook backup; its permission metadata also confirms
   shared=false and only the approved owner. Resource links are in the durable
   ignored `.local/PILOT_RESOURCES.md`, not the public repository.
-- Immutable owner-only web-app version 1 is deployed. Its runnable source and
+- Immutable owner-only web-app version 2 is deployed. Its runnable source and
   semantic manifest match the tested build. Unauthenticated requests redirect to
   Google sign-in and expose no Queue content.
-- `cccHealth` passed at 03:14:57 EDT: all ten headers valid and six flags false.
-- `cccGmailReadProbe` passed at 03:15:49 EDT: approved mailbox, 30-day window,
+- Version 1 `cccHealth` passed at 03:14:57 EDT: all ten headers valid and six flags false.
+- Version 1 `cccGmailReadProbe` passed at 03:15:49 EDT: approved mailbox, 30-day window,
   one metadata message, no raw content stored and zero mutations.
 - The Mac locked again while saving Gmail/briefing flags for manual pilot tests.
   Save outcome is unknown; no worker or briefing execution followed. No triggers
   have been installed. Verify properties before continuing.
+- Version 2 adds guarded Queue controls and a seventh flag, `CCC_MANUAL_WRITES`,
+  which defaults false. CLI deployment changed source only, preserving the private
+  access posture and existing properties. Live version 2 menu/health/disable checks
+  remain pending because Computer Use could not automatically unlock the Mac.
+  Version 1 remains available for rollback.
 
 ## Runtime release verification
 
-Commit e13f333 binds the guarded runtime. `pnpm verify` passed all 325 tests in 32
-files, including unit, contract, integration, schema and callable-bundle checks;
-lint, typecheck, formatting and build passed. `pnpm validate:planning` passed.
-Independent final review reported no merge blockers. This is local verification;
-live worker and model acceptance remain separate.
+Runtime release PR #31 merged at `25e3518` after required hosted checks and
+independent review (325 tests in 32 files). The Queue-controls candidate passed
+`pnpm verify` with 331 tests in 33 files; lint, typecheck, schemas, formatting
+and build passed. Final source commit `6ae04e0` changes only controlled uncertainty
+feedback; its 12 affected Queue/bundle tests and build passed. Planning checks pass.
+Independent code review reported no merge blockers. Immutable deployed version 2
+exactly matches that source build; its manifest scopes and owner-only access are
+unchanged. Live worker, menu and model acceptance remain separate.
 
 ## Feature posture
 
 | Component | Implementation | Live posture |
 | --- | --- | --- |
 | Queue/Sheets | Actual adapter and atomic bounded commits | Ten tabs initialized; live health passed; no mailbox ingestion |
+| Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Default off; live menu and disable-during-prompt acceptance pending |
 | Gmail | Native read-only metadata worker, five messages per invocation, 30-day cursor | Read probe passed; flag-save outcome unknown; worker/replay acceptance remains |
 | Drafts | Domain lifecycle and operation ledger | No bound provider, no compose scope, disabled |
 | Studio | Versioned disabled configuration and staging validation | ID equivalence and safe binding unverified; disabled |
@@ -86,7 +98,7 @@ source IDs and strict pre-persistence validation.
 
 1. Unlock the Mac and inspect the saved flags in the pilot Apps Script project.
    Health and Gmail access already passed. Test bounded metadata processing,
-   duplicate replay, live briefing persistence and `cccDisableAll` before
+   duplicate replay, guarded Queue menu actions, live briefing persistence and `cccDisableAll` before
    installing any trigger; logs must contain controlled codes/counts only.
 2. Connect a supported interpretation provider with the required privacy behavior
    within an existing paid entitlement. Actual Studio UI did not expose arbitrary

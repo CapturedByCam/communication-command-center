@@ -36,10 +36,12 @@ reply text. A fresh eight-section `Briefing_View` was generated on 2026-09-22 fo
 the five current Queue items with `delivery_channel=none`; the briefing flag is
 off again. A later bounded Gmail sweep advanced six enumeration pages, then
 returned a generic failure before processing. Queue and Dead_Letter exactly
-match the private pre-sweep backup. Gmail intake is off; leave the checkpoint in
-place until the proposed fixed stage/category diagnostic is reviewed and synced,
-then use one bounded invocation to confirm a safe continuation point. The initial
-30-day window remains incomplete.
+match the private pre-sweep backup. PR #52 merged a fixed stage/category
+diagnostic, but its bundle is not synced to Apps Script: local `clasp` has no
+saved credentials, and patching the large bundle in the authenticated editor is
+unsafe. Gmail intake is off; leave the checkpoint in place until the exact
+merged bundle is synced, then use one bounded invocation to confirm a safe
+continuation point. The initial 30-day window remains incomplete.
 
 ## Commitment storage release
 

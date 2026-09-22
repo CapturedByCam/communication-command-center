@@ -118,6 +118,21 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   with `snooze_until:null` and `manual_override:true`; bounded proof then found five
   Queue rows and eleven Audit_Log rows. Final `cccDisableAll` at 09:50:20 EDT returned
   `{ok:true,flags_enabled:[],managed_triggers_deleted:0,managed_triggers_remaining:0}`.
+- Version 5 deployed at 11:09 EDT from `ae5d2ef`. Its source SHA
+  `9a0ba51a70ac6d2d728581a00c3f31d407c2230176d65e7553e7cf59b6abf2af` and semantic
+  manifest SHA `6d2df263d5686e5b903c655da411ce96d4403c71d249321f220be50ce7f0689d` match the
+  verified build. Drift passed with unchanged `MYSELF`/`USER_DEPLOYING` access and an
+  unauthenticated Google sign-in redirect. At 11:14:40 EDT, Version 5 `cccHealth`
+  returned `ok:true`: all ten headers valid, all seven flags false,
+  `America/New_York`, and `send_capability:false`. No fresh Version 5 trigger count is
+  claimed; the 09:50 controlled zero-trigger result remains the latest such evidence.
+- Workspace Studio test add-on installation is verified: Test deployments shows an
+  Application deployment for Workspace Studio, an Uninstall button, and Installed
+  add-ons. It required no new scope or consent. A freshly reloaded empty manual flow,
+  `CCC V1 — bounded staging acceptance`, exposed no CCC/custom add-on entry after all
+  visible step categories were inspected. No step, run, source ID, or model input was
+  added. Account UI/admin/rollout gating, actual step availability, starter binding, and
+  model acceptance remain pending; the Admin passkey action is still pending.
 - Version 2 adds guarded Queue controls and a seventh flag, `CCC_MANUAL_WRITES`,
   which defaults false. CLI deployment changed source only, preserving the private
   access posture and existing properties. Version 4 live Gmail recovery, guarded
@@ -135,6 +150,9 @@ uncertainty feedback; its 12 affected Queue/bundle tests and build passed. Immut
 Version 2 deployment exactly matched that source build; its manifest scopes and owner-only
 access were unchanged. Version 4 later completed the live Gmail, manual-control and
 kill-switch checks; model acceptance remains separate.
+Gmail recovery PR #34 merged after independent review and required checks. The
+subsequent Studio custom-step branch passed full local verification: 370 tests in
+37 files; its release PR remains pending.
 
 ## Feature posture
 
@@ -144,8 +162,8 @@ kill-switch checks; model acceptance remains separate.
 | Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`; final all-off kill switch passed |
 | Gmail | Native read-only metadata worker, five messages per invocation, 30-day cursor | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
 | Drafts | Domain lifecycle and operation ledger | No bound provider, no compose scope, disabled |
-| Studio | Versioned disabled configuration and staging validation | ID equivalence and safe binding unverified; disabled |
-| Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | No token installed, no phone Shortcut installed; disabled |
+| Studio | Versioned disabled configuration and staging validation | Test add-on installation verified with no new consent; custom step absent from the reloaded manual-flow UI, so account UI/admin/rollout, starter binding and model acceptance remain unverified; disabled |
+| Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Safe setup-blocked template exists in [Shortcut installation](../../shortcuts/SHORTCUT_INSTALLATION.md); no export, network request, token, or phone Shortcut installation; disabled |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
 | Calendar | Reviewable candidates only | No Calendar mutation or runtime scope |
 
@@ -160,11 +178,11 @@ source IDs and strict pre-persistence validation.
 1. Keep all seven feature flags off while the next integration is prepared. Do not install
    a trigger or enable drafting from this pilot; retain bounded controlled-code logging.
 2. Connect a supported interpretation provider with the required privacy behavior
-   within an existing paid entitlement. The inspected Studio UI did not expose a
-   custom step or HTTP binding. Newly published official custom-step documentation
-   provides an implementation route; account availability and Admin settings still
-   require verification after passkey authentication. Draft ownership/revision data
-   remains unbound. The inspected
+   within an existing paid entitlement. The Studio test add-on is installed without
+   new consent, but its custom action remains absent from the reloaded manual-flow UI.
+   Newly published official custom-step documentation provides an implementation route;
+   account UI/admin/rollout availability and the Admin passkey action remain pending.
+   Draft ownership/revision data remains unbound. The inspected
    Cloud project showed an expired free trial and a free-trial billing account;
    Vertex requires enabled billing. No billing upgrade was made. Free Gemini API
    terms are unsuitable for private-message processing here. An eligible existing

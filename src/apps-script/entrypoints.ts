@@ -1,4 +1,8 @@
 import "./runtime-polyfills.js";
+export {
+  cccConfigureStudioStep,
+  cccExecuteStudioStep,
+} from "./studio-native.js";
 import {
   WORKBOOK_MANIFEST,
   headersEqual,

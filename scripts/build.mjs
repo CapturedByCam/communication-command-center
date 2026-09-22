@@ -16,6 +16,8 @@ const entrypoints = [
   "cccGmailReadProbe",
   "cccReconcileGmail",
   "cccProcessStudio",
+  "cccConfigureStudioStep",
+  "cccExecuteStudioStep",
   "cccResolveSelectedQueueRow",
   "cccReopenSelectedQueueRow",
   "cccSnoozeSelectedQueueRow",

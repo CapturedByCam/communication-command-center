@@ -29,6 +29,7 @@ Reach an implementation-ready, privacy-reviewed specification and a verified del
 - [Keep briefing delivery disabled under the current no-send instruction](tickets/104-briefing-delivery.md): Generate the private Sheet view on demand; no Google Chat or email transport.
 - [Use curated Contacts and Projects as canonical context](tickets/105-context-registry-source.md): ChatGPT memories may suggest records during explicit review, but nothing memory-derived persists without approval and a deterministic identifier.
 - [Use the approved pilot sample and thresholds](tickets/106-pilot-evaluation.md): Evaluate at least 50 approved or sanitized examples against the specified accuracy, privacy, and no-send thresholds.
+- [Validate Studio interpretation through a private Apps Script custom step](tickets/107-studio-custom-step.md): Keep a bounded metadata-only staging action private, flag-gated, and separately prove installation, starter binding, and model usefulness.
 
 Repository operations decision, 2026-09-22: Cam made the repository public and
 authorized Actions and branch protections. Require PRs and verified CI through
@@ -66,7 +67,9 @@ remain unsent. Apps Script owns deterministic validation, source IDs and draft
 ownership; visible Studio steps alone do not prove those capabilities. The native
 metadata pilot reads selected messages only within its bounded query and always
 requires review. Full interpretation and drafts need a verified provider binding.
-See [execution record](../implementation/V1_EXECUTION.md) for evidence and gates.
+The private Studio-step design is documented, while account installation and
+starter-variable acceptance remain separate gates; see [Studio custom Apps Script
+step](../implementation/STUDIO_CUSTOM_STEP.md). See [execution record](../implementation/V1_EXECUTION.md) for evidence and gates.
 
 Queue operator decision, 2026-09-22: owner-only Resolve, Reopen and explicit-offset
 Snooze menu actions use a separate default-off flag and the shared transaction

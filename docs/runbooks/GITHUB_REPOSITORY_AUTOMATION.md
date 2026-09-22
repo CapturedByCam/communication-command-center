@@ -39,7 +39,8 @@ deployment gates are not configured because the project has no such workflow.
 
 - Default `GITHUB_TOKEN` permissions: read-only. Actions cannot create or
   approve pull requests using the repository default permission setting.
-- Allowed actions: GitHub-owned actions plus `pnpm/action-setup@*`. Other
+- Allowed actions: GitHub-owned actions plus `pnpm/action-setup@*` and the
+  pinned `dependabot/fetch-metadata` commit used by auto-merge. Other
   Marketplace actions need an explicit allowlist update. Require full commit
   SHA pins for actions at repository level.
 - All external contributors require approval before fork PR workflows run.
@@ -48,14 +49,51 @@ deployment gates are not configured because the project has no such workflow.
   free of private content and credentials.
 - Enable Dependabot vulnerability alerts and security-update PRs. Weekly
   Actions and npm/pnpm version updates are configured in `.github/dependabot.yml`.
-  Dependency PRs use the same verification gate and are not automatically merged.
+  Dependency PRs use the same verification gate. Eligible development patches
+  are enrolled in protected auto-merge as described below.
 - Enable secret scanning, secret push protection, and private vulnerability
   reporting.
-- Enable GitHub-managed CodeQL default setup for JavaScript/TypeScript and
-  Python. GitHub owns the analysis workflow; the repository does not deploy it.
+- Enable GitHub-managed CodeQL default setup for JavaScript/TypeScript,
+  Python, and Actions. GitHub owns the analysis workflow.
 - Offer branch updates and automatically delete merged remote branches.
-  Existing local worktrees are not removed. Auto-merge remains available only
-  when a maintainer explicitly enables it on an individual PR.
+  Existing local worktrees are not removed.
+
+## Guarded auto-merge
+
+Cam authorized safe auto-merge on 2026-09-22 in issue #27.
+`.github/workflows/dependabot-auto-merge.yml` automatically enables native
+GitHub squash auto-merge only when every update is a stable patch to a direct
+development dependency in the root npm/pnpm package. Only modifications to
+`package.json` and `pnpm-lock.yaml` are eligible. Mixed groups must satisfy the
+policy for every dependency. Minor and major versions, prereleases, production
+dependencies, Actions, and application changes remain manual.
+
+The policy requires exactly one commit, and the pinned metadata action verifies
+Dependabot's identity and that commit's signature.
+The policy also checks the current PR author, repository, target, draft state,
+complete changed-file list, and head SHA. This privileged `pull_request_target`
+workflow checks out only the trusted base SHA, never installs dependencies or
+executes PR code, and uses no personal token. Its write permissions are confined
+to this job; ordinary CI remains read-only. Automated enrollment is cleared
+before each reevaluation, and the final request must match the evaluated head.
+The head guard applies when enabling auto-merge, not permanently: GitHub can
+retain enrollment after a maintainer pushes. Disable auto-merge before manually
+modifying an enrolled PR; asynchronous reevaluation may not finish before its
+checks do. This policy trusts repository writers, currently Cam alone.
+
+Native auto-merge still requires all main-branch rules: an up-to-date branch,
+passing repository verification, CodeQL, and resolved review conversations.
+There is no admin bypass or automatic approval. Checks reduce risk but do not
+guarantee that a dependency is defect-free. Dependabot rebases may rerun checks;
+conflicts or unmet requirements leave the PR open.
+
+Maintainers can enable auto-merge individually after reviewing other PRs.
+Application milestone acceptance remains required; this workflow does not grant
+product acceptance, deploy code, or authorize Google access. Existing PRs must
+receive a new supported PR event after this workflow reaches main, or be
+reviewed and enabled individually. Disable auto-merge on an individual PR with
+`gh pr merge NUMBER --disable-auto`; disable the workflow to stop future
+automatic enrollment.
 
 ## Verification and maintenance
 

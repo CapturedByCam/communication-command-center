@@ -13,14 +13,20 @@ This work runs independently of the Milestone 3 Gmail pilot.
   chronology commits `8b01ebd` and `453f41a`, plus bounded reconciliation at
   `7f61d9e`. Those commits are not on `main`; this snapshot does not establish
   Milestone 3 acceptance or verification of its latest work.
+  Its local implementation is now proposed in [PR #22](https://github.com/CapturedByCam/communication-command-center/pull/22).
 - This branch is `codex/milestone-4-workspace-studio`, based on `6bf1875`.
 - Implementation commit: `26924cf` (`feat: prepare Workspace Studio intake contracts`).
 - Main, the Milestone 3 worktree, Gmail adapter files, and persisted schemas were
   left unchanged. Reconcile shared PMC notes when integrating the branches;
   preserve both workstreams' latest evidence.
 - No Google access, real messages, Sheet writes, drafts, deployments, or flow
-  test runs were performed. No GitHub issue, push, or PR has been created for
-  this branch; external writes remain gated by project instructions.
+  test runs were performed.
+- Cam approved GitHub publication on 2026-09-22. The branch is pushed;
+  [issue #23](https://github.com/CapturedByCam/communication-command-center/issues/23)
+  tracks the complete milestone, and
+  [draft PR #24](https://github.com/CapturedByCam/communication-command-center/pull/24)
+  contains this local preparation. The PR does not close the milestone issue.
+  Merge and Google/account operations remain separate approval gates.
 
 ## Delivered locally
 
@@ -60,9 +66,8 @@ This work runs independently of the Milestone 3 Gmail pilot.
 
 ## Remaining gates and next actions
 
-1. Preserve the independently reviewed branch for owner review. Publish a
-   focused implementation issue/PR only after the
-   external-write gate. No merge is authorized here.
+1. Review draft PR #24 against the local scope and keep issue #23 open for
+   the remaining milestone acceptance work. No merge is authorized here.
 2. Integrate the accepted Milestone 3 contracts, keeping authoritative Gmail
    chronology, canonical deduplication, manual overrides, and missed-event
    recovery in the backend. A stable staging key is not itself deduplication.

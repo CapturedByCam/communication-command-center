@@ -50,13 +50,17 @@ Branch `codex/milestone-4-workspace-studio`, based on `6bf1875`, implements the
 disabled manifest, pinned prompts, strict staging preparation, and synthetic
 tests at `26924cf`. Full verification passes with 115 tests; independent review
 found no actionable defects for this local scope. A neutral bundle smoke test
-also passed. No real flow, Google permission, Sheet write, draft, deployment,
-or GitHub publication was performed.
+also passed. No real flow, Google permission, Sheet write, draft, or deployment
+was performed. Cam approved GitHub publication on 2026-09-22: the branch is
+pushed, [issue #23](https://github.com/CapturedByCam/communication-command-center/issues/23)
+tracks the milestone, and [draft PR #24](https://github.com/CapturedByCam/communication-command-center/pull/24)
+proposes this local preparation. The PR must not close the milestone issue.
 
 A read-only snapshot of the parallel Milestone 3 branch on 2026-09-22 found
 chronology and bounded reconciliation committed through `7f61d9e`. Main still
 points to `6bf1875`; Milestone 3 acceptance and its latest verification belong
 to that workstream.
+Its local implementation is proposed in [PR #22](https://github.com/CapturedByCam/communication-command-center/pull/22).
 
 Next: owner review; integrate the accepted Milestone 3 contracts; resolve the
 documented deterministic binding and draft-lifecycle gaps; then obtain the

@@ -47,6 +47,7 @@
 - [Milestone 2 implementation issue #17](https://github.com/CapturedByCam/communication-command-center/issues/17) is closed as completed through PR #18.
 - [Repository automation issue #19](https://github.com/CapturedByCam/communication-command-center/issues/19) is open through PR #20; automatic CI passes, but required-check enforcement is unavailable for this private repository under the current GitHub plan.
 - [Milestone 3 implementation issue #21](https://github.com/CapturedByCam/communication-command-center/issues/21) is open for the Gmail pilot.
+- [Milestone 4 implementation issue #23](https://github.com/CapturedByCam/communication-command-center/issues/23) tracks the full Studio milestone; [draft PR #24](https://github.com/CapturedByCam/communication-command-center/pull/24) proposes the local preparation.
 
 ## Next action
 
@@ -61,6 +62,10 @@ prompt hashes, strict staging preparation, synthetic contracts, and integration
 fixture pass full verification (115 tests). Independent review found no
 actionable defects for this local scope. No Google state or shared-main files
 were changed by this task.
+
+Cam approved GitHub publication on 2026-09-22. The branch is published through
+draft PR #24, with issue #23 left open for live integration and acceptance.
+This approval does not authorize merge or Google/account operations.
 
 Milestone 4 is not accepted or live. Studio's deterministic validation binding,
 event metadata, draft idempotency/thread targeting, and account tests remain

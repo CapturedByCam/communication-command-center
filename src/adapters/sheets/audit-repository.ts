@@ -84,4 +84,12 @@ export class AuditRepository {
     const headers = assertHeaders(sheetName, table.headers);
     return table.rows.map((row) => fromRow(headers, row));
   }
+
+  async findByCorrelationId(correlationId: string): Promise<AuditEvent | null> {
+    return (
+      (await this.list()).find(
+        (event) => event.correlation_id === correlationId,
+      ) ?? null
+    );
+  }
 }

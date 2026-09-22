@@ -22,16 +22,22 @@ export interface UpsertResult {
   readonly item: CommunicationItem;
 }
 
-function preserveManualFields(
+function mergeIncomingItem(
   existing: CommunicationItem,
   incoming: CommunicationItem,
 ): CommunicationItem {
+  const next: CommunicationItem = {
+    ...incoming,
+    item_id: existing.item_id,
+    captured_at: existing.captured_at,
+  };
+
   if (!existing.manual_override) {
-    return incoming;
+    return next;
   }
 
   return {
-    ...incoming,
+    ...next,
     category: existing.category,
     status: existing.status,
     waiting_on: existing.waiting_on,
@@ -75,8 +81,16 @@ export async function upsertCommunicationItem(
     incoming.source,
     incoming.source_thread_id,
   );
+  const priorEvent = await dependencies.audit.findByCorrelationId(
+    context.correlationId,
+  );
 
-  if (existing?.content_hash === incoming.content_hash) {
+  if (priorEvent) {
+    if (!existing) {
+      throw new Error(
+        "Audit correlation exists without its canonical queue item",
+      );
+    }
     const outcome = "duplicate_suppressed" as const;
     await dependencies.audit.append(
       buildAuditEvent(existing, outcome, context),
@@ -84,7 +98,7 @@ export async function upsertCommunicationItem(
     return { outcome, item: existing };
   }
 
-  const next = existing ? preserveManualFields(existing, incoming) : incoming;
+  const next = existing ? mergeIncomingItem(existing, incoming) : incoming;
   const outcome = await dependencies.queue.upsert(next);
   await dependencies.audit.append(buildAuditEvent(next, outcome, context));
   return { outcome, item: next };

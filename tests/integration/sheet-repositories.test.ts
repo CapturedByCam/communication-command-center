@@ -120,12 +120,12 @@ const baseItem: CommunicationItem = {
   last_error_code: null,
 };
 
-function context(sequence: number) {
+function context(sequence: number, correlationId = `correlation-${sequence}`) {
   return {
     auditEventId: `audit-${sequence}`,
     eventAt: `2026-09-22T12:0${sequence}:00Z`,
     actor: "system",
-    correlationId: `correlation-${sequence}`,
+    correlationId,
     durationMs: sequence,
     payloadHash: String(sequence).repeat(64).slice(0, 64),
   } as const;
@@ -152,7 +152,7 @@ describe("idempotent Sheet repositories", () => {
     const second = await upsertCommunicationItem(
       { queue, audit },
       baseItem,
-      context(2),
+      context(2, "correlation-1"),
     );
 
     expect(first.outcome).toBe("created");
@@ -180,6 +180,7 @@ describe("idempotent Sheet repositories", () => {
 
     const incoming: CommunicationItem = {
       ...baseItem,
+      item_id: "cc_abcdefghijkl",
       category: "personal",
       status: "resolved",
       waiting_on: "none",
@@ -199,6 +200,7 @@ describe("idempotent Sheet repositories", () => {
       status: "snoozed",
       waiting_on: "them",
       manual_override: true,
+      item_id: "cc_123456789012",
       updated_at: "2026-09-22T13:00:00Z",
       content_hash: "b".repeat(64),
     });
@@ -215,21 +217,18 @@ describe("idempotent Sheet repositories", () => {
         ...baseItem,
         updated_at: "2026-09-22T12:10:00Z",
         summary: "Updated synthetic summary.",
-        content_hash: "b".repeat(64),
       },
       {
         ...baseItem,
         updated_at: "2026-09-22T12:20:00Z",
         status: "snoozed",
         snooze_until: "2026-09-25T12:00:00Z",
-        content_hash: "c".repeat(64),
       },
       {
         ...baseItem,
         updated_at: "2026-09-22T12:30:00Z",
         status: "resolved",
         resolved_at: "2026-09-22T12:30:00Z",
-        content_hash: "d".repeat(64),
       },
     ];
 
@@ -241,7 +240,7 @@ describe("idempotent Sheet repositories", () => {
     expect(await queue.getBySourceThread("gmail", "thread-1")).toMatchObject({
       status: "resolved",
       resolved_at: "2026-09-22T12:30:00Z",
-      content_hash: "d".repeat(64),
+      content_hash: "a".repeat(64),
     });
     expect((await audit.list()).map((event) => event.result)).toEqual([
       "created",

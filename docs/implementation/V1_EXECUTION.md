@@ -334,8 +334,12 @@ No disable, migration, source push or deployment had been performed.
 
 ## 2026-09-22 private Commitment 1.1 release
 
-After PR #42 and migration-order PR #43 merged, the approved account and exact
-private pilot workbook were reverified. A fresh private backup passed the
+After PR #42 (`4789030589d1f0168aff87de788f29dd80155e85`) and
+migration-order PR #43 (`1f8bc3ea4fdc8f41a6ad8f2a811726caa724d868`)
+merged, the approved account and exact private pilot workbook were reverified.
+The pushed bundle was built from clean `main` at
+`1f8bc3ea4fdc8f41a6ad8f2a811726caa724d868`; `pnpm build` passed before
+the push. PR #42 required CI and CodeQL passed, and PR #43 required CI passed. A fresh private backup passed the
 owner-only and workbook-metadata checks; its ID is only in ignored
 `.local/PILOT_RESOURCES.md`. At about 14:46 EDT, `cccDisableAll` returned all
 seven flags off and zero managed triggers. The unfiltered Triggers page showed

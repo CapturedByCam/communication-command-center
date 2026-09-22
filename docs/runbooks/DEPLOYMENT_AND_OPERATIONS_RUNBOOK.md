@@ -50,7 +50,7 @@ For unexpected behavior, suspected token exposure, source/secret retention, targ
 1. Run `cccDisableAll()` from the authenticated private project when it is safe to do so.
 2. Preserve only minimal content-free evidence; do not copy source text, tokens, payloads, cookies, or OAuth material into logs, Sheets, fixtures, or notes.
 3. Preserve the private workbook and backup. Do not delete source messages, drafts, records, or ranges as diagnosis.
-4. If code rollback is required, repoint only the private deployment to a previously verified version, then run the kill switch again and recheck health.
+4. If code rollback is required, first verify workbook/schema compatibility. Version 6 or older cannot run against the migrated Commitment 1.1 workbook; restore the pre-migration backup to a new private workbook and coordinate its binding before repointing the owner-only deployment. Then run the kill switch again and recheck health.
 
 Rollback never sends a message, deletes source data, or proves recovery by itself. Re-enablement requires the relevant controlled acceptance evidence.
 

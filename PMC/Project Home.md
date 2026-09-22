@@ -4,7 +4,12 @@ Communication Command Center is a privacy-conscious, human-reviewed system for t
 
 ## Current milestone
 
-Milestone 3 — implement and verify Gmail chronology and reconciliation first with synthetic or sanitized fixtures. No Gmail permission request, mailbox access, trigger installation, or deployment is authorized yet.
+Milestone 7 private pilot preparation is underway. Immutable owner-only Apps
+Script Version 7 and the empty Commitment 1.1 migration are verified. Only
+guarded manual Queue controls are enabled; automatic intake, Studio processing,
+drafting, Shortcut capture and briefing delivery remain disabled. V1 is not
+accepted for unattended daily use. See [Current State](Current%20State.md) for
+the exact live posture and remaining provider, device and pilot gates.
 
 ## Start here
 
@@ -27,4 +32,8 @@ Milestone 3 — implement and verify Gmail chronology and reconciliation first w
 
 ## Next safe action
 
-Implement the local-only portion of [Milestone 3 issue #21](https://github.com/CapturedByCam/communication-command-center/issues/21) in a dedicated worktree. Stop and present the exact Google authorization plan before requesting permissions or accessing Gmail.
+Resolve the privacy-compatible interpretation provider and Workspace Studio
+access/retention gate, then bind and test real bounded source interpretation
+without enabling an unverified worker. Complete the local Shortcut setup and
+working-week pilot only after their individual acceptance gates. Preserve the
+owner-only deployment and no-send boundary.

@@ -4,7 +4,7 @@ Communication Command Center is a privacy-conscious, human-reviewed system for t
 
 ## Current milestone
 
-Milestone 2 — implement and verify the Sheet/backend vertical slice entirely against synthetic in-memory adapters. No cloud resources or production integrations are part of this milestone.
+Milestone 3 — implement and verify Gmail chronology and reconciliation first with synthetic or sanitized fixtures. No Gmail permission request, mailbox access, trigger installation, or deployment is authorized yet.
 
 ## Start here
 
@@ -27,4 +27,4 @@ Milestone 2 — implement and verify the Sheet/backend vertical slice entirely a
 
 ## Next safe action
 
-Implement [Milestone 2 issue #17](https://github.com/CapturedByCam/communication-command-center/issues/17) in a dedicated worktree, open a PR, and stop for review before merge or any Google integration.
+Implement the local-only portion of [Milestone 3 issue #21](https://github.com/CapturedByCam/communication-command-center/issues/21) in a dedicated worktree. Stop and present the exact Google authorization plan before requesting permissions or accessing Gmail.

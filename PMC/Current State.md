@@ -4,7 +4,8 @@
 
 - Phase 0 is complete and its Wayfinder decision frontier is resolved.
 - Milestone 1 is accepted and merged at `c37f9f3` through PR #16; its 48 tests and full verification passed before merge.
-- Milestone 2 local Sheet/backend work is authorized; no Google service access is authorized.
+- Milestone 2 is accepted and merged at `4708371` through PR #18; its 63 tests, planning validator, independent review, and full verification passed before merge.
+- Milestone 3 local Gmail chronology and reconciliation work is authorized; no Google service access is authorized.
 - The planning pack and Phase 0 package/build/test skeleton are committed to private `main`.
 - Foundation commit: `c2823de` (`chore: initialize communication command center`).
 - The local repository root is also the approved Obsidian vault root.
@@ -27,10 +28,12 @@
 - The morning alert uses private Google Chat at 8:00 AM `America/New_York` and links the private `Briefing_View` Sheet; afternoon delivery starts disabled.
 - Curated `Contacts` and `Projects` tabs are canonical. ChatGPT memories are suggestion-only during explicit review and require approval before persistence.
 - Pilot evaluation uses at least 50 approved or sanitized examples with the thresholds in the architecture specification.
+- The Milestone 3 pilot uses `contact@elev8mediaky.com` as the primary and sole in-scope Gmail identity with an initial 30-day lookback.
+- The Shortcut endpoint remains deferred to Milestone 5.
 
 ## Deferred implementation gates
 
-- Record the exact verified work mailbox aliases and initial pilot lookback window before requesting Gmail permissions or accessing production data.
+- Before requesting Gmail permissions or accessing production data, present the exact OAuth scopes, target account, query/lookback, redaction behavior, and rollback plan for approval.
 - Prove required Workspace Studio actions with successful test runs under the real account policy during the authorized Studio milestone.
 - Verify Shortcut kill switch, redacted logging, rate limiting, and assisted rotation before deployment.
 
@@ -41,8 +44,10 @@
 - All 13 decision tickets are closed with owner-approved resolutions.
 - The reconciled map issue is closed as completed.
 - [Milestone 1 implementation issue #15](https://github.com/CapturedByCam/communication-command-center/issues/15) is closed as completed.
-- [Milestone 2 implementation issue #17](https://github.com/CapturedByCam/communication-command-center/issues/17) is open for the local Sheet/backend vertical slice.
+- [Milestone 2 implementation issue #17](https://github.com/CapturedByCam/communication-command-center/issues/17) is closed as completed through PR #18.
+- [Repository automation issue #19](https://github.com/CapturedByCam/communication-command-center/issues/19) is open through PR #20; automatic CI passes, but required-check enforcement is unavailable for this private repository under the current GitHub plan.
+- [Milestone 3 implementation issue #21](https://github.com/CapturedByCam/communication-command-center/issues/21) is open for the Gmail pilot.
 
 ## Next action
 
-Implement issue #17 locally in a dedicated worktree and request review before merge. Stop before any real Sheet access, Google permission request, cloud resource creation, deployment, or production communication access.
+Implement the local-only chronology and reconciliation portion of issue #21 in a dedicated worktree and request review before merge. Stop before any Gmail permission request, real mailbox access, trigger installation, cloud resource creation, deployment, draft creation, or production communication access.

@@ -53,7 +53,13 @@ ignored and must never be shared or committed.
   synthetic cases; 50/50 waiting-state and draft-risk agreement. No real model ratings.
 - [Execution record](../docs/implementation/V1_EXECUTION.md): live evidence and limitations.
 - [Runtime operations](../docs/runbooks/RUNTIME_OPERATIONS.md): deployment drift and recovery.
-- Release PR/commit and final check counts are added after protected integration.
+- Runtime release [PR #31](https://github.com/CapturedByCam/communication-command-center/pull/31)
+  contains runtime commit `e13f333` and reviewed operating records. Local full
+  verification: 325 tests in 32 files; planning checks pass. Hosted checks and
+  protected merge status are recorded on the PR. The final main commit is also
+  recorded in the private resource note after integration.
+- [Issue #32](https://github.com/CapturedByCam/communication-command-center/issues/32)
+  tracks runtime/device/pilot acceptance; Gmail #21 and Studio #23 remain open.
 
 ## Disable and recover
 

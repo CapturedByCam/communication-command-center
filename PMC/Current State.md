@@ -6,7 +6,8 @@ Updated 2026-09-22.
 
 - Milestones 1 and 2 are merged through PR16 and PR18.
 - Gmail domain reconciliation PR22, Studio preparation PR24 and draft lifecycle
-  PR28 are merged. Issues21 and 23 retain live acceptance work.
+  PR28 are merged. Issues21 and 23 retain live acceptance work; issue32 tracks remaining runtime,
+  device and elapsed-pilot acceptance.
 - The public GitHub repository and its required checks/reviews remain protected.
 - The authorized V1 release integrates runtime Sheets/Gmail adapters, guarded
   synchronous Shortcut intake, commitments/deadlines, deterministic briefing,

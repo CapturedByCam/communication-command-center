@@ -1,4 +1,5 @@
 import { queueItemFromRow } from "../adapters/sheets/queue-repository.js";
+import { BoundedGmailCheckpointSchema } from "../domain/bounded-gmail-checkpoint.js";
 import { GmailCheckpointSchema } from "../adapters/gmail/reconciliation.js";
 import {
   assertHeaders,
@@ -105,15 +106,19 @@ function healthFromTables(
     .map((row) => rowToRecord(configHeaders, row))
     .flatMap((record) => {
       if (
-        record.key !== "gmail.reconciliation.v1" ||
+        !["gmail.reconciliation.v1", "gmail.reconciliation.v2"].includes(
+          String(record.key),
+        ) ||
         typeof record.value !== "string" ||
         !isTimestamp(record.updated_at)
       )
         return [];
       try {
-        const parsed = GmailCheckpointSchema.safeParse(
-          JSON.parse(record.value),
-        );
+        const parsed = (
+          record.key === "gmail.reconciliation.v2"
+            ? BoundedGmailCheckpointSchema
+            : GmailCheckpointSchema
+        ).safeParse(JSON.parse(record.value));
         return parsed.success
           ? [{ checkpoint: parsed.data, updatedAt: record.updated_at }]
           : [];
@@ -123,7 +128,13 @@ function healthFromTables(
     })
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0];
   return {
-    failedIntakeCount,
+    failedIntakeCount:
+      failedIntakeCount +
+      (last &&
+      "error_code" in last.checkpoint &&
+      last.checkpoint.error_code !== null
+        ? 1
+        : 0),
     duplicateSuppressedCount,
     staleDraftCount: items.filter((item) => item.draft_status === "stale")
       .length,

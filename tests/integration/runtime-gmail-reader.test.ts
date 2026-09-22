@@ -107,6 +107,113 @@ describe("Apps Script Gmail metadata reader", () => {
     ]);
   });
 
+  it("enumerates bounded message and thread references with the existing eligible query", async () => {
+    const { gateway, reader } = setup();
+
+    const page = await reader.listBoundedReferences({
+      mailbox: approvedMailbox,
+      from: "2026-05-28T00:00:00.000Z",
+      to: "2026-05-29T00:00:00.000Z",
+      pageToken: "page-1",
+      limit: 7,
+      excludeAutomated: true,
+      excludeBulk: true,
+    });
+
+    expect(page).toEqual({
+      references: [{ id: "message-1", threadId: "thread-1" }],
+      nextPageToken: "page-2",
+    });
+    expect(gateway.calls).toEqual([
+      { method: "profile:me" },
+      {
+        method: "list:me",
+        options: {
+          q: "after:1779926400 before:1780012800 -label:spam -label:trash -category:promotions -category:forums -from:(no-reply)",
+          pageToken: "page-1",
+          maxResults: 7,
+        },
+      },
+    ]);
+  });
+
+  it("builds an exact bounded thread snapshot using only the listed message metadata", async () => {
+    const { gateway, reader } = setup();
+    gateway.messageResult = {
+      ...(gateway.messageResult as Record<string, unknown>),
+      internalDate: "1780000000000",
+    };
+
+    const snapshot = ThreadSnapshotSchema.parse(
+      await reader.getBoundedThreadSnapshot(
+        [{ id: "message-1", threadId: "thread-1" }],
+        {
+          from: "2026-05-28T00:00:00.000Z",
+          to: "2026-05-29T00:00:00.000Z",
+        },
+      ),
+    );
+
+    expect(snapshot.threadId).toBe("thread-1");
+    expect(snapshot.messages).toHaveLength(1);
+    expect(gateway.calls.map((call) => call.method)).toEqual([
+      "profile:me",
+      "message:me",
+    ]);
+  });
+
+  it("blocks oversized, conflicting, duplicate, and out-of-window bounded evidence", async () => {
+    const { gateway, reader } = setup();
+    const request = {
+      mailbox: approvedMailbox as typeof approvedMailbox,
+      from: "2026-05-28T00:00:00.000Z",
+      to: "2026-05-29T00:00:00.000Z",
+      pageToken: null,
+      limit: 21,
+      excludeAutomated: true as const,
+      excludeBulk: true as const,
+    };
+    await expect(reader.listBoundedReferences(request)).rejects.toThrow(
+      "exceeds 20",
+    );
+    expect(gateway.calls).toEqual([]);
+
+    const window = {
+      from: "2026-05-28T00:00:00.000Z",
+      to: "2026-05-29T00:00:00.000Z",
+    };
+    await expect(
+      reader.getBoundedThreadSnapshot(
+        [
+          { id: "message-1", threadId: "thread-1" },
+          { id: "message-1", threadId: "thread-1" },
+        ],
+        window,
+      ),
+    ).rejects.toThrow("unique and in one thread");
+
+    await expect(
+      reader.getBoundedThreadSnapshot(
+        [{ id: "message-1", threadId: "wrong-thread" }],
+        window,
+      ),
+    ).rejects.toThrow("conflicts with the bounded window");
+
+    gateway.messageResult = {
+      ...(gateway.messageResult as Record<string, unknown>),
+      internalDate: "1779926399999",
+    };
+    await expect(
+      reader.getBoundedThreadSnapshot(
+        [{ id: "message-1", threadId: "thread-1" }],
+        window,
+      ),
+    ).rejects.toThrow("conflicts with the bounded window");
+    expect(
+      gateway.calls.some((call) => call.method.startsWith("thread:")),
+    ).toBe(false);
+  });
+
   it("fetches and verifies the requested message and its thread using metadata headers only", async () => {
     const { gateway, reader } = setup();
     const snapshot = ThreadSnapshotSchema.parse(

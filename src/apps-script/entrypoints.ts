@@ -21,7 +21,8 @@ import {
 import { literalCell } from "./google-sheet-gateway.js";
 import { migrateEmptyCommitments } from "./commitment-migration.js";
 import { runBriefing } from "./briefing-runtime.js";
-import { runGmailReconciliation, runtimeReconciler } from "./gmail-runtime.js";
+import { runtimeReconciler } from "./gmail-runtime.js";
+import { runBoundedGmailReconciliation } from "./bounded-gmail-runtime.js";
 import {
   replaySelectedGmailQueueItem,
   retrySelectedGmailSnapshotInvalid,
@@ -636,7 +637,17 @@ async function reconcile(studio: boolean) {
           now,
           5,
         )
-      : await runGmailReconciliation(gateway, gmail, id, now, sha256);
+      : await runBoundedGmailReconciliation(
+          gateway,
+          gmail,
+          id,
+          now,
+          sha256,
+          () => {
+            assertOwner();
+            return flag("GMAIL_INTAKE") && workbookId() === id;
+          },
+        );
     // The domain result contains only fixed statuses and numeric counts.
     return codeResult(() => ({ ok: true, ...result }));
   } catch {

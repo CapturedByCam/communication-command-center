@@ -9,6 +9,7 @@ import {
 import {
   deriveThreadState,
   type ThreadCommitment,
+  type ThreadState,
 } from "../adapters/gmail/thread-state.js";
 
 export type Sha256 = (value: string) => string;
@@ -28,6 +29,16 @@ export function normalizeStagingItem(
 ): CommunicationItem | null {
   const snapshot = ThreadSnapshotSchema.parse(rawSnapshot);
   const state = deriveThreadState(snapshot, commitments, now);
+  return normalizeDerivedThreadState(snapshot, state, now, sha256);
+}
+
+/** Internal projection of deterministic, validated chronology. */
+export function normalizeDerivedThreadState(
+  snapshot: ThreadSnapshot,
+  state: ThreadState,
+  now: string,
+  sha256: Sha256,
+): CommunicationItem | null {
   if (state.excluded) return null;
   const status =
     state.waitingOn === "none" && !state.hasOpenPromise ? "resolved" : "open";

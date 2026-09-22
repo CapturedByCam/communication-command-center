@@ -286,6 +286,38 @@ describe("synchronous briefing runtime", () => {
     );
   });
 
+  it("surfaces a blocked bounded scan alongside its previous completion time", () => {
+    const t = setup();
+    t.tables.get("Config")!.rows.push(
+      row("Config", {
+        key: "gmail.reconciliation.v2",
+        updated_at: "2026-09-22T12:00:00Z",
+        updated_by: "system",
+        value: JSON.stringify({
+          schema_version: "2.0",
+          mailbox: "contact@elev8mediaky.com",
+          window: { from: "2026-08-23T12:00:00Z", to: "2026-09-22T12:00:00Z" },
+          phase: "blocked",
+          pageToken: null,
+          seenPageTokenHashes: [],
+          shardCount: 1,
+          nextThread: 0,
+          completedThrough: "2026-09-22T11:00:00Z",
+          retry: null,
+          error_code: "CURSOR_EXPIRED",
+        }),
+      }),
+    );
+    runBriefing(t.gateway, "book", "2026-09-22T09:00:00-04:00", hash);
+    const summaries = t.tables
+      .get("Briefing_View")!
+      .rows.map((value) => value[5]);
+    expect(summaries).toContain("Failed intake: 2");
+    expect(summaries).toContain(
+      "Last successful reconciliation: 2026-09-22T11:00:00Z",
+    );
+  });
+
   it("does not trust an invalid reconciler checkpoint", () => {
     const t = setup();
     const configValue = headers("Config").indexOf("value");

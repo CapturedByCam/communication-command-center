@@ -98,3 +98,10 @@ project code, so it does not prove execution of the deployed older version. Rest
 only into a new private copy of the verified backup. Preserve current rows,
 source messages, drafts and audit evidence. Nothing in this procedure sends a
 message or clears records.
+
+## Current source work
+
+Bounded chronology candidate is unmerged; independent review is clean after
+repairing legacy Studio/manual replay overwrites, deferred coverage and recovery
+bounds. Required local verification passes; PR CI remains. See
+[implementation](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md).

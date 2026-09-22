@@ -26,18 +26,23 @@ entered, retained, or exported.
 
 ## Export status
 
-An export was started from the native File menu, but the Mac locked before the
-save dialog could be completed. No `.shortcut` file was saved. The durable
-artifact is therefore still this checked-in installation record plus the
-versioned target inventory in [ADD_TO_COMMAND_CENTER.md](ADD_TO_COMMAND_CENTER.md).
+The native export completed on September 22, 2026 at 13:17:38 EDT.
+The durable local file is `shortcuts/Add to Communication Command Center - Setup Required.shortcut`
+(21,763 bytes; SHA-256 `580d2b6afab291766849ca1b473ad335ab739b5c27a92aeb4e6bb264497a3ce4`).
+The save dialog closed successfully and the file's existence and hash were verified.
+The native editor still showed only Show Result and Stop, with no token or network action.
+
+This signed export stays local and is excluded from Git; the versioned inventory
+and this evidence describe its behavior. Export success does not establish import,
+phone authentication, or capture acceptance. The earlier lock-related export failure
+is superseded by this saved artifact.
 
 ## Remaining local completion steps
 
 Complete these only after the private endpoint and device authentication path
 have been accepted and verified:
 
-1. Unlock the Mac, reopen the named Shortcut, and export its current
-   setup-blocked form to `shortcuts/` before adding any sensitive setup.
+1. Preserve the saved setup-blocked export before adding any sensitive setup.
 2. Replace the temporary Show Result and Stop guard with the complete action
    inventory in `ADD_TO_COMMAND_CENTER.md`: plain-text conversion, trimming,
    empty and 12,000-character guards, ISO capture time, one generated
@@ -57,5 +62,5 @@ have been accepted and verified:
    that no Queue contents or request text are returned to the device.
 
 The current source of truth is the observed native Shortcut state above. It is
-a safe setup template, not a working capture Shortcut and not evidence of a
-successful export or device acceptance.
+a safe setup template, not a working capture Shortcut and not evidence of
+device acceptance.

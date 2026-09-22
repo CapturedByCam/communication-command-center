@@ -13,3 +13,6 @@ coverage/
 .clasp*
 .local/
 private-runtime/
+
+# Signed native setup export remains local; behavior is documented in shortcuts/.
+/shortcuts/Add to Communication Command Center - Setup Required.shortcut

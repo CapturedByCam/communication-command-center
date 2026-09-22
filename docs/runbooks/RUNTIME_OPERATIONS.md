@@ -12,19 +12,22 @@ message.
 The checked-in manifest configures the web app with
 `webapp.access: "MYSELF"` and `webapp.executeAs: "USER_DEPLOYING"`. That is a
 private operator deployment: only the deploying operator can access it and it
-runs as that operator. Immutable Version 7 is deployed with this configuration. Its `SERVER_JS`
-source exactly matches `dist/Code.js` after LF normalization and its manifest
-semantically matches `dist/appsscript.json`; see the chronological evidence in
+runs as that operator. Immutable Version 8 is deployed with this configuration
+in the existing deployment; its owner-only URL and access setting were
+preserved. Version 8 includes the reviewed Shortcut authorization/kill-switch
+hardening; see the chronological evidence in
 [V1 execution](../implementation/V1_EXECUTION.md).
 
 The current live posture is `CCC_MANUAL_WRITES:true`; the other six feature flags remain
-false. Post-deployment editor `cccHealth` at 15:07:25 EDT returned `ok:true`, ten
-valid headers, `America/New_York`, and `send_capability:false`; only
-`CCC_MANUAL_WRITES` was true. The unfiltered Apps Script Triggers page showed
-`Showing 0 triggers`. Do not create time-driven triggers, enable an automatic feature, or
-enable drafting from this pilot. The manifest's Gmail scope is read-only; V1 has no send
-path. Historical Version 1–4 checks, including all-off kill-switch and disabled-worker
-evidence, remain below and in [V1 execution](../implementation/V1_EXECUTION.md).
+false. The Version 8 editor health execution at 17:53:21 EDT returned `ok:true`,
+ten valid headers, `America/New_York`, and `send_capability:false`; only
+`CCC_MANUAL_WRITES` was true. The unfiltered Apps Script Triggers page last
+showed `Showing 0 triggers` at 15:07 EDT; the later deployment did not create a
+trigger. Do not create time-driven triggers, enable an automatic feature, or
+enable drafting from this pilot. The manifest's Gmail scope is read-only; V1
+has no send path. Historical Version 1–4 checks, including all-off kill-switch
+and disabled-worker evidence, remain below and in
+[V1 execution](../implementation/V1_EXECUTION.md).
 
 On 2026-09-22, IAB Settings confirmed all seven flags false after the kill switch. A
 single enabled Gmail batch then returned zero processed, four excluded and one failed;

@@ -42,7 +42,12 @@ product's private-data or deployment approval boundaries.
 
 ## Open frontier
 
-None. Implementation must still satisfy the account, data-access, and deployment gates recorded in the specification and runbook.
+V1 implementation is substantially released, but live acceptance is not complete.
+The owner-only runtime and manual Queue controls are verified; bounded Gmail
+intake, Workspace Studio source binding and retention, eligible draft creation,
+Shortcut device capture, and the real working-week pilot remain gated. Keep
+automatic processing and delivery disabled until the corresponding evidence in
+the specification and runbooks passes.
 
 ## Not yet specified
 

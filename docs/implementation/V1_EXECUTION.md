@@ -419,3 +419,37 @@ headers valid, timezone `America/New_York`, no send capability, and flags
 `MANUAL_WRITES` flag is the only true flag. No flow, message, draft, trigger, or
 Shortcut request was run. Phone/device acceptance and an endpoint accessible to
 Shortcuts remain open.
+## 2026-09-22 briefing and Studio configuration check
+
+An authenticated, one-time `cccBuildBriefing` run generated an eight-section
+projection for the five current Queue items. The latest `Briefing_History` row
+records `delivery_channel=none` and `delivery_status=generated`; no Google
+message was sent. `CCC_BRIEFING_DELIVERY` was restored to false immediately
+after the run. A subsequent `cccHealth` execution returned `ok:true`, all ten
+expected headers valid, `America/New_York`, no send capability, and all automated
+intake, Studio, Shortcut, drafting, and briefing flags false; `MANUAL_WRITES`
+remained the only true flag.
+
+Workspace Admin's approved Custom steps setting is enabled for the CapturedByCam
+root organizational unit, with unpublished (test) custom steps still allowed.
+The private CCC custom step is now visible in Studio. The live-source Studio
+flow remains unrun: its source binding/model behavior and exact input/source
+retention are still unresolved. Do not process actual messages through that flow
+until those acceptance gates are resolved.
+
+The bounded Gmail metadata sweep was then enabled for a single manual session.
+Six consecutive calls returned `status=more` with zero processed, excluded, or
+failed records. The next call returned `RECONCILIATION_FAILED`; the Apps Script
+execution log contains only that generic result, so the underlying cause is not
+known. The v2 checkpoint remains in `enumerating`, with six reference shards and
+no processed thread. Queue (five data rows) and Dead_Letter (one data row)
+exactly match the private pre-sweep backup. `CCC_GMAIL_INTAKE` was restored to
+false and verified; all other automatic flags remain false and
+`MANUAL_WRITES` remains enabled. No messages or drafts were sent or created.
+Do not retry or reset the checkpoint until the failure is diagnosed.
+
+The live cause remains unresolved. A proposed source change in the current review
+work adds only a fixed failure stage and category to the controlled error result;
+it never exposes provider messages or stack traces. This change is not yet merged
+or synchronized to Apps Script. Keep intake disabled until review, source sync, and
+a single bounded diagnostic invocation confirm a safe continuation point.

@@ -75,3 +75,5 @@ Queue operator decision, 2026-09-22: owner-only Resolve, Reopen and explicit-off
 Snooze menu actions use a separate default-off flag and the shared transaction
 lock. Recheck authorization and the complete selected row after the prompt;
 commit Queue and Audit_Log together. See [Queue operator controls](../implementation/QUEUE_OPERATOR_CONTROLS.md).
+
+Manual waiting-state decision, 2026-09-22: complete the documented waiting command through the guarded selected-row transaction. See [decision 109](tickets/109-manual-waiting-state.md).

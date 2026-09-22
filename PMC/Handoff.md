@@ -62,8 +62,8 @@ attempted an unnecessary shared-module reinstall. Independent review found no ac
   provider is merged in PR #36 but unbound; compose authorization/live acceptance
   remain open. Replacement and deletion stay unsupported to preserve human edits.
 - Finish the local [Shortcut installation](../shortcuts/SHORTCUT_INSTALLATION.md)
-  when native device access is available. Only a setup-blocked template exists;
-  no token, endpoint, export or live capture was configured. Prove the endpoint's
+  using the now-accessible native editor. A safe setup-blocked export is saved
+  locally, but no token, endpoint or live capture was configured. Prove the endpoint's
   write-only authentication and invalid-token/replay/rate-limit/kill-switch behavior
   before capture. Owner-only web deployment is not phone acceptance.
 - After bindings pass, collect the required real working-week observations and

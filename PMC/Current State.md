@@ -86,8 +86,8 @@ All Google messages remain unsent; Codex coordination is authorized.
    protect human edits. Outbound promise extraction and the new Commitment storage writer
    still need migration, deployment and a verified interpretation/runtime binding;
    local integration tests alone do not establish that product behavior.
-3. The native Shortcut is a setup-blocked two-action template, with no export,
-   endpoint/token configuration, network request or device acceptance. Complete
+3. The native Shortcut is a setup-blocked two-action template, with a verified local
+   setup-only export and no endpoint/token configuration, network request or device acceptance. Complete
    device setup and prove the write-only authentication path without exposing Queue
    reads. Owner-only web access is not proof of phone compatibility.
 4. Collect real model observations, usefulness ratings and the required working

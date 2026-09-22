@@ -22,7 +22,10 @@ export interface ShortcutStorageRecord {
  * store only the supplied normalized record, never the original request body.
  */
 export interface ShortcutStorage {
-  createIfAbsent(record: ShortcutStorageRecord): "created" | "duplicate";
+  createIfAbsent(
+    record: ShortcutStorageRecord,
+    stillAuthorized: () => boolean,
+  ): "created" | "duplicate" | "authorization_lost";
   findByIdempotencyKey(
     idempotencyKey: string,
   ): { readonly itemId: string } | null;
@@ -33,7 +36,10 @@ export interface ShortcutRejectionSink {
    * Persist only the controlled error code. Implementations must not attach the
    * request body, token, contact hint, model fields, or transport metadata.
    */
-  recordRejected(event: { readonly errorCode: "invalid_payload" }): void;
+  recordRejected(
+    event: { readonly errorCode: "invalid_payload" },
+    stillAuthorized: () => boolean,
+  ): boolean;
 }
 
 export interface ShortcutHandlerDependencies {
@@ -77,11 +83,30 @@ function hasAuthenticatedToken(
 
 function recordAuthenticatedSchemaRejection(
   rejectionSink: ShortcutRejectionSink | undefined,
-): void {
+  stillAuthorized: () => boolean,
+): boolean {
   try {
-    rejectionSink?.recordRejected({ errorCode: "invalid_payload" });
+    return (
+      rejectionSink?.recordRejected(
+        { errorCode: "invalid_payload" },
+        stillAuthorized,
+      ) ?? true
+    );
   } catch {
     // The write-only endpoint must return the same redacted response if audit is down.
+    return true;
+  }
+}
+
+function authorizationFailure(
+  dependencies: ShortcutHandlerDependencies,
+): ShortcutResponse {
+  try {
+    if (!dependencies.isEnabled()) return rejected("disabled");
+    dependencies.getToken();
+    return rejected("unauthorized");
+  } catch {
+    return rejected("configuration_error");
   }
 }
 
@@ -182,7 +207,30 @@ export function createShortcutHandler(
     const intakeResult = ShortcutIntakeSchema.safeParse(parsed);
     if (!intakeResult.success) {
       if (authenticated) {
-        recordAuthenticatedSchemaRejection(dependencies.rejectionSink);
+        if (!dependencies.allowRequest(request.remoteAddress)) {
+          return rejected("rate_limited");
+        }
+        const stillAuthorized = () => {
+          try {
+            return (
+              dependencies.isEnabled() &&
+              constantTimeEqual(
+                dependencies.getToken() ?? "",
+                (parsed as { auth_token: string }).auth_token,
+              )
+            );
+          } catch {
+            return false;
+          }
+        };
+        if (
+          !recordAuthenticatedSchemaRejection(
+            dependencies.rejectionSink,
+            stillAuthorized,
+          )
+        ) {
+          return authorizationFailure(dependencies);
+        }
       }
       return rejected("invalid_payload");
     }
@@ -205,7 +253,26 @@ export function createShortcutHandler(
     }
 
     try {
-      const outcome = dependencies.storage.createIfAbsent(record);
+      const stillAuthorized = () => {
+        try {
+          return (
+            dependencies.isEnabled() &&
+            constantTimeEqual(
+              dependencies.getToken() ?? "",
+              intakeResult.data.auth_token,
+            )
+          );
+        } catch {
+          return false;
+        }
+      };
+      const outcome = dependencies.storage.createIfAbsent(
+        record,
+        stillAuthorized,
+      );
+      if (outcome === "authorization_lost") {
+        return authorizationFailure(dependencies);
+      }
       return outcome === "created"
         ? { status: "needs_review", item_id: record.item.item_id }
         : { status: "duplicate", item_id: record.item.item_id };

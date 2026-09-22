@@ -52,6 +52,15 @@ Apply the rate limit using transport metadata where Apps Script makes it
 available; if no trustworthy address exists, use a conservative single-user
 bucket without recording request content.
 
+Apply the authenticated write quota before either a Queue create or an
+authenticated malformed-request audit row. Recheck the current kill switch and
+the token presented by the request while holding the same script lock used for
+the corresponding Queue or Dead_Letter write. `cccDisableAll()` takes that lock
+before changing feature flags, so a request that has not crossed the locked
+authorization boundary cannot persist after shutdown completes. Keep the
+disable-first rotation sequence; do not replace the token while intake remains
+enabled.
+
 Never log `e.postData.contents`, `shared_text`, `auth_token`, the full parsed
 payload, or model output. Logs and audit records may contain only a content hash,
 controlled result, correlation UUID, and timestamp.

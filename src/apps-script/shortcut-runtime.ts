@@ -24,9 +24,13 @@ export function createShortcutStorage(
     return matches[0] ? { itemId: String(matches[0][idIndex]) } : null;
   };
   return {
-    createIfAbsent(record: ShortcutStorageRecord) {
+    createIfAbsent(
+      record: ShortcutStorageRecord,
+      stillAuthorized: () => boolean,
+    ) {
       gateway.acquire();
       try {
+        if (!stillAuthorized()) return "authorization_lost";
         if (find(record.idempotencyKey)) return "duplicate";
         const before = gateway.read(id, "Queue");
         const headers = assertHeaders("Queue", before.headers);

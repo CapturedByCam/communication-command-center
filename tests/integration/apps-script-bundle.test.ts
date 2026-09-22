@@ -454,6 +454,8 @@ describe("deployable Apps Script bundle", () => {
       managed_triggers_remaining: 0,
     });
     expect(runtime.deleted).toEqual(["cccBuildBriefing"]);
+    expect(runtime.lock.tryLock).toHaveBeenCalledWith(5000);
+    expect(runtime.lock.releaseLock).toHaveBeenCalledOnce();
     for (const name of [
       "GMAIL_INTAKE",
       "STUDIO_PROCESSING",

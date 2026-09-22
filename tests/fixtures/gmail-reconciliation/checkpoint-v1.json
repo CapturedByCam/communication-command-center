@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "mailbox": "contact@elev8mediaky.com",
+  "completedThrough": null,
+  "window": {
+    "from": "2026-08-23T12:00:00.000Z",
+    "to": "2026-09-22T12:00:00.000Z",
+    "pageToken": null,
+    "cursorResets": 0
+  },
+  "pending": {
+    "messageIds": ["synthetic-message"],
+    "nextPageToken": "synthetic-next-page"
+  },
+  "retry": {
+    "attempts": 1,
+    "nextAttemptAt": "2026-09-22T12:01:00.000Z"
+  },
+  "blocked": false
+}

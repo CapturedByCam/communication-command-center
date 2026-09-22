@@ -25,5 +25,64 @@
   "webapp": {
     "access": "MYSELF",
     "executeAs": "USER_DEPLOYING"
+  },
+  "addOns": {
+    "common": {
+      "name": "Communication Command Center",
+      "logoUrl": "https://www.gstatic.com/images/icons/material/system/1x/assignment_black_48dp.png",
+      "useLocaleFromApp": true
+    },
+    "studio": {
+      "flows": {
+        "workflowElements": [
+          {
+            "id": "cccValidateGmail",
+            "state": "ACTIVE",
+            "name": "Validate Gmail interpretation",
+            "description": "Validate bounded interpretation against authoritative Gmail metadata and stage it privately. No drafts or sending.",
+            "workflowAction": {
+              "inputs": [
+                {
+                  "id": "gmail_message_id",
+                  "description": "Gmail message ID from the starter",
+                  "cardinality": "SINGLE",
+                  "dataType": {
+                    "basicType": "STRING"
+                  }
+                },
+                {
+                  "id": "model_json",
+                  "description": "Bounded interpretation JSON",
+                  "cardinality": "SINGLE",
+                  "dataType": {
+                    "basicType": "STRING"
+                  }
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "status",
+                  "description": "Validation status",
+                  "cardinality": "SINGLE",
+                  "dataType": {
+                    "basicType": "STRING"
+                  }
+                },
+                {
+                  "id": "ingest_id",
+                  "description": "Accepted intake ID, or empty",
+                  "cardinality": "SINGLE",
+                  "dataType": {
+                    "basicType": "STRING"
+                  }
+                }
+              ],
+              "onConfigFunction": "cccConfigureStudioStep",
+              "onExecuteFunction": "cccExecuteStudioStep"
+            }
+          }
+        ]
+      }
+    }
   }
 }

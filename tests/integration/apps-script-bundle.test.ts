@@ -17,6 +17,107 @@ beforeAll(() => {
   code = readFileSync("dist/Code.js", "utf8");
 });
 
+function studioServices() {
+  const inputs: { field: string; mode: string; includeVariables: boolean }[] =
+    [];
+  const card = () => ({
+    addSection() {
+      return this;
+    },
+    addWidget() {
+      return this;
+    },
+    setHeader() {
+      return this;
+    },
+    setText() {
+      return this;
+    },
+    build() {
+      return { kind: "card" };
+    },
+  });
+  return {
+    inputs,
+    CardService: {
+      TextInputMode: { PLAIN_TEXT: "PLAIN_TEXT" },
+      newTextInput: () => {
+        const item = { field: "", mode: "", includeVariables: false };
+        inputs.push(item);
+        return {
+          setFieldName(value: string) {
+            item.field = value;
+            return this;
+          },
+          setTitle() {
+            return this;
+          },
+          setInputMode(value: string) {
+            item.mode = value;
+            return this;
+          },
+          setHostAppDataSource(value: { workflow: { include: boolean } }) {
+            item.includeVariables = value.workflow.include;
+            return this;
+          },
+        };
+      },
+      newHostAppDataSource: () => ({
+        workflow: { include: false },
+        setWorkflowDataSource(value: { include: boolean }) {
+          this.workflow = value;
+          return this;
+        },
+      }),
+      newWorkflowDataSource: () => ({
+        include: false,
+        setIncludeVariables(value: boolean) {
+          this.include = value;
+          return this;
+        },
+      }),
+      newCardBuilder: card,
+      newCardSection: card,
+      newTextParagraph: card,
+    },
+    AddOnsResponseService: {
+      newVariableData: () => ({
+        values: [] as string[],
+        addStringValue(value: string) {
+          this.values.push(value);
+          return this;
+        },
+      }),
+      newReturnOutputVariablesAction: () => ({
+        variables: {} as Record<string, string[]>,
+        addVariableData(id: string, data: { values: string[] }) {
+          this.variables[id] = data.values;
+          return this;
+        },
+      }),
+      newHostAppAction: () => ({
+        action: { variables: {} as Record<string, string[]> },
+        setWorkflowAction(value: { variables: Record<string, string[]> }) {
+          this.action = value;
+          return this;
+        },
+      }),
+      newRenderActionBuilder: () => ({
+        host: { action: { variables: {} as Record<string, string[]> } },
+        setHostAppAction(value: {
+          action: { variables: Record<string, string[]> };
+        }) {
+          this.host = value;
+          return this;
+        },
+        build() {
+          return this.host.action.variables;
+        },
+      }),
+    },
+  };
+}
+
 function createRuntime(
   options: {
     readonly properties?: Record<string, string>;
@@ -82,7 +183,10 @@ function createRuntime(
     createMenu: vi.fn(() => menu),
   };
   const lock = { tryLock: vi.fn(() => true), releaseLock: vi.fn() };
+  const studio = studioServices();
   const context = vm.createContext({
+    CardService: studio.CardService,
+    AddOnsResponseService: studio.AddOnsResponseService,
     console: { info: logs },
     ContentService: {
       MimeType: { JSON: "json" },
@@ -169,8 +273,8 @@ function createRuntime(
         getProfile: () => ({ emailAddress: "contact@elev8mediaky.com" }),
         Messages: {
           list: () => ({ messages: options.gmail?.messages ?? [] }),
-          get: () => (
-            gmailGets(),
+          get: (...args: unknown[]) => (
+            gmailGets(...args),
             options.gmail?.metadata ?? {
               id: options.gmail?.messages?.[0]?.id,
               threadId: "thread-1",
@@ -198,6 +302,7 @@ function createRuntime(
     menu,
     toast,
     gmailGets,
+    studioInputs: studio.inputs,
   };
 }
 
@@ -214,6 +319,8 @@ describe("deployable Apps Script bundle", () => {
       "cccBuildBriefing",
       "cccReconcileGmail",
       "cccProcessStudio",
+      "cccConfigureStudioStep",
+      "cccExecuteStudioStep",
       "cccResolveSelectedQueueRow",
       "cccReopenSelectedQueueRow",
       "cccSnoozeSelectedQueueRow",
@@ -608,5 +715,94 @@ describe("deployable Apps Script bundle", () => {
       "https://www.googleapis.com/auth/gmail.compose",
     );
     expect(code).not.toMatch(/GmailApp|MailApp|\.Messages\.send\(/);
+  });
+});
+
+describe("native Studio callback", () => {
+  it("builds single-variable inputs and synchronously returns disabled outputs without reads", () => {
+    const r = createRuntime();
+    expect(r.context.cccConfigureStudioStep()).toEqual({ kind: "card" });
+    expect(r.studioInputs).toEqual([
+      { field: "gmail_message_id", mode: "PLAIN_TEXT", includeVariables: true },
+      { field: "model_json", mode: "PLAIN_TEXT", includeVariables: true },
+    ]);
+    const result = r.context.cccExecuteStudioStep({
+      untrusted: "private event",
+    });
+    expect(result).toEqual({ status: ["disabled"], ingest_id: [""] });
+    expect(result.then).toBeUndefined();
+    expect(r.reads).toEqual([]);
+    expect(r.gmailGets).not.toHaveBeenCalled();
+    expect(r.batchUpdate).not.toHaveBeenCalled();
+    expect(r.logs).not.toHaveBeenCalled();
+  });
+
+  it("returns a synchronous staged output after one native atomic metadata-only append", () => {
+    const r = createRuntime({
+      properties: {
+        CCC_STUDIO_PROCESSING: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      gmail: {
+        metadata: {
+          id: "studio-message-1",
+          threadId: "studio-thread-1",
+          internalDate: String(Date.now() - 86_400_000),
+          labelIds: ["INBOX"],
+          payload: {
+            headers: [
+              { name: "From", value: "Known Person <known@example.com>" },
+              { name: "Subject", value: "Status request" },
+            ],
+          },
+        },
+      },
+    });
+    const result = r.context.cccExecuteStudioStep({
+      workflow: {
+        actionInvocation: {
+          inputs: {
+            gmail_message_id: { stringValues: ["studio-message-1"] },
+            model_json: {
+              stringValues: [
+                JSON.stringify({
+                  requires_response: true,
+                  direct_response_requested: true,
+                  draft_risk: "routine",
+                  category_hint: "client_lead",
+                  project_hint: null,
+                  deadline_text: null,
+                  next_action_hint: "Review availability.",
+                  summary_hint: "A short request.",
+                  confidence_hint: 0.8,
+                  message_kind: null,
+                  consequences: [],
+                  model_uncertain: false,
+                }),
+              ],
+            },
+          },
+        },
+      },
+    });
+    expect(result).toEqual({
+      status: ["staged"],
+      ingest_id: ["studio:gmail:studio-message-1"],
+    });
+    expect(result.then).toBeUndefined();
+    expect(r.gmailGets).toHaveBeenCalledWith("me", "studio-message-1", {
+      format: "metadata",
+      metadataHeaders: ["From", "Subject"],
+      fields: "id,threadId,internalDate,labelIds,payload/headers",
+    });
+    expect(r.batchUpdate).toHaveBeenCalledTimes(1);
+    const serialized = JSON.stringify(r.batchUpdate.mock.calls);
+    expect(serialized).toContain("review_only");
+    expect(serialized).not.toContain("model_json");
+    expect(
+      r.reads.every((range) => /'(Contacts|Studio_Inbox)'!/u.test(range)),
+    ).toBe(true);
+    expect(r.logs).not.toHaveBeenCalled();
+    expect(r.lock.releaseLock).toHaveBeenCalledTimes(1);
   });
 });

@@ -24,8 +24,8 @@ Workspace Studio handles bounded Gmail event orchestration. Apps Script owns det
 
 ## Active workstreams
 
-- Phase 0 repository and decision-map registration
-- Open Wayfinder decisions listed in [Current State](Current%20State.md)
+- Milestone 1 local domain core: versioned contracts, deterministic state, risk, and priority rules
+- Deferred implementation gates listed in [Current State](Current%20State.md)
 
 ## Decisions and procedures
 

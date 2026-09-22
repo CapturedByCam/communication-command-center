@@ -10,8 +10,8 @@ Prototype + grilling
 
 ## Status
 
-Open
+Closed
 
-## Default proposal
+## Resolution
 
-Start with curated `Contacts` and `Projects` tabs. Allow AI to suggest an association, but require a deterministic identifier or manual approval before persisting a new project/contact relationship.
+Use curated `Contacts` and `Projects` tabs as canonical context. AI may suggest an association, but a deterministic identifier or manual approval is required before persisting a new relationship. Previous ChatGPT memories may suggest seed records or associations only during an explicit review session; nothing memory-derived is persisted automatically, and each proposed record requires Cam's approval and a deterministic identifier.

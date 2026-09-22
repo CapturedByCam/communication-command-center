@@ -104,7 +104,7 @@ V1 uses two versioned flows:
 2. **Daily Briefing Delivery**
    - runs on a schedule;
    - reads the precomputed `Briefing_View`;
-   - sends the deterministic queue to Cam through a selected channel;
+   - sends a private 8:00 AM `America/New_York` Google Chat notification linking the private `Briefing_View` Sheet;
    - does not reorder or silently omit items.
 
 Studio is a fast reaction layer. It is not the canonical database.
@@ -157,10 +157,12 @@ It:
 - validates allowed enum text using fixed Shortcut logic;
 - constructs the JSON dictionary itself;
 - generates an idempotency UUID;
-- posts to the Apps Script endpoint over HTTPS with a rotating shared secret;
+- posts to the Apps Script endpoint over HTTPS with a high-entropy shared secret;
 - shows `Added`, `Already added`, or `Needs review`;
 - never reads the Messages database automatically;
 - never receives queue data back from the endpoint.
+
+The pilot does not require routine manual secret rotation. Rotation is incident-driven (suspected exposure, device loss, or scope expansion) or automated before production hardening. The endpoint must provide an immediate kill switch and a documented assisted rotation procedure.
 
 ### 6.5 ChatGPT
 

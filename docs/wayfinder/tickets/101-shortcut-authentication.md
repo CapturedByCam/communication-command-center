@@ -10,13 +10,12 @@ Grilling + research
 
 ## Status
 
-Open
+Closed
 
-## Blocks
+## Resolution
 
-- Apple Shortcut implementation
-- production deployment runbook approval
+Use one high-entropy shared secret stored in Script Properties and the Shortcut for the single-user pilot. The endpoint remains write-only, enforces strict payload limits, idempotency and rate limits, returns no queue data, and has an immediate kill switch. Do not require routine manual rotation. Rotate after suspected exposure, device loss, or scope expansion, or automate rotation before production hardening. Document an assisted rotation procedure. Move to signed or OAuth-based authentication before unattended or multi-user ingestion.
 
-## Recommendation to evaluate
+## Remaining implementation gate
 
-Use a rotating high-entropy shared secret stored in Script Properties and the local Shortcut for the single-user pilot, with a write-only endpoint, strict payload limits, idempotency, rate limiting, no response data, and an immediate kill switch. Move to Cloud Run or another signed/OAuth path before unattended or multi-user ingestion.
+Verify the kill switch, redacted logging, rate limiting, and assisted rotation procedure before deployment.

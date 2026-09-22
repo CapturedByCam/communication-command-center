@@ -2,7 +2,8 @@
 
 ## Verified position
 
-- Phase 0 is active; Phase 1 has not begun.
+- Phase 0 is complete and its Wayfinder decision frontier is resolved.
+- Milestone 1 local domain work is authorized; no Google service access is authorized.
 - The planning pack and Phase 0 package/build/test skeleton are committed to private `main`.
 - Foundation commit: `c2823de` (`chore: initialize communication command center`).
 - The local repository root is also the approved Obsidian vault root.
@@ -19,23 +20,26 @@
 - ChatGPT is the judgment and control layer.
 - Workspace Studio reacts; Apps Script performs canonical normalization and reconciliation.
 - Manual overrides win and schemas are versioned.
+- The single-user Shortcut pilot uses one high-entropy shared secret with a kill switch and no routine manual rotation.
+- Required Workspace Studio actions are visible; Skills are out of V1 and successful test runs remain a later account-policy gate.
+- Gmail V1 is limited to the primary work mailbox and verified aliases; automated and bulk mail are excluded.
+- The morning alert uses private Google Chat at 8:00 AM `America/New_York` and links the private `Briefing_View` Sheet; afternoon delivery starts disabled.
+- Curated `Contacts` and `Projects` tabs are canonical. ChatGPT memories are suggestion-only during explicit review and require approval before persistence.
+- Pilot evaluation uses at least 50 approved or sanitized examples with the thresholds in the architecture specification.
 
-## Open Wayfinder frontier
+## Deferred implementation gates
 
-- [Shortcut endpoint authentication](https://github.com/CapturedByCam/communication-command-center/issues/7)
-- [Workspace Studio capability and account-policy verification](https://github.com/CapturedByCam/communication-command-center/issues/8)
-- [Gmail accounts, aliases, and exclusions](https://github.com/CapturedByCam/communication-command-center/issues/9)
-- [Briefing delivery channel and cadence](https://github.com/CapturedByCam/communication-command-center/issues/10)
-- [Project/contact context source](https://github.com/CapturedByCam/communication-command-center/issues/11)
-- [Pilot evaluation sample and thresholds](https://github.com/CapturedByCam/communication-command-center/issues/12)
+- Record the exact verified work mailbox aliases and initial pilot lookback window before requesting Gmail permissions or accessing production data.
+- Prove required Workspace Studio actions with successful test runs under the real account policy during the authorized Studio milestone.
+- Verify Shortcut kill switch, redacted logging, rate limiting, and assisted rotation before deployment.
 
 ## Decision map
 
 - [GitHub Wayfinder map](https://github.com/CapturedByCam/communication-command-center/issues/1)
 - All 13 source tickets are attached to the map as GitHub sub-issues.
-- Seven accepted decisions are closed with their planning-pack resolutions.
-- Six unresolved decision tickets remain open.
+- All 13 decision tickets are closed with owner-approved resolutions.
+- The map issue is ready to close after its body is reconciled with the versioned map.
 
 ## Next action
 
-Verify and commit the PMC registration, then stop. A separate approval is required before Phase 1.
+Close the reconciled Wayfinder map, then implement Milestone 1 locally in a dedicated worktree. Stop before any Google permission request, cloud resource creation, deployment, or production communication access.

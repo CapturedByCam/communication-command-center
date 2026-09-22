@@ -10,8 +10,12 @@ Research + task
 
 ## Status
 
-Open
+Closed
 
-## Verification checklist
+## Resolution
 
-Confirm access to: `When I get an email`, `Ask Gemini`, `Decide`, `Extract`, `Add a row`, `Update rows`, `Get sheet contents`, `Draft an email`, `On a schedule`, and the intended notification step. Record admin approval behavior and any preview-only feature. Do not assume custom add-on steps are available.
+Cam verified that the proposed core starters and steps are visible in the approved Workspace account and that he is a super admin who can review permission requests as they arise. Workspace Studio Skills are acknowledged but are not required for V1 and remain out of scope until the deterministic core works.
+
+## Remaining implementation gate
+
+Successful test runs, not visibility alone, establish that each required action works under the real account policy. Complete that check only when the corresponding Studio milestone is authorized; do not request permissions during local domain work.

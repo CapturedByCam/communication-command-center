@@ -23,15 +23,16 @@ Reach an implementation-ready, privacy-reviewed specification and a verified del
 - [Retain operational metadata instead of full message bodies](tickets/005-content-retention.md): Source systems remain the content store.
 - [Use ChatGPT as the judgment and control layer](tickets/006-chatgpt-role.md): ChatGPT reviews and operates the queue but does not poll or own state.
 - [Use Workspace Studio for fast orchestration and Apps Script for canonical normalization](tickets/007-orchestration-boundary.md): Studio reacts; Apps Script validates, reconciles, and persists.
+- [Use a shared secret for the single-user Shortcut pilot](tickets/101-shortcut-authentication.md): Use a high-entropy write-only secret with a kill switch and incident-driven or automated rotation rather than routine manual maintenance.
+- [Treat visible Workspace Studio actions as provisionally available](tickets/102-studio-capability-check.md): Required actions are visible; Skills remain out of V1, and successful test runs are the later account-policy gate.
+- [Limit Gmail V1 to the primary work mailbox and verified aliases](tickets/103-gmail-scope.md): Exclude automated and bulk mail; exact identities and pilot lookback are deployment configuration.
+- [Deliver the morning alert through private Google Chat](tickets/104-briefing-delivery.md): Send an 8:00 AM alert linking the private `Briefing_View` Sheet; keep afternoon delivery off until the first week demonstrates value.
+- [Use curated Contacts and Projects as canonical context](tickets/105-context-registry-source.md): ChatGPT memories may suggest records during explicit review, but nothing memory-derived persists without approval and a deterministic identifier.
+- [Use the approved pilot sample and thresholds](tickets/106-pilot-evaluation.md): Evaluate at least 50 approved or sanitized examples against the specified accuracy, privacy, and no-send thresholds.
 
 ## Open frontier
 
-- [Select Shortcut endpoint authentication for the pilot](tickets/101-shortcut-authentication.md)
-- [Verify Workspace Studio capabilities and account policy](tickets/102-studio-capability-check.md)
-- [Select Gmail accounts and aliases in scope](tickets/103-gmail-scope.md)
-- [Select briefing delivery channel and cadence](tickets/104-briefing-delivery.md)
-- [Select the source of project/contact context](tickets/105-context-registry-source.md)
-- [Approve pilot accuracy thresholds and review sample](tickets/106-pilot-evaluation.md)
+None. Implementation must still satisfy the account, data-access, and deployment gates recorded in the specification and runbook.
 
 ## Not yet specified
 

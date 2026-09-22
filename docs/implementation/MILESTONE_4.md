@@ -1,8 +1,8 @@
 # Milestone 4 — Workspace Studio progress and next steps
 
-## Position on 2026-09-22
+## Historical position on 2026-09-22
 
-**Local preparation is implemented; live milestone acceptance remains pending.**
+**The local preparation below is historical evidence. The accepted private custom-step implementation still requires account-level acceptance.**
 This work runs independently of the Milestone 3 Gmail pilot.
 
 - Milestones 1 and 2 are accepted on `main` at `c37f9f3` and `4708371`.
@@ -29,11 +29,14 @@ This work runs independently of the Milestone 3 Gmail pilot.
   Cam subsequently authorized cleanup, merge, and continued implementation.
   Google/account operations remain separate approval gates.
 
+Subsequent accepted decisions supersede the proposed path in this historical snapshot. [Decision 107](../wayfinder/tickets/107-studio-custom-step.md) uses a private custom Apps Script step for strict, bounded metadata staging only: it creates no Gmail draft, adds no scope, and cannot send. [Decision 108](../wayfinder/tickets/108-native-draft-create-only.md) keeps native create-only Gmail drafting separate and gated on a trusted context, compose authorization, runtime binding, and provider acceptance.
+
 ## Delivered locally
 
-- [Versioned flow blueprint](../../studio/flow-manifest.json): starter, ordered
-  built-in actions, complete staging mappings, SHA-256 prompt hashes, unresolved
-  deployment bindings, disabled drafting, and no send steps.
+- Historical [versioned flow blueprint](../../studio/flow-manifest.json): starter,
+  ordered built-in actions, complete staging mappings, SHA-256 prompt hashes,
+  unresolved deployment bindings, disabled drafting, and no send steps. It is
+  planning evidence, not the current accepted Studio implementation.
 - [Intake configuration and activation guide](../../studio/GMAIL_INTAKE_FLOW.md):
   current official capability evidence, concrete limitations, pilot case matrix,
   integration requirements, and rollback.
@@ -67,37 +70,20 @@ This work runs independently of the Milestone 3 Gmail pilot.
 
 ## Remaining gates and next actions
 
-1. Merge reviewed PR #24 under Cam's cleanup/merge authorization and keep
-   issue #23 open for the remaining milestone acceptance work.
-2. Integrate the accepted Milestone 3 contracts, keeping authoritative Gmail
-   chronology, canonical deduplication, manual overrides, and missed-event
-   recovery in the backend. A stable staging key is not itself deduplication.
-3. Inspect the real Studio variables and permissions at the documented approval
-   gate. Verify Email ID, timestamp/run metadata, private Sheet behavior, and
-   original-thread draft targeting using a specific approved synthetic message.
-4. Resolve the missing deterministic binding before any flow writes metadata or
-   creates drafts. Built-in availability does not prove schema validation,
-   registry/freshness checks, or atomic draft idempotency. Bring any proposed
-   custom step/webhook or change in draft ownership back for a focused decision.
-5. Implement the selected binding and draft lifecycle/operation ledger (plan
-   Task 11), prove independent kill switches and safe uncertain-write recovery,
-   and present exact account, resources, scopes, test actions, and rollback.
-6. After approval, manually build the flow from the pinned artifacts and run
-   the synthetic case matrix. Test runs perform real actions. Record one
-   canonical item and one correct-thread routine draft; high-risk cases must
-   produce no automatic draft, with zero sends and no raw body retention.
-7. Claim Milestone 4 complete only after those account-level results pass.
-   Briefing generation and delivery remain Milestone 6; Shortcut remains
-   Milestone 5.
+1. Keep `CCC_STUDIO_PROCESSING` disabled while the private custom step is unavailable in the account UI and its starter-variable binding and model acceptance remain unproven.
+2. When the account exposes the custom step, verify one actual bounded Gmail resource ID stages exactly one metadata-only record atomically. The Studio step must never create a Gmail draft.
+3. Complete the separately gated native create-only draft acceptance only after a trusted interpreted context, compose authorization, runtime binding, and provider evidence exist. It must not replace or delete drafts.
+4. Milestone 4 completes after the Studio custom-step acceptance proves its bounded staging behavior. Native draft behavior is a separate provider gate.
 
 ## Implementation rulings
 
 - Preserve existing staging schema 1.0. Introduce only a local extraction
   contract and validator; the existing Sheets/backend contract remains stable
   while Milestone 3 proceeds. Cost: live wiring remains follow-up work.
-- Keep the blueprint disabled because required deterministic bindings are
-  unproven. A custom action or changed architecture is a proposal, not an
-  accepted decision. Cost: full milestone acceptance awaits integration.
+- Keep `CCC_STUDIO_PROCESSING` disabled while account UI availability,
+  starter-variable binding, and model acceptance are unproven. The custom Apps
+  Script step is accepted by decision 107 and strictly stages metadata; it
+  cannot draft or send. Cost: full milestone acceptance awaits integration.
 - Keep Task 11 draft persistence in a separate implementation slice from this
   Task 10 preparation. The manifest records its prerequisite. Local draft
   lifecycle work can proceed through injected interfaces while live Studio

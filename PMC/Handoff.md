@@ -10,8 +10,15 @@ and semantic manifest SHA `6d2df263d5686e5b903c655da411ce96d4403c71d249321f220be
 match the verified build. Drift passed, `MYSELF`/`USER_DEPLOYING` access is unchanged,
 and unauthenticated access redirects to Google sign-in. At 11:14:40 EDT, Version 5
 `cccHealth` returned `ok:true`: all ten headers valid, all seven flags false,
-`America/New_York`, and `send_capability:false`; no fresh trigger count is claimed. The
-workbook has ten valid tabs in America/New_York and a private pre-activation backup.
+`America/New_York`, and `send_capability:false`. PR #35 merged at
+`c0c959d00d3b7b4769ea25e8f673d83bce0a3c14` at 11:19:34 EDT and durable main
+fast-forwarded. Under standing authorization, only `CCC_MANUAL_WRITES` was enabled after
+the verified Version 4 controls and Version 5 same-code health. At 11:24:50 EDT,
+`cccHealth` returned `ok:true`: all ten headers valid, `CCC_MANUAL_WRITES:true`, the
+other six flags false, `America/New_York`, and `send_capability:false`. No source or
+Queue mutation occurred during activation. At about 11:32 EDT, the Apps Script Triggers
+page showed `Showing 0 triggers` with no filters set. The workbook has ten valid tabs in
+America/New_York and a private pre-activation backup.
 
 At 09:37:42 EDT, selected replay resolved the original controlled Gmail Dead_Letter as
 `manual_gmail_replay`: Queue has one item, Audit_Log gained one row, and Config was
@@ -26,7 +33,7 @@ correctly rejected the Snoozed row as `STALE_STATE`. The supported Resolve then 
 sequence restored the first row to `open` with `snooze_until:null` and
 `manual_override:true`. Bounded proof confirms five Queue rows and eleven Audit_Log rows.
 At 09:50:20 EDT, `cccDisableAll` returned all seven flags off and zero managed triggers;
-this remains the latest trigger-count evidence.
+that historical all-off result precedes the current manual-controls activation.
 
 The [Gmail source snapshot 1.1](../docs/implementation/GMAIL_SNAPSHOT_V1_1.md) correction
 handles valid RFC local-parts only in the transient source contract. It does not alter Sheet
@@ -38,8 +45,9 @@ Private resource links and local deployment bindings remain in ignored
 
 ## Required continuation
 
-1. Keep all features disabled while the next integration is prepared. Do not install a
-   trigger or enable drafting from this pilot.
+1. Guarded Queue controls are currently available under `CCC_MANUAL_WRITES`. Keep
+   automatic intake, drafting, Shortcut capture, and briefing delivery disabled; do not
+   install a trigger.
 2. Studio's test add-on installation is verified: Test deployments shows Application
    Workspace Studio, an Uninstall button, and Installed add-ons, with no new scopes or
    consent. A reloaded empty manual flow titled `CCC V1 — bounded staging acceptance`
@@ -49,11 +57,17 @@ Private resource links and local deployment bindings remain in ignored
    action is still pending.
 3. Complete Shortcut token/device acceptance, then collect real pilot observations and
    user usefulness ratings over the required working week. Keep all communications unsent.
+4. The create-only draft-provider slice at `9dc1cc6` passed independent review and
+   full local verification (386 tests in 39 files) plus planning. It remains unbound,
+   unscoped and undeployed. A trusted model/context resolver and live provider
+   acceptance are required before any drafting claim; replacement and deletion remain
+   unsupported.
 
 ## Reference evidence
 
-- Studio branch full local verification: 370 tests in 37 files passed. Gmail
-  recovery PR #34 is merged; the Studio release PR is pending.
+- Studio branch full local verification: 370 tests in 37 files passed. Gmail recovery
+  PR #34 and Studio PR #35 are merged.
+- [Run comms](../docs/runbooks/RUN_COMMS.md): private Queue review and unsent reply text.
 - [Runtime operations](../docs/runbooks/RUNTIME_OPERATIONS.md): deployment drift,
   disable and recovery procedures.
 - [Shortcut installation](../shortcuts/SHORTCUT_INSTALLATION.md): safe setup template

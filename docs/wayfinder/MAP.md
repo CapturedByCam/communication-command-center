@@ -38,6 +38,8 @@ repository. See [GitHub Repository Automation](../runbooks/GITHUB_REPOSITORY_AUT
 for the security settings and reproducible ruleset. This does not change the
 product's private-data or deployment approval boundaries.
 
+- [Use a create-only native Gmail draft adapter in V1](tickets/108-native-draft-create-only.md): Preserve human edits by declining unsupported conditional updates and deletes; require fresh bounded source checks before create.
+
 ## Open frontier
 
 None. Implementation must still satisfy the account, data-access, and deployment gates recorded in the specification and runbook.

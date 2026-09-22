@@ -276,7 +276,9 @@ function manualResult(
               ? "Queue action cancelled."
               : outcome.error_code === "SELECTION_CHANGED"
                 ? "Queue row changed; no update was made."
-                : "Queue action did not run.";
+                : outcome.error_code === "WRITE_UNCERTAIN"
+                  ? "Queue action could not be confirmed. Check the row before retrying."
+                  : "Queue action did not run.";
   try {
     active?.toast(message, "Communication Command Center", 5);
   } catch {

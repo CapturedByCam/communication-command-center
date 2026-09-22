@@ -264,26 +264,25 @@ export function createStudioStep(dependencies: StudioStepDependencies) {
     }
     const source = metadataSource(rawMetadata, messageId, dependencies.now());
     if (!source) return { status: "rejected" };
+    const validatedSource = source;
 
     let acquired = false;
     let commitAttempted = false;
-    try {
-      dependencies.gateway.acquire();
-      acquired = true;
+    function runLocked(): StudioStepResult {
       const insideAuthorization = authorize();
       if (insideAuthorization !== "ok") return { status: insideAuthorization };
       const knownContact =
         resolveContact(dependencies.getCuratedContacts(), {
-          email: source.sender,
+          email: validatedSource.sender,
         }).kind !== "unresolved";
       const prepared = prepareStudioStaging(
         {
           mailbox: APPROVED_GMAIL_MAILBOX,
           gmail_message_id: messageId,
           flow_run_id: `studio:gmail:${messageId}`,
-          received_at: source.receivedAt,
-          sender_email: source.sender,
-          subject: source.subject,
+          received_at: validatedSource.receivedAt,
+          sender_email: validatedSource.sender,
+          subject: validatedSource.subject,
         },
         interpretation.data,
         { approvedMailbox: APPROVED_GMAIL_MAILBOX, knownContact },
@@ -321,18 +320,28 @@ export function createStudioStep(dependencies: StudioStepDependencies) {
       commitAttempted = true;
       dependencies.gateway.commit(dependencies.spreadsheetId, changes);
       return { status: "staged", ingest_id: prepared.record.ingest_id };
+    }
+
+    let result: StudioStepResult;
+    try {
+      dependencies.gateway.acquire();
+      acquired = true;
+      result = runLocked();
     } catch {
-      return { status: commitAttempted ? "uncertain" : "rejected" };
-    } finally {
-      if (acquired) {
-        try {
-          dependencies.gateway.release();
-        } catch {
-          // A completed atomic write remains uncertain when lock cleanup cannot be confirmed.
-          return { status: commitAttempted ? "uncertain" : "rejected" };
-        }
+      result = { status: commitAttempted ? "uncertain" : "rejected" };
+    }
+    let releaseFailed = false;
+    if (acquired) {
+      try {
+        dependencies.gateway.release();
+      } catch {
+        releaseFailed = true;
       }
     }
+    // A completed atomic write remains uncertain when lock cleanup cannot be confirmed.
+    return releaseFailed
+      ? { status: commitAttempted ? "uncertain" : "rejected" }
+      : result;
   }
 
   return { execute };

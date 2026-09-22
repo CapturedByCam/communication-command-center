@@ -16,8 +16,11 @@ Updated 2026-09-22.
   uploaded and bootstrap executed successfully, creating ten manifest tabs with
   every feature disabled. The workbook uses America/New_York.
 - A private pre-activation backup exists. Both Sheets have only the approved owner.
-- Immutable owner-only version 1 is deployed and matches the tested build.
+- Immutable owner-only version 2 is deployed and matches the tested build.
 - Live health and a bounded Gmail metadata probe passed; zero mailbox mutations.
+- Guarded owner-only Queue controls support Resolve, Reopen and explicit-offset
+  Snooze with manual overrides, conflict checks and atomic audits. The independent
+  `CCC_MANUAL_WRITES` flag defaults off; live menu acceptance remains open.
 - No Gmail ingestion, draft, Google notification, trigger or installed Shortcut is
   claimed. The Mac relocked during a manual pilot flag save; its outcome is unknown.
   Inspect saved flags before live worker tests.
@@ -44,7 +47,7 @@ Updated 2026-09-22.
 
 See [V1 execution record](../docs/implementation/V1_EXECUTION.md) for exact access,
 provider and elapsed-pilot gates, and [Handoff](Handoff.md) for continuation.
-The Mac needs manual unlock. The available Cloud billing is a free-trial account;
+Computer Use attempted automatic unlock and reported that manual unlock is required. The available Cloud billing is a free-trial account;
 a privacy-compatible model binding within existing entitlements is unverified.
 
 ## Decision and operating records

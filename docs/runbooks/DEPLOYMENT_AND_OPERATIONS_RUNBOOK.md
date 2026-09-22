@@ -12,7 +12,7 @@
   pilot flag save was interrupted by screen lock and its outcome is unknown. No trigger, Shortcut
   token, installed Shortcut, mailbox processing, or application-created draft
   exists, and no application-created Google message has been sent.
-- **Deployment state:** immutable Apps Script version 1 is deployed as an
+- **Deployment state:** immutable Apps Script version 2 is deployed as an
   owner-only web app (`access: "MYSELF"`, `executeAs: "USER_DEPLOYING"`). The
   deployed `Code.js` exactly matches `dist/Code.js` after LF normalization and
   its manifest semantically matches `dist/appsscript.json`.
@@ -94,12 +94,12 @@ the detailed procedure in [Runtime operations](RUNTIME_OPERATIONS.md).
 
 ## Phase 3 — Private Apps Script test deployment
 
-Immutable Apps Script version 1 is deployed privately with `MYSELF` /
+Immutable Apps Script version 2 is deployed privately with `MYSELF` /
 `USER_DEPLOYING`; exact deployed code and semantic manifest comparison against
 `dist` passed. Do not create a domain, logged-in-user, or anonymous deployment.
 No token or phone test is active.
 
-`cccHealth()` passed at 03:14:57 EDT with all ten headers valid and all six flags
+On version 1, `cccHealth()` passed at 03:14:57 EDT with all ten headers valid and all six flags
 false. `cccGmailReadProbe()` passed at 03:15:49 EDT with `ok: true`,
 `mailbox_verified: true`, `bounded_days: 30`, `sampled_messages: 1`,
 `metadata_verified: true`, `raw_content_stored: false`, and `mutations: 0`.
@@ -188,3 +188,8 @@ evidence, and unresolved gates. Include links to
 [V1 execution](../implementation/V1_EXECUTION.md), [PMC current state](../../PMC/Current%20State.md),
 and [runtime operations](RUNTIME_OPERATIONS.md). Never include resource IDs,
 tokens, source content, or OAuth material.
+
+Version 2 adds the guarded Queue menu and the independent default-off
+`CCC_MANUAL_WRITES` flag. Its source and unchanged manifest were verified against
+the immutable deployment; live menu, health and disable checks are still pending.
+The earlier six-flag health result describes version 1, not a fresh version 2 run.

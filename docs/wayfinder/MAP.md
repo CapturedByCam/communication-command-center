@@ -67,3 +67,8 @@ ownership; visible Studio steps alone do not prove those capabilities. The nativ
 metadata pilot reads selected messages only within its bounded query and always
 requires review. Full interpretation and drafts need a verified provider binding.
 See [execution record](../implementation/V1_EXECUTION.md) for evidence and gates.
+
+Queue operator decision, 2026-09-22: owner-only Resolve, Reopen and explicit-offset
+Snooze menu actions use a separate default-off flag and the shared transaction
+lock. Recheck authorization and the complete selected row after the prompt;
+commit Queue and Audit_Log together. See [Queue operator controls](../implementation/QUEUE_OPERATOR_CONTROLS.md).

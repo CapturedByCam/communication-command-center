@@ -4,6 +4,8 @@ import vm from "node:vm";
 import { z } from "zod";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { WORKBOOK_MANIFEST } from "../../src/adapters/sheets/workbook-manifest.js";
+import { recordToRow } from "../../src/adapters/sheets/sheet-table.js";
+import { selectedSnapshotInvalidDeadLetter } from "../../src/adapters/sheets/gmail-sync-repository.js";
 
 interface MockTable {
   headers: string[];
@@ -21,6 +23,7 @@ function createRuntime(
     readonly sheets?: { title: string; sheetId: number }[];
     readonly queueHeaders?: readonly string[];
     readonly queueRows?: unknown[][];
+    readonly deadLetterRows?: unknown[][];
     readonly gmail?: {
       messages?: { id: string; threadId?: string }[];
       metadata?: unknown;
@@ -31,6 +34,7 @@ function createRuntime(
       readonly row: number;
       readonly numRows?: number;
     };
+    readonly onPrompt?: (properties: Map<string, string>) => void;
   } = {},
 ) {
   const properties = new Map(Object.entries(options.properties ?? {}));
@@ -46,6 +50,9 @@ function createRuntime(
   const queue = tables.get("Queue")!;
   queue.headers = [...(options.queueHeaders ?? queue.headers)];
   queue.rows = options.queueRows ?? [];
+  tables.get("Dead_Letter")!.rows = (options.deadLetterRows ?? []).map((row) =>
+    row.map((value) => (value === null ? "" : value)),
+  );
   const sheets =
     options.sheets ??
     WORKBOOK_MANIFEST.map((sheet, index) => ({
@@ -55,10 +62,14 @@ function createRuntime(
   const reads: string[] = [];
   const logs = vi.fn();
   const toast = vi.fn();
-  const prompt = vi.fn(() => ({
-    getSelectedButton: () => "OK",
-    getResponseText: () => "2026-09-25T14:30:00-04:00",
-  }));
+  const prompt = vi.fn(() => {
+    options.onPrompt?.(properties);
+    return {
+      getSelectedButton: () => "OK",
+      getResponseText: () => "2026-09-25T14:30:00-04:00",
+    };
+  });
+  const gmailGets = vi.fn();
   const menu = {
     addItem: vi.fn().mockReturnThis(),
     addSeparator: vi.fn().mockReturnThis(),
@@ -158,7 +169,8 @@ function createRuntime(
         getProfile: () => ({ emailAddress: "contact@elev8mediaky.com" }),
         Messages: {
           list: () => ({ messages: options.gmail?.messages ?? [] }),
-          get: () =>
+          get: () => (
+            gmailGets(),
             options.gmail?.metadata ?? {
               id: options.gmail?.messages?.[0]?.id,
               threadId: "thread-1",
@@ -167,7 +179,8 @@ function createRuntime(
               payload: {
                 headers: [{ name: "From", value: "private@example.com" }],
               },
-            },
+            }
+          ),
         },
       },
     },
@@ -184,6 +197,7 @@ function createRuntime(
     prompt,
     menu,
     toast,
+    gmailGets,
   };
 }
 
@@ -203,6 +217,8 @@ describe("deployable Apps Script bundle", () => {
       "cccResolveSelectedQueueRow",
       "cccReopenSelectedQueueRow",
       "cccSnoozeSelectedQueueRow",
+      "cccRetrySelectedGmailSnapshotFailure",
+      "cccReplaySelectedGmailQueueItem",
     ])
       expect(typeof context[name]).toBe("function");
     expect(JSON.parse(context.doGet().value)).toEqual({
@@ -311,6 +327,30 @@ describe("deployable Apps Script bundle", () => {
       "Communication Command Center",
       5,
     );
+    await expect(
+      runtime.context.cccRetrySelectedGmailSnapshotFailure(),
+    ).resolves.toEqual({ ok: true, status: "disabled" });
+    await expect(
+      runtime.context.cccReplaySelectedGmailQueueItem(),
+    ).resolves.toEqual({ ok: true, status: "disabled" });
+    expect(runtime.reads).toEqual([]);
+    expect(runtime.prompt).toHaveBeenCalledTimes(0);
+  });
+
+  it("does not inspect a selected row when Gmail intake is disabled", async () => {
+    const runtime = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_MANUAL_WRITES: "true",
+        CCC_GMAIL_INTAKE: "false",
+      },
+      selection: { sheetName: "Dead_Letter", row: 2 },
+    });
+    await expect(
+      runtime.context.cccRetrySelectedGmailSnapshotFailure(),
+    ).resolves.toEqual({ ok: true, status: "disabled" });
+    expect(runtime.reads).toEqual([]);
+    expect(runtime.prompt).not.toHaveBeenCalled();
   });
 
   it("runs a content-free persisted briefing synchronously and keeps disabled workers inert", async () => {
@@ -411,6 +451,115 @@ describe("deployable Apps Script bundle", () => {
     expect(JSON.stringify(runtime.batchUpdate.mock.calls)).not.toContain(
       privateMarker,
     );
+  });
+
+  it("retries a selected Gmail snapshot failure through the URL-less native bundle in one Queue, Audit, and Dead_Letter commit", async () => {
+    const privateMarker = "SANITIZED-RECOVERY-SENDER@example.com";
+    const receiptAt = new Date(Date.now() + 60_000).toISOString();
+    const deadHeaders = WORKBOOK_MANIFEST.find(
+      (sheet) => sheet.name === "Dead_Letter",
+    )!.headers;
+    const runtime = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_MANUAL_WRITES: "true",
+        CCC_GMAIL_INTAKE: "true",
+      },
+      selection: { sheetName: "Dead_Letter", row: 2 },
+      deadLetterRows: (() => {
+        const row = recordToRow(deadHeaders, {
+          dead_letter_id: `dl_${"a".repeat(64)}`,
+          received_at: receiptAt,
+          source: "gmail",
+          source_record_id: "synthetic-message",
+          error_code: "SNAPSHOT_INVALID",
+          payload_hash: "a".repeat(64),
+          status: "open",
+          resolved_at: null,
+          resolution_actor: null,
+        });
+        expect(
+          selectedSnapshotInvalidDeadLetter(deadHeaders, [row], 0),
+        ).toEqual(row);
+        return [row];
+      })(),
+      gmail: {
+        metadata: {
+          id: "synthetic-message",
+          threadId: "synthetic-thread",
+          internalDate: String(Date.now()),
+          labelIds: ["INBOX"],
+          payload: {
+            headers: [
+              { name: "From", value: privateMarker },
+              { name: "To", value: "contact@elev8mediaky.com" },
+            ],
+          },
+        },
+      },
+    });
+
+    await expect(
+      runtime.context.cccRetrySelectedGmailSnapshotFailure(),
+    ).resolves.toEqual({ ok: true, status: "replayed" });
+    expect(runtime.gmailGets).toHaveBeenCalledOnce();
+    expect(runtime.batchUpdate).toHaveBeenCalledOnce();
+    const requestSheetIds = runtime.batchUpdate.mock.calls[0]![0].requests.map(
+      (request: { updateCells: { start: { sheetId: number } } }) =>
+        request.updateCells.start.sheetId,
+    );
+    const sheetId = (name: string) =>
+      WORKBOOK_MANIFEST.findIndex((sheet) => sheet.name === name) + 1;
+    expect(requestSheetIds).toEqual(
+      expect.arrayContaining([
+        sheetId("Queue"),
+        sheetId("Audit_Log"),
+        sheetId("Dead_Letter"),
+      ]),
+    );
+    expect(requestSheetIds).not.toContain(sheetId("Config"));
+    expect(runtime.reads.some((range) => range.includes("Config"))).toBe(false);
+    expect(JSON.stringify(runtime.batchUpdate.mock.calls)).not.toContain(
+      privateMarker,
+    );
+    expect(JSON.stringify(runtime.logs.mock.calls)).not.toContain(
+      privateMarker,
+    );
+  });
+
+  it("stops a selected Gmail failure replay after its confirmation when a required flag is disabled", async () => {
+    const deadHeaders = WORKBOOK_MANIFEST.find(
+      (sheet) => sheet.name === "Dead_Letter",
+    )!.headers;
+    const runtime = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_MANUAL_WRITES: "true",
+        CCC_GMAIL_INTAKE: "true",
+      },
+      selection: { sheetName: "Dead_Letter", row: 2 },
+      deadLetterRows: [
+        recordToRow(deadHeaders, {
+          dead_letter_id: `dl_${"b".repeat(64)}`,
+          received_at: new Date(Date.now() + 60_000).toISOString(),
+          source: "gmail",
+          source_record_id: "synthetic-message",
+          error_code: "SNAPSHOT_INVALID",
+          payload_hash: "b".repeat(64),
+          status: "open",
+          resolved_at: null,
+          resolution_actor: null,
+        }),
+      ],
+      onPrompt: (properties) => properties.set("CCC_GMAIL_INTAKE", "false"),
+    });
+
+    await expect(
+      runtime.context.cccRetrySelectedGmailSnapshotFailure(),
+    ).resolves.toEqual({ ok: true, status: "disabled" });
+    expect(runtime.prompt).toHaveBeenCalledOnce();
+    expect(runtime.gmailGets).not.toHaveBeenCalled();
+    expect(runtime.batchUpdate).not.toHaveBeenCalled();
   });
 
   it("preserves canonical URL rejection", () => {

@@ -19,6 +19,8 @@ const entrypoints = [
   "cccResolveSelectedQueueRow",
   "cccReopenSelectedQueueRow",
   "cccSnoozeSelectedQueueRow",
+  "cccRetrySelectedGmailSnapshotFailure",
+  "cccReplaySelectedGmailQueueItem",
 ];
 await build({
   entryPoints: [entrypoint],

@@ -9,6 +9,7 @@ import type { ThreadSnapshot } from "../../src/adapters/gmail/gmail-client.js";
 import { QueueRepository } from "../../src/adapters/sheets/queue-repository.js";
 import { AuditRepository } from "../../src/adapters/sheets/audit-repository.js";
 import { StagingRepository } from "../../src/adapters/sheets/staging-repository.js";
+import { recordToRow } from "../../src/adapters/sheets/sheet-table.js";
 import { FakeSheetTableAdapter } from "../helpers/fake-sheet-table.js";
 import type { ThreadCommitment } from "../../src/adapters/gmail/thread-state.js";
 
@@ -103,6 +104,237 @@ const stagingRecord = {
 } as const;
 
 describe("local bounded Gmail reconciliation", () => {
+  it("replays one selected SNAPSHOT_INVALID failure without moving Config and resolves its evidence atomically", async () => {
+    const { worker, adapter, queue, audit, reader } = setup();
+    const dead = adapter.tables.get("Dead_Letter")!;
+    const failure = {
+      dead_letter_id: `dl_${"b".repeat(64)}`,
+      received_at: now,
+      source: "gmail" as const,
+      source_record_id: "message-1",
+      error_code: "SNAPSHOT_INVALID" as const,
+      payload_hash: "b".repeat(64),
+      status: "open" as const,
+      resolved_at: null,
+      resolution_actor: null,
+    };
+    dead.rows.push(recordToRow(dead.headers, failure));
+    const config = adapter.tables.get("Config")!;
+    config.rows.push([
+      "gmail.reconciliation.v1",
+      '{"private":"cursor"}',
+      now,
+      "gmail_reconciliation",
+    ]);
+    const originalConfig = structuredClone(config.rows);
+
+    await expect(
+      worker.replaySelectedSnapshotInvalid(
+        {
+          selectedRowIndex: 0,
+          selectedRow: structuredClone(dead.rows[0]!),
+          authorize: () => true,
+        },
+        now,
+      ),
+    ).resolves.toEqual({ ok: true, status: "replayed" });
+
+    expect(reader.requests).toEqual([]);
+    expect(reader.fetches).toEqual(["message-1"]);
+    expect(await queue.list()).toHaveLength(1);
+    expect((await audit.list())[0]).toMatchObject({
+      actor: "manual_gmail_replay",
+      result: "created",
+    });
+    expect(dead.rows[0]).toEqual(
+      recordToRow(dead.headers, {
+        ...failure,
+        status: "resolved",
+        resolved_at: "2026-09-22T12:00:00.000Z",
+        resolution_actor: "manual_gmail_replay",
+      }),
+    );
+    expect(config.rows).toEqual(originalConfig);
+  });
+
+  it("keeps a selected failure open when replay cannot be normalized or committed", async () => {
+    const { worker, adapter, queue, audit, reader } = setup();
+    const dead = adapter.tables.get("Dead_Letter")!;
+    const failure = {
+      dead_letter_id: `dl_${"c".repeat(64)}`,
+      received_at: now,
+      source: "gmail" as const,
+      source_record_id: "message-1",
+      error_code: "SNAPSHOT_INVALID" as const,
+      payload_hash: "c".repeat(64),
+      status: "open" as const,
+      resolved_at: null,
+      resolution_actor: null,
+    };
+    dead.rows.push(recordToRow(dead.headers, failure));
+    reader.snapshots.set("message-1", { invalid: "PRIVATE" });
+    await expect(
+      worker.replaySelectedSnapshotInvalid(
+        {
+          selectedRowIndex: 0,
+          selectedRow: structuredClone(dead.rows[0]!),
+          authorize: () => true,
+        },
+        now,
+      ),
+    ).resolves.toEqual({ ok: false, error_code: "NOT_ELIGIBLE" });
+    expect(dead.rows[0]).toEqual(recordToRow(dead.headers, failure));
+    expect(await queue.list()).toEqual([]);
+    expect(await audit.list()).toEqual([]);
+
+    reader.snapshots.set("message-1", snapshot());
+    adapter.failNextAppendFor = "Audit_Log";
+    await expect(
+      worker.replaySelectedSnapshotInvalid(
+        {
+          selectedRowIndex: 0,
+          selectedRow: structuredClone(dead.rows[0]!),
+          authorize: () => true,
+        },
+        now,
+      ),
+    ).rejects.toThrow(/synthetic append failure/);
+    expect(dead.rows[0]).toEqual(recordToRow(dead.headers, failure));
+    expect(await queue.list()).toEqual([]);
+    expect(await audit.list()).toEqual([]);
+  });
+
+  it("does not extend a historical failure beyond both 30-day eligibility windows", async () => {
+    const { worker, adapter, reader } = setup();
+    const dead = adapter.tables.get("Dead_Letter")!;
+    const failure = {
+      dead_letter_id: `dl_${"d".repeat(64)}`,
+      received_at: "2026-08-20T12:00:00Z",
+      source: "gmail" as const,
+      source_record_id: "message-1",
+      error_code: "SNAPSHOT_INVALID" as const,
+      payload_hash: "d".repeat(64),
+      status: "open" as const,
+      resolved_at: null,
+      resolution_actor: null,
+    };
+    dead.rows.push(recordToRow(dead.headers, failure));
+    await expect(
+      worker.replaySelectedSnapshotInvalid(
+        {
+          selectedRowIndex: 0,
+          selectedRow: structuredClone(dead.rows[0]!),
+          authorize: () => true,
+        },
+        now,
+      ),
+    ).resolves.toEqual({ ok: false, error_code: "NOT_ELIGIBLE" });
+    expect(reader.fetches).toEqual([]);
+    expect(dead.rows[0]).toEqual(recordToRow(dead.headers, failure));
+  });
+
+  it("replays a selected current Gmail Queue item as a duplicate without replacing a manual override", async () => {
+    const { worker, adapter, queue, audit, reader } = setup();
+    await worker.reconcileRecentGmail(now, 1);
+    const entry = (await queue.findBySourceThread("gmail", "thread-1"))!;
+    const overridden = {
+      ...entry.item,
+      status: "snoozed" as const,
+      manual_override: true,
+      snooze_until: "2026-09-25T12:00:00Z",
+    };
+    await queue.upsert(overridden, entry);
+    const queueTable = adapter.tables.get("Queue")!;
+    const configBefore = structuredClone(adapter.tables.get("Config")!.rows);
+    const listCalls = reader.requests.length;
+
+    await expect(
+      worker.replaySelectedQueueItem(
+        {
+          selectedRowIndex: 0,
+          selectedRow: structuredClone(queueTable.rows[0]!),
+          authorize: () => true,
+        },
+        "2026-09-22T12:30:00Z",
+      ),
+    ).resolves.toEqual({ ok: true, status: "replayed" });
+    expect(reader.requests).toHaveLength(listCalls);
+    expect((await queue.list())[0]).toMatchObject({
+      status: "snoozed",
+      manual_override: true,
+      snooze_until: "2026-09-25T12:00:00Z",
+    });
+    expect((await audit.list()).at(-1)).toMatchObject({
+      actor: "manual_gmail_replay",
+      result: "duplicate_suppressed",
+    });
+    expect(adapter.tables.get("Config")!.rows).toEqual(configBefore);
+  });
+
+  it("does not fetch a Queue record whose source capture is older than the current 30-day window", async () => {
+    const { worker, adapter, queue, reader } = setup();
+    await worker.reconcileRecentGmail(now, 1);
+    const entry = (await queue.findBySourceThread("gmail", "thread-1"))!;
+    await queue.upsert(
+      {
+        ...entry.item,
+        captured_at: "2026-08-20T12:00:00Z",
+        updated_at: now,
+        manual_override: true,
+      },
+      entry,
+    );
+    const queueTable = adapter.tables.get("Queue")!;
+    const fetches = reader.fetches.length;
+    const auditRows = structuredClone(adapter.tables.get("Audit_Log")!.rows);
+    await expect(
+      worker.replaySelectedQueueItem(
+        {
+          selectedRowIndex: 0,
+          selectedRow: structuredClone(queueTable.rows[0]!),
+          authorize: () => true,
+        },
+        now,
+      ),
+    ).resolves.toEqual({ ok: false, error_code: "NOT_ELIGIBLE" });
+    expect(reader.fetches).toHaveLength(fetches);
+    expect(adapter.tables.get("Audit_Log")!.rows).toEqual(auditRows);
+  });
+
+  it("does not persist a Queue replay that resolves to a different Gmail thread", async () => {
+    const { worker, adapter, queue, reader, audit } = setup();
+    await worker.reconcileRecentGmail(now, 1);
+    const entry = (await queue.findBySourceThread("gmail", "thread-1"))!;
+    await queue.upsert(
+      {
+        ...entry.item,
+        source_record_id: "message-2",
+        updated_at: now,
+        manual_override: true,
+      },
+      entry,
+    );
+    reader.snapshots.set("message-2", {
+      ...snapshot("message-2"),
+      threadId: "thread-2",
+    });
+    const queueTable = adapter.tables.get("Queue")!;
+    const auditRows = structuredClone(adapter.tables.get("Audit_Log")!.rows);
+    await expect(
+      worker.replaySelectedQueueItem(
+        {
+          selectedRowIndex: 0,
+          selectedRow: structuredClone(queueTable.rows[0]!),
+          authorize: () => true,
+        },
+        now,
+      ),
+    ).resolves.toEqual({ ok: false, error_code: "NOT_ELIGIBLE" });
+    expect(reader.fetches).toContain("message-2");
+    expect((await queue.list())[0].source_thread_id).toBe("thread-1");
+    expect(await audit.list()).toHaveLength(auditRows.length);
+  });
+
   it("accepts Studio messages stamped exactly at the worker's current time", async () => {
     const { worker, reader, staging, queue, adapter } = setup();
     reader.snapshots.set("message-1", {

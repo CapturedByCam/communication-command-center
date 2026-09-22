@@ -1,3 +1,4 @@
+import "./runtime-polyfills.js";
 import {
   WORKBOOK_MANIFEST,
   headersEqual,

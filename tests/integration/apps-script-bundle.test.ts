@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import { z } from "zod";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { WORKBOOK_MANIFEST } from "../../src/adapters/sheets/workbook-manifest.js";
 
@@ -20,7 +21,10 @@ function createRuntime(
     readonly sheets?: { title: string; sheetId: number }[];
     readonly queueHeaders?: readonly string[];
     readonly queueRows?: unknown[][];
-    readonly gmail?: { messages?: { id: string }[]; metadata?: unknown };
+    readonly gmail?: {
+      messages?: { id: string; threadId?: string }[];
+      metadata?: unknown;
+    };
     readonly triggers?: { readonly handler: string }[];
     readonly selection?: {
       readonly sheetName: string;
@@ -345,6 +349,72 @@ describe("deployable Apps Script bundle", () => {
     expect(enabled.reads).toContain("'Queue'!A1:ZZ1");
     expect(enabled.batchUpdate).toHaveBeenCalledOnce();
     expect(JSON.stringify(enabled.logs.mock.calls)).not.toContain("private");
+  });
+
+  it("reconciles eligible Gmail metadata without browser URL globals", async () => {
+    const privateMarker = "SANITIZED-SENDER@example.com";
+    const runtime = createRuntime({
+      properties: {
+        CCC_GMAIL_INTAKE: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      gmail: {
+        messages: [{ id: "synthetic-message", threadId: "synthetic-thread" }],
+        metadata: {
+          id: "synthetic-message",
+          threadId: "synthetic-thread",
+          internalDate: String(Date.now()),
+          labelIds: ["INBOX"],
+          payload: {
+            headers: [
+              { name: "From", value: privateMarker },
+              { name: "To", value: "contact@elev8mediaky.com" },
+            ],
+          },
+        },
+      },
+    });
+    expect(vm.runInContext("typeof URL", runtime.context)).toBe("function");
+    expect(vm.runInContext("typeof URLSearchParams", runtime.context)).toBe(
+      "function",
+    );
+    for (const name of [
+      "window",
+      "navigator",
+      "process",
+      "setTimeout",
+      "fetch",
+      "TextEncoder",
+    ])
+      expect(vm.runInContext(`typeof ${name}`, runtime.context)).toBe(
+        "undefined",
+      );
+
+    await expect(runtime.context.cccReconcileGmail()).resolves.toMatchObject({
+      ok: true,
+      status: "complete",
+      processed: 1,
+      excluded: 0,
+      failed: 0,
+    });
+    expect(runtime.batchUpdate).toHaveBeenCalledOnce();
+    const requestSheetIds = runtime.batchUpdate.mock.calls[0]![0].requests.map(
+      (request: { updateCells: { start: { sheetId: number } } }) =>
+        request.updateCells.start.sheetId,
+    );
+    const sheetId = (name: string) =>
+      WORKBOOK_MANIFEST.findIndex((sheet) => sheet.name === name) + 1;
+    expect(requestSheetIds).toEqual(
+      expect.arrayContaining([sheetId("Queue"), sheetId("Audit_Log")]),
+    );
+    expect(requestSheetIds).not.toContain(sheetId("Dead_Letter"));
+    expect(JSON.stringify(runtime.batchUpdate.mock.calls)).not.toContain(
+      privateMarker,
+    );
+  });
+
+  it("preserves canonical URL rejection", () => {
+    expect(z.string().url().safeParse("not a URL").success).toBe(false);
   });
 
   it("reports Gmail probe metadata status without returning source content", () => {

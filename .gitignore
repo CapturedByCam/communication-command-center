@@ -8,3 +8,8 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# Private deployment identifiers and OAuth material
+.clasp*
+.local/
+private-runtime/

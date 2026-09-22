@@ -9,6 +9,7 @@ import {
 } from "../adapters/gmail/reconciliation.js";
 
 const approvedMailbox = APPROVED_GMAIL_MAILBOX;
+const maxWindowMillis = 30 * 24 * 60 * 60 * 1000;
 const metadataHeaders = [
   "From",
   "To",
@@ -30,7 +31,27 @@ const genericInterpretation = {
 
 const IdSchema = z.string().min(1).max(512);
 const EmailSchema = z.string().email().max(320);
-const HeaderSchema = z.object({ name: z.string(), value: z.string() }).strict();
+const HeaderSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1)
+      .max(78)
+      .regex(/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/),
+    value: z
+      .string()
+      .max(998)
+      .regex(/^[^\r\n]*$/),
+  })
+  .strict()
+  .superRefine((header, ctx) => {
+    if (header.name.length + 2 + header.value.length > 998) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Gmail header exceeds RFC line limit.",
+      });
+    }
+  });
 const MessageSchema = z
   .object({
     id: IdSchema,
@@ -69,7 +90,9 @@ const ReadRequestSchema = z
   })
   .strict()
   .superRefine((value, ctx) => {
-    if (Date.parse(value.from) >= Date.parse(value.to)) {
+    const from = Date.parse(value.from);
+    const to = Date.parse(value.to);
+    if (from >= to || to - from > maxWindowMillis) {
       ctx.addIssue({ code: "custom", message: "Invalid Gmail time window." });
     }
   });
@@ -93,14 +116,38 @@ export interface GmailMetadataGateway {
   ): unknown;
 }
 
+type CursorReason = "invalid_page_token" | "expired_page_token";
+
+function safeProviderFailure(error: unknown): {
+  readonly statusCode: number | null;
+  readonly cursorReason: CursorReason | null;
+} {
+  const record =
+    error instanceof Error
+      ? { message: error.message }
+      : error && typeof error === "object"
+        ? (error as { code?: unknown; status?: unknown; message?: unknown })
+        : {};
+  const rawCode = record.code ?? record.status;
+  const statusCode =
+    typeof rawCode === "number" && Number.isInteger(rawCode) ? rawCode : null;
+  const message =
+    typeof record.message === "string" && record.message.length <= 80
+      ? record.message
+      : "";
+  if (/^invalid page token$/i.test(message)) {
+    return { statusCode, cursorReason: "invalid_page_token" };
+  }
+  if (/^expired page token$/i.test(message)) {
+    return { statusCode, cursorReason: "expired_page_token" };
+  }
+  return { statusCode, cursorReason: null };
+}
+
 function redactedReadError(error: unknown, cursor = false): Error {
-  const candidate = error as { code?: unknown; message?: unknown };
-  if (candidate?.code === 404) return new GmailReadError("NOT_FOUND");
-  if (
-    cursor &&
-    candidate?.code === 400 &&
-    candidate?.message === "Invalid page token"
-  ) {
+  const failure = safeProviderFailure(error);
+  if (failure.statusCode === 404) return new GmailReadError("NOT_FOUND");
+  if (cursor && failure.cursorReason) {
     return new GmailReadError("CURSOR_EXPIRED");
   }
   return new Error("Gmail metadata read failed.");
@@ -189,6 +236,8 @@ function messageFromMetadata(message: z.infer<typeof MessageSchema>) {
 /**
  * Metadata-only adapter for Advanced Gmail. It does not request snippets or
  * bodies and exposes no mutation methods, so it cannot mark messages read.
+ * Gmail search suppresses queryable bulk sources; header/label classification
+ * below remains the final exclusion for automated and bulk mail.
  */
 export class GmailMetadataReader implements GmailReconciliationReader {
   constructor(private readonly gateway: GmailMetadataGateway) {}
@@ -219,7 +268,7 @@ export class GmailMetadataReader implements GmailReconciliationReader {
     let result: unknown;
     try {
       result = this.gateway.listMessages("me", {
-        q: `after:${fromSeconds} before:${toSeconds}`,
+        q: `after:${fromSeconds} before:${toSeconds} -label:spam -label:trash -category:promotions -category:forums -from:(no-reply)`,
         ...(parsed.pageToken ? { pageToken: parsed.pageToken } : {}),
         maxResults: parsed.limit,
       });
@@ -227,6 +276,9 @@ export class GmailMetadataReader implements GmailReconciliationReader {
       throw redactedReadError(error, true);
     }
     const page = ListSchema.parse(result);
+    if (page.messages.length > parsed.limit) {
+      throw new Error("Gmail metadata read failed.");
+    }
     return {
       messageIds: page.messages.map((message) => message.id),
       nextPageToken: page.nextPageToken ?? null,
@@ -261,7 +313,10 @@ export class GmailMetadataReader implements GmailReconciliationReader {
     const thread = ThreadSchema.parse(actualThread);
     if (
       thread.id !== message.threadId ||
-      !thread.messages.some((item) => item.id === requestedId)
+      !thread.messages.some((item) => item.id === requestedId) ||
+      thread.messages.some((item) => item.threadId !== thread.id) ||
+      new Set(thread.messages.map((item) => item.id)).size !==
+        thread.messages.length
     ) {
       throw new Error("Gmail metadata read failed.");
     }

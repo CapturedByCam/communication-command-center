@@ -99,7 +99,7 @@ describe("Apps Script Gmail metadata reader", () => {
       {
         method: "list:me",
         options: {
-          q: "after:1779926400 before:1780012800",
+          q: "after:1779926400 before:1780012800 -label:spam -label:trash -category:promotions -category:forums -from:(no-reply)",
           pageToken: "page-1",
           maxResults: 7,
         },
@@ -153,6 +153,76 @@ describe("Apps Script Gmail metadata reader", () => {
     expect(JSON.stringify(snapshot)).not.toContain("PRIVATE");
   });
 
+  it("rejects an oversized response, an overlong window, mismatched thread messages, duplicate IDs, and RFC-invalid headers", async () => {
+    const { gateway, reader } = setup();
+    gateway.listResult = {
+      messages: [
+        { id: "message-1", threadId: "thread-1" },
+        { id: "message-2", threadId: "thread-2" },
+      ],
+    };
+    await expect(
+      reader.listRecentMessages({
+        mailbox: approvedMailbox,
+        from: "2026-05-28T00:00:00.000Z",
+        to: "2026-05-29T00:00:00.000Z",
+        pageToken: null,
+        limit: 1,
+        excludeAutomated: true,
+        excludeBulk: true,
+      }),
+    ).rejects.toThrow();
+    await expect(
+      reader.listRecentMessages({
+        mailbox: approvedMailbox,
+        from: "2026-05-01T00:00:00.000Z",
+        to: "2026-06-01T00:00:00.000Z",
+        pageToken: null,
+        limit: 1,
+        excludeAutomated: true,
+        excludeBulk: true,
+      }),
+    ).rejects.toThrow("Invalid Gmail time window.");
+
+    gateway.threadResult = {
+      id: "thread-1",
+      messages: [
+        {
+          ...(gateway.messageResult as Record<string, unknown>),
+          threadId: "wrong-thread",
+        },
+      ],
+    };
+    await expect(reader.getThreadSnapshot("message-1")).rejects.toThrow(
+      "Gmail metadata read failed.",
+    );
+
+    gateway.threadResult = {
+      id: "thread-1",
+      messages: [gateway.messageResult, gateway.messageResult],
+    };
+    await expect(reader.getThreadSnapshot("message-1")).rejects.toThrow(
+      "Gmail metadata read failed.",
+    );
+
+    gateway.threadResult = {
+      id: "thread-1",
+      messages: [
+        {
+          ...(gateway.messageResult as Record<string, unknown>),
+          payload: {
+            headers: [
+              { name: "From", value: "person@example.com" },
+              { name: "To", value: approvedMailbox },
+              { name: "X-Test", value: "a".repeat(999) },
+            ],
+          },
+        },
+      ],
+    };
+    await expect(reader.getThreadSnapshot("message-1")).rejects.toThrow();
+  });
+
   it("sets exclusion flags from metadata headers and labels without marking messages read", async () => {
     const { gateway, reader } = setup();
     gateway.threadResult = {
@@ -199,7 +269,22 @@ describe("Apps Script Gmail metadata reader", () => {
     );
 
     gateway.listMessages = () => {
-      throw { code: 400, message: "Invalid page token" };
+      throw { status: 400, message: "Invalid page token" };
+    };
+    await expect(
+      reader.listRecentMessages({
+        mailbox: approvedMailbox,
+        from: "2026-05-28T00:00:00.000Z",
+        to: "2026-05-29T00:00:00.000Z",
+        pageToken: "page-1",
+        limit: 1,
+        excludeAutomated: true,
+        excludeBulk: true,
+      }),
+    ).rejects.toEqual(new GmailReadError("CURSOR_EXPIRED"));
+
+    gateway.listMessages = () => {
+      throw new Error("Expired page token");
     };
     await expect(
       reader.listRecentMessages({

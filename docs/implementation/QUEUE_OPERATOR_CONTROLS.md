@@ -44,7 +44,7 @@ audit contract without a schema change.
 
 `cccDisableAll` disables this flag along with every other feature flag. The menu may be
 visible while controls are disabled, but every manual command checks the owner and flag
-before any Queue read. At about 11:32 EDT, the Apps Script Triggers page showed
+before any Queue read. At about 11:51 EDT, the Apps Script Triggers page showed
 `Showing 0 triggers` with no filters set.
 
 After each menu action the bound spreadsheet shows a short controlled toast for

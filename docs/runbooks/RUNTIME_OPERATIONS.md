@@ -19,8 +19,8 @@ semantically matches `dist/appsscript.json`; see the chronological evidence in
 
 The current live posture is `CCC_MANUAL_WRITES:true`; the other six feature flags remain
 false. Fresh Version 6 `cccHealth` at 11:52:57 EDT returned `ok:true`, ten valid headers,
-`America/New_York`, and `send_capability:false`, with no source or Queue mutation during
-activation. At about 11:51 EDT, the Apps Script Triggers page showed `Showing 0 triggers`
+`America/New_York`, and `send_capability:false`. That read-only health check preceded
+the bounded Version 6 waiting-state acceptance. At about 11:51 EDT, the Apps Script Triggers page showed `Showing 0 triggers`
 with no filters set. Do not create time-driven triggers, enable an automatic feature, or
 enable drafting from this pilot. The manifest's Gmail scope is read-only; V1 has no send
 path. Historical Version 1–4 checks, including all-off kill-switch and disabled-worker

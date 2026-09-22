@@ -38,10 +38,16 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
   at 11:56:36 EDT. Five Queue rows and thirteen Audit_Log rows remain. The tested
   row retains `open`, `manual_override:true`, and `snooze_until:null`; only its
   update timestamp differs from the pre-test row. All other Queue rows are exact.
-- The prior briefing test persisted eight sections and one history record without
-  delivery; its replay changed nothing. That projection predates the five Queue
-  items and must not be presented as a current briefing. Review Queue directly
-  until a fresh accepted projection exists.
+- On 2026-09-22 at 18:43 EDT, an on-demand run generated a fresh eight-section
+  `Briefing_View` for the five current Queue items. `Briefing_History` records
+  delivery channel `none`; no Google message was sent. The briefing flag was
+  restored to false after the single run. See the latest live evidence in
+  [V1 execution](../docs/implementation/V1_EXECUTION.md).
+- A bounded Gmail metadata sweep on 2026-09-22 advanced six enumeration pages
+  with zero processed, excluded, or failed rows, then returned only the generic
+  `RECONCILIATION_FAILED` result. The checkpoint remains in enumeration; exact
+  Queue and Dead_Letter values still match the private pre-sweep backup. Intake
+  is off and the cause is unresolved; do not retry until diagnosed.
 - PR #34, #35 and #37 are merged. PR #37 merged at
   `60beecf5f76a77edd99daf99fad3917462cdf4cf` after required CI and review. The create-only draft provider PR #36 merged at
   `8f97b6b43b260534a9ee10c2f77aa403f08d3d95`; its factory remains uninvoked and is

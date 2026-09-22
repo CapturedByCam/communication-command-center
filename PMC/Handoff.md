@@ -32,9 +32,12 @@ active workbook was never repointed or overwritten. The integrated hardening
 candidate passed 393 tests plus all repository verification checks.
 
 Use [Run comms](../docs/runbooks/RUN_COMMS.md) for private source review and unsent
-reply text. The existing briefing projection predates current Queue items;
-review Queue directly until a fresh accepted briefing is available. Gmail's
-initial 30-day cursor is incomplete and intake remains disabled.
+reply text. A fresh eight-section `Briefing_View` was generated on 2026-09-22 for
+the five current Queue items with `delivery_channel=none`; the briefing flag is
+off again. A later bounded Gmail sweep advanced six enumeration pages, then
+returned a generic failure before processing. Queue and Dead_Letter exactly
+match the private pre-sweep backup. Gmail intake is off; leave the checkpoint in
+place and diagnose before any retry. The initial 30-day window remains incomplete.
 
 ## Commitment storage release
 

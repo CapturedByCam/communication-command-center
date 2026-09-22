@@ -1,0 +1,153 @@
+{
+  "manifest_version": "1.0",
+  "staging_schema_version": "1.0",
+  "interpretation_contract_version": "1.0",
+  "purpose": "Reviewable manual-build blueprint; not a Studio import or executable flow",
+  "enabled": false,
+  "deployment_ready": false,
+  "bindings": {
+    "approved_mailbox": "contact@elev8mediaky.com",
+    "spreadsheet_id": "${PILOT_SPREADSHEET_ID}",
+    "synthetic_sender": "${APPROVED_SYNTHETIC_SENDER}"
+  },
+  "starter": {
+    "action": "When I get an email",
+    "to": "${APPROVED_MAILBOX}",
+    "from": "${APPROVED_SYNTHETIC_SENDER}",
+    "include_flow_created_mail": false,
+    "default_label": "Inbox",
+    "historical_lookback": "Backend only: approved 30-day Gmail pilot"
+  },
+  "steps": [
+    {
+      "id": "action",
+      "action": "Decide",
+      "prompt": {
+        "path": "studio/prompts/decide-action.txt",
+        "sha256": "8c2cc7a65716ecac4341d18afd24fce1d9d86075d00093dd947cd7526beb1a5c"
+      }
+    },
+    {
+      "id": "extract",
+      "action": "Extract",
+      "prompt": {
+        "path": "studio/prompts/extract-fields.txt",
+        "sha256": "4805c7ca1993602926a6377067e1347bfd3cf8dbcd707dc629a939f43bbf243b"
+      },
+      "output_contract": "StudioInterpretationSchema"
+    },
+    {
+      "id": "stage",
+      "action": "Add a row",
+      "sheet": "Studio_Inbox",
+      "position": "after existing rows",
+      "requires": "validated staging metadata; binding not implemented",
+      "field_mappings": {
+        "schema_version": "validated.schema_version",
+        "ingest_id": "validated.ingest_id",
+        "flow_run_id": "validated.flow_run_id",
+        "gmail_message_id": "validated.gmail_message_id",
+        "received_at": "validated.received_at",
+        "sender_email": "validated.sender_email",
+        "subject": "validated.subject",
+        "requires_response": "validated.requires_response",
+        "draft_risk": "validated.draft_risk",
+        "category_hint": "validated.category_hint",
+        "project_hint": "validated.project_hint",
+        "deadline_text": "validated.deadline_text",
+        "next_action_hint": "validated.next_action_hint",
+        "summary_hint": "validated.summary_hint",
+        "confidence_hint": "validated.confidence_hint",
+        "processing_status": "validated.processing_status",
+        "processed_at": "validated.processed_at",
+        "error_code": "validated.error_code"
+      }
+    },
+    {
+      "id": "routine_gate",
+      "action": "Check if",
+      "all_of": [
+        "validated.requires_response",
+        "validated.draft_risk_is_routine",
+        "trusted.known_contact",
+        "validated.direct_response_requested",
+        "trusted.intake_enabled",
+        "trusted.drafting_enabled",
+        "trusted.no_existing_or_uncertain_draft",
+        "trusted.source_is_current"
+      ]
+    },
+    {
+      "id": "draft_text",
+      "action": "Ask Gemini",
+      "parent": "routine_gate",
+      "prompt": {
+        "path": "studio/prompts/draft-reply.txt",
+        "sha256": "6729ea62ec60e62e084c0ba36faec285d0def94c92438aa2b25b17a2888ae191"
+      },
+      "sources": "only explicitly approved source context"
+    },
+    {
+      "id": "draft",
+      "action": "Draft an email",
+      "parent": "routine_gate",
+      "enabled": false,
+      "body": "draft_text.result",
+      "target": "verified original message/thread binding required",
+      "retry_policy": "never automatically retry an uncertain draft creation"
+    }
+  ],
+  "send_steps": [],
+  "activation_gates": [
+    {
+      "id": "google_access",
+      "status": "pending",
+      "required_evidence": "Cam approves exact account, resources, scopes, and every action before real test execution."
+    },
+    {
+      "id": "source_identity",
+      "status": "pending",
+      "required_evidence": "Verify Email ID against Gmail Message.id and original thread; never use RFC Message-ID as an API ID."
+    },
+    {
+      "id": "event_metadata",
+      "status": "pending",
+      "required_evidence": "Resolve authoritative received timestamp and non-model run ID; neither is confirmed as a Studio variable."
+    },
+    {
+      "id": "validation_binding",
+      "status": "pending",
+      "required_evidence": "Wire deterministic validation before Sheet writes and drafting; validated/trusted names are conceptual, not built-in Studio variables."
+    },
+    {
+      "id": "literal_sheet_writes",
+      "status": "pending",
+      "required_evidence": "Demonstrate literal values, bounded summaries, no raw body mapping, exact headers and private unshared pilot workbook."
+    },
+    {
+      "id": "canonical_reconciliation",
+      "status": "pending",
+      "required_evidence": "Integrate with M3 so duplicate message IDs yield one canonical item and missed events recover."
+    },
+    {
+      "id": "draft_idempotency",
+      "status": "pending",
+      "required_evidence": "One owner creates each draft, persist source/draft IDs, recheck latest chronology/manual overrides, stop on uncertain outcomes."
+    },
+    {
+      "id": "draft_thread_target",
+      "status": "pending",
+      "required_evidence": "Verify original thread and recipient with an approved synthetic message."
+    },
+    {
+      "id": "kill_switches",
+      "status": "pending",
+      "required_evidence": "Prove independent intake/draft stop behavior including in-flight runs."
+    },
+    {
+      "id": "synthetic_account_tests",
+      "status": "pending",
+      "required_evidence": "Execute approved local cases in the actual account, review activity retention and record content-free evidence; zero sends."
+    }
+  ]
+}

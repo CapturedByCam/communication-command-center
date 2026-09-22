@@ -83,6 +83,12 @@ function setup(
     );
   tables.get("Commitments")!.rows.push(
     row("Commitments", {
+      schema_version: "1.1",
+      source_message_id: "outbound-1",
+      source_evidence_id: "evidence-1",
+      observed_at: "2026-09-22T12:00:00Z",
+      resolved_by: null,
+      needs_date_review: false,
       commitment_id: "com_due000001",
       item_id: "cc_handlefirst01",
       source_thread_id: "thread-cc_handlefirst01",
@@ -214,6 +220,35 @@ describe("synchronous briefing runtime", () => {
     expect(second).toMatchObject({ status: "duplicate" });
     expect(t.commits()).toBe(1);
     expect(t.held()).toBe(false);
+  });
+
+  it("accepts a named manual fulfillment without inventing source evidence", () => {
+    const t = setup();
+    const table = t.tables.get("Commitments")!;
+    const set = (key: string, value: CellValue) => {
+      table.rows[0][table.headers.indexOf(key)] = value;
+    };
+    set("status", "fulfilled");
+    set("fulfilled_at", "2026-09-22T12:30:00Z");
+    set("updated_at", "2026-09-22T12:30:00Z");
+    set("resolved_by", "manual-owner");
+    set("manual_override", true);
+    expect(
+      runBriefing(t.gateway, "book", "2026-09-22T13:00:00Z", hash).status,
+    ).toBe("generated");
+    expect(
+      t.tables
+        .get("Briefing_View")!
+        .rows.some((row) => row[5] === "Send the estimate"),
+    ).toBe(false);
+    const invalid = setup();
+    invalid.tables.get("Commitments")!.rows[0][
+      table.headers.indexOf("source_evidence_id")
+    ] = null;
+    expect(() =>
+      runBriefing(invalid.gateway, "book", "2026-09-22T13:00:00Z", hash),
+    ).toThrow("COMMITMENT_INVALID");
+    expect(invalid.commits()).toBe(0);
   });
 
   it("fails closed for a malformed commitment and leaves both projections untouched", () => {

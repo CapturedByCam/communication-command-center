@@ -10,6 +10,7 @@ const entrypoints = [
   "doPost",
   "onOpen",
   "cccInitializePilot",
+  "cccMigrateEmptyCommitments",
   "cccHealth",
   "cccDisableAll",
   "cccBuildBriefing",

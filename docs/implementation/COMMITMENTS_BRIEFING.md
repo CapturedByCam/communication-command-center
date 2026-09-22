@@ -61,9 +61,12 @@ adapter for the existing manifest tables. It reads `Queue`, `Commitments`,
 each queue row through `queueItemFromRow`. Commitment rows are fail-closed:
 their IDs, bounded promise text, enum status, boolean override, and all
 present timestamps must be valid before a briefing can be persisted. The
-current `Commitments` sheet has no columns for `sourceEvidenceId`, `observedAt`,
-or `resolvedBy`; the adapter derives those internal fields from the stable row
-identity and `updated_at` without changing the workbook schema.
+version 1.1 `Commitments` rows retain source message/evidence IDs, observation
+time, a named resolver and date-review status. The adapter validates the strict
+storage contract and projects actual persisted provenance into the domain model.
+Manual fulfillment may use a named actor without an external evidence ID.
+Legacy rows are not silently upgraded. See [Commitment storage](COMMITMENT_STORAGE.md)
+for the explicit empty-only migration and separate provider acceptance gate.
 
 Health is calculated from open `Dead_Letter` rows, `duplicate_suppressed`
 `Audit_Log` rows, Queue rows whose `draft_status` is `stale`, and the newest

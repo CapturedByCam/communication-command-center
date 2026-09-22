@@ -30,6 +30,22 @@ reply text. The existing briefing projection predates current Queue items;
 review Queue directly until a fresh accepted briefing is available. Gmail's
 initial 30-day cursor is incomplete and intake remains disabled.
 
+## Prepared Commitment storage release
+
+The source implements version 1.1 persisted outbound message/evidence IDs,
+observation time, a manual resolver and date-review status. A guarded writer
+validates selected outbound metadata before an atomic Commitment/audit write.
+The explicit migration appends headers only to an unchanged empty legacy table;
+populated legacy rows stop without mutation. Briefing reads real persisted
+provenance. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
+This is not deployed or provider-bound. Current Version 6 and private table data
+are unchanged; do not run the new source against old headers without the
+coordinated migration gate. Automatic promise extraction is still required.
+The integrated candidate passed 404 tests across 42 files, formatting, lint,
+type checking, schema validation, bundle build and planning validation. The exact
+verify subcommands ran directly against installed dependencies because pnpm
+attempted an unnecessary shared-module reinstall. Independent review found no actionable material issues; required CI remains the merge gate.
+
 ## Remaining work and user action
 
 - Resolve Workspace Studio custom-step availability. Admin is authenticated, but

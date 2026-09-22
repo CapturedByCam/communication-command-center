@@ -117,6 +117,12 @@ const expectedManifest = [
       "fulfillment_evidence_id",
       "manual_override",
       "updated_at",
+      "schema_version",
+      "source_message_id",
+      "source_evidence_id",
+      "observed_at",
+      "resolved_by",
+      "needs_date_review",
     ],
   },
   {

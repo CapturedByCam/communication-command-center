@@ -48,11 +48,26 @@ review acceptance; installation alone does not establish model acceptance.
 
 On 2026-09-22, test add-on installation was verified in Test deployments: Application
 shows Workspace Studio, the button is Uninstall, and Installed add-ons is present. No
-new scope or consent was requested. A freshly reloaded flow titled `CCC V1 — bounded
-staging acceptance` was created with Start manually only; its visible step categories
-contained no CCC/custom add-on entry. No action, run, source ID, or model input was
-added. Installation therefore does not prove account UI/admin/rollout availability,
-starter binding, or model usefulness. The Google Admin passkey action remains pending.
+new scope or consent was requested. Before Admin availability was inspected, the custom
+action was absent from the reloaded manual-flow UI; that historical absence does not
+prove permanent unavailability.
+
+Admin is authenticated. At the CapturedByCam root organizational unit, Studio Custom
+steps access is OFF; Directory All organizational units showed one active approved user.
+Allow unpublished test steps is checked but disabled while access is OFF. Enabling it
+requires action-time confirmation and has not occurred: no Admin/OAuth/policy/runtime
+change was made. The current app-owned flow is Start manually → Ask Gemini, with Web
+search and Workspace sources off, no skills, Text output, and no custom or Google
+mutation step. One synthetic-only manual run succeeded at 12:26:22 EDT.
+`StudioInterpretationSchema` accepted all 12 required fields with no extras; a pure
+`prepareStudioStaging` call with wholly synthetic metadata and `knownContact:false`
+returned `review_only` without persistence or provider calls. The synthetic details are
+in [Studio synthetic probe](../../evaluation/STUDIO_SYNTHETIC_PROBE.md). The proposal's
+`active_project`, `routine`, confidence `1.0`, and synthetic `No rush` deadline text lack
+project evidence, so semantic review and model usefulness acceptance remain open. No
+Gmail starter, message ID, or private content was bound. Activity says Data available for
+40 days and exposes stored synthetic output; exact resolved-input/source retention remains
+unknown.
 
 ## Sources
 

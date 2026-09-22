@@ -133,13 +133,21 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   `send_capability:false`. No source or Queue mutation occurred during activation. A
   current trigger count was observed at about 11:32 EDT in the Apps Script Triggers
   page: `Showing 0 triggers` with no filters set.
-- Workspace Studio test add-on installation is verified: Test deployments shows an
-  Application deployment for Workspace Studio, an Uninstall button, and Installed
-  add-ons. It required no new scope or consent. A freshly reloaded empty manual flow,
-  `CCC V1 — bounded staging acceptance`, exposed no CCC/custom add-on entry after all
-  visible step categories were inspected. No step, run, source ID, or model input was
-  added. Account UI/admin/rollout gating, actual step availability, starter binding, and
-  model acceptance remain pending; the Admin passkey action is still pending.
+- Workspace Studio test add-on installation is verified with no new scope or consent.
+  The historical reloaded manual-flow inspection found no CCC/custom action. Admin is
+  now authenticated, but CapturedByCam root Custom steps access is OFF; Allow unpublished
+  test steps is checked but disabled, and action-time confirmation to enable access is
+  pending. No Admin/OAuth/policy/runtime change occurred. The current app-owned flow is
+  Start manually → Ask Gemini with Web search and Workspace sources off, no skills, Text
+  output, and no custom/Google mutation step. A synthetic-only manual run succeeded at
+  12:26:22 EDT. `StudioInterpretationSchema` accepted all 12 required fields with no
+  extras; pure synthetic `prepareStudioStaging` with `knownContact:false` returned
+  review-only and made no persistence/provider call. Details are in [Studio synthetic
+  probe](../evaluation/STUDIO_SYNTHETIC_PROBE.md). It has no Gmail starter, message ID,
+  or private source binding. The activity panel exposes stored synthetic output and says
+  Data available for 40 days, but exact resolved-input/source retention remains unknown.
+  Its proposal still lacks project evidence, so semantic review, starter binding,
+  retention meaning, and model usefulness remain unaccepted.
 - Version 2 adds guarded Queue controls and a seventh flag, `CCC_MANUAL_WRITES`,
   which defaults false. CLI deployment changed source only, preserving the private
   access posture and existing properties. Version 4 live Gmail recovery, guarded
@@ -245,7 +253,7 @@ required checks. The Studio branch passed full local verification: 370 tests in 
 | Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 after health passed, without a source or Queue mutation |
 | Gmail | Native read-only metadata worker, five messages per invocation, 30-day cursor | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
 | Drafts | Domain lifecycle, operation ledger and reviewed create-only provider merged in PR #36 | Uninvoked and absent from the emitted runtime; no compose scope or live create acceptance; replacement/deletion unsupported |
-| Studio | Versioned disabled configuration and staging validation | Test add-on installation verified with no new consent; custom step absent from the reloaded manual-flow UI, so account UI/admin/rollout, starter binding and model acceptance remain unverified; disabled |
+| Studio | Versioned disabled configuration and staging validation | Test add-on installation verified; historical custom-step absence is distinct from current Admin-authenticated availability. Root Custom steps access is OFF pending action-time confirmation. A synthetic-only manual Ask Gemini run succeeded, but source binding, strict semantic acceptance, resolved-input retention meaning, and model usefulness remain unverified; disabled |
 | Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Safe setup-blocked template exists in [Shortcut installation](../../shortcuts/SHORTCUT_INSTALLATION.md); no export, network request, token, or phone Shortcut installation; disabled |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
 | Calendar | Reviewable candidates only | No Calendar mutation or runtime scope |
@@ -263,9 +271,10 @@ source IDs and strict pre-persistence validation.
    trigger; retain bounded controlled-code logging.
 2. Connect a supported interpretation provider with the required privacy behavior
    within an existing paid entitlement. The Studio test add-on is installed without
-   new consent, but its custom action remains absent from the reloaded manual-flow UI.
-   Newly published official custom-step documentation provides an implementation route;
-   account UI/admin/rollout availability and the Admin passkey action remain pending.
+   new consent. Its historical custom-step absence does not decide current availability:
+   Admin is authenticated but root Custom steps access is OFF pending action-time
+   confirmation. Starter binding, strict semantic acceptance, retention meaning, and
+   model usefulness remain pending.
    Draft ownership/revision data remains unbound. The inspected
    Cloud project showed an expired free trial and a free-trial billing account;
    Vertex requires enabled billing. No billing upgrade was made. Free Gemini API

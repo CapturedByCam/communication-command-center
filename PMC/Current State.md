@@ -60,11 +60,17 @@ All Google messages remain unsent; Codex coordination is authorized.
 
 ## Remaining gates
 
-1. Studio test add-on installation is verified without new consent, but its custom
-   step is absent from the inspected manual-flow UI. The flow has only a manual
-   starter, no action and no run. Admin passkey action, account/rollout availability,
-   real source-ID binding and privacy-compatible model acceptance remain pending.
-   No paid upgrade or free-tier private-message workaround is authorized.
+1. Studio test add-on installation is verified without new consent. The historical
+   manual-flow inspection found the custom step absent. Admin is now authenticated, but
+   CapturedByCam root Custom steps access is OFF; enabling it awaits action-time
+   confirmation and no Admin/OAuth/policy change occurred. The flow now has a
+   synthetic-only manual Ask Gemini run at 12:26:22 EDT with sources off, no skills,
+   Text output, and no custom/Google mutation step. The strict schema accepted its 12
+   fields; a pure synthetic `knownContact:false` staging call returned review-only with
+   no persistence/provider call. Stored synthetic output is visible for a reported 40
+   days, but resolved-input/source retention is unknown. Project evidence, starter
+   binding, retention meaning, and model usefulness remain open. No paid upgrade or
+   free-tier private-message workaround is authorized.
 2. Draft creation needs compose authorization, a trusted eligible context resolver
    and bounded live acceptance. Native replacement/deletion return unsupported to
    protect human edits. Outbound promise extraction and Commitment persistence

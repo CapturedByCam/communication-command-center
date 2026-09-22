@@ -1,6 +1,6 @@
 # Local Gmail chronology and reconciliation
 
-This is the local implementation for issue #21, Tasks 7 and 8. It runs only with injected snapshot and workbook adapters. No production Gmail reader, Google authorization, trigger installer, deployment entrypoint, draft action, or send action is included. The full Milestone 3 mailbox pilot is still gated.
+This document describes the chronology/reconciliation contracts introduced for issue #21, Tasks 7 and 8. The original local implementation now has a deployed owner-only Apps Script metadata binding and approved Google authorization. The full interpreted-mailbox pilot remains incomplete. Current live evidence and feature posture are authoritative in [V1 execution](../implementation/V1_EXECUTION.md).
 
 ## Interfaces and source boundaries
 
@@ -10,7 +10,7 @@ This is the local implementation for issue #21, Tasks 7 and 8. It runs only with
 - `GmailReconciler.processStudioInbox(now, batchSize)` processes pending, failed, or previously claimed staging records using current snapshots. It updates staging status and a fixed error code in the same transaction as queue/audit writes. A message exactly at `now` is eligible.
 - `GmailReconciler.reconcileRecentGmail(now, batchSize)` recovers messages absent from Studio. Readers receive the fixed mailbox, filtering flags, a half-open time window, a page token, and an explicit limit. The requested message must be inside that window. Local fixture readers may verify a full selected thread; the native Apps Script pilot uses only the requested metadata message and does not read thread history.
 
-Models supply only validated meaning/category/risk/summary/confidence. They do not supply direction, chronology, IDs, hashes, cursors, retries, or persistence decisions. Automated/bulk/receipt flags and labels must come from the trusted reader's filtering logic. No extraction model or real-mail classifier is connected by this implementation. Commitment extraction, date interpretation, and the `Commitments` repository are deferred; the chronology accepts already normalized, explicitly supplied commitments.
+Models supply only validated meaning/category/risk/summary/confidence. They do not supply direction, chronology, IDs, hashes, cursors, retries, or persistence decisions. Automated/bulk/receipt flags and labels must come from the trusted reader's filtering logic. No extraction model or real-mail classifier is connected by this implementation. Commitment/date domain services and briefing reads now exist, but provider extraction and live commitment persistence are not bound; chronology accepts already normalized, explicitly supplied commitments.
 
 ## Bounded recovery
 
@@ -47,9 +47,9 @@ Operational records include IDs or hashed staging IDs, fixed error codes, timing
 
 ## Local verification and remaining gate
 
-Run focused chronology/reconciliation and contract tests, `pnpm verify`, and `pnpm validate:planning`. Bundle the reconciliation entry module with esbuild's neutral platform as a local smoke check; the repository's normal build still has no deployed entrypoint. Test evidence covers missed-event recovery, current-state idempotency, reply transitions, manual overrides, pagination, restart/retry/dead-letter behavior, failed checkpoint rollback, redaction, and concurrent workers.
+Run focused chronology/reconciliation and contract tests, `pnpm verify`, and `pnpm validate:planning`. The normal build emits functional Apps Script entrypoints, which are checked by callable-bundle tests. The native runtime is deployed privately; worker/replay acceptance remains unverified. Test evidence covers missed-event recovery, current-state idempotency, reply transitions, manual overrides, pagination, restart/retry/dead-letter behavior, failed checkpoint rollback, redaction, and concurrent workers.
 
-Before any Google permission request, real mailbox read, trigger installation, Apps Script deployment, draft creation, or production communication access, present the exact OAuth scopes, account, query/lookback, redaction rules, and rollback plan for Cam's approval. Workspace Studio configuration remains Milestone 4; Shortcut work remains Milestone 5. PMC acceptance records are updated only when the milestone is accepted, not when this local PR is opened.
+The 2026-09-22 standing authorization covers minimum in-scope Google permissions, private deployment and bounded pilot tests. Record exact scopes, approved account, 30-day query bounds, redaction and rollback before exercising each operation; do not repeat approval for the same authorized scope. Workspace Studio, Shortcut installation and live feature acceptance remain open as detailed in the V1 execution record. No Google email or Chat message may be sent.
 
 ## Google runtime transaction limits
 

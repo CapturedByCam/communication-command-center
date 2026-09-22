@@ -74,10 +74,10 @@ status and hashes, never source.
 
 ## Phase 2 — Workbook and bootstrap state
 
-Do not rerun bootstrap as a routine operation. The initialized workbook is the
-current pilot state. Its required checks are: exactly ten manifest tabs, matching
-headers, `America/New_York`, empty operational rows, and these Script Properties
-set to `false`:
+Do not rerun bootstrap as a routine operation. The verified bootstrap snapshot
+had ten manifest tabs, matching headers, `America/New_York`, empty operational
+rows, and these Script Properties set to `false`. The later interrupted pilot
+save means current Gmail/briefing flag values must be inspected again:
 
 ```text
 CCC_GMAIL_INTAKE
@@ -99,12 +99,17 @@ Immutable Apps Script version 1 is deployed privately with `MYSELF` /
 `dist` passed. Do not create a domain, logged-in-user, or anonymous deployment.
 No token or phone test is active.
 
-`cccHealth()` passed at 03:14:57 EDT. Its controlled result confirmed `ok: true`, valid headers, all six flags false,
-`time_zone: "America/New_York"`, and `send_capability: false`. After that
-result, run `cccGmailReadProbe()` and require `ok: true`,
-`mailbox_verified: true`, `bounded_days: 30`, `raw_content_stored: false`, and
-`mutations: 0`. Then run `cccDisableAll()` and require `ok: true`, empty
-`flags_enabled`, and `managed_triggers_remaining: 0`.
+`cccHealth()` passed at 03:14:57 EDT with all ten headers valid and all six flags
+false. `cccGmailReadProbe()` passed at 03:15:49 EDT with `ok: true`,
+`mailbox_verified: true`, `bounded_days: 30`, `sampled_messages: 1`,
+`metadata_verified: true`, `raw_content_stored: false`, and `mutations: 0`.
+
+A subsequent save enabling only Gmail/briefing for manual pilot testing was
+interrupted by screen lock. Its result is unknown and no worker ran afterward.
+After unlocking, inspect the saved Script Properties. Run `cccDisableAll()` and
+require `ok: true`, empty `flags_enabled`, and `managed_triggers_remaining: 0`
+before the next controlled feature test. Recheck health; do not infer current
+flags from the earlier successful snapshot.
 
 These checks use controlled counts/statuses. They do not enable processing,
 create drafts, or send messages. Stop if any expected result is absent.

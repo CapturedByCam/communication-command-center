@@ -51,3 +51,19 @@
 ## Next action
 
 Implement the local-only chronology and reconciliation portion of issue #21 in a dedicated worktree and request review before merge. Stop before any Gmail permission request, real mailbox access, trigger installation, cloud resource creation, deployment, draft creation, or production communication access.
+
+## Parallel Milestone 4 work
+
+Cam authorized Workspace Studio work alongside Milestone 3 on 2026-09-22.
+Local preparation is implemented on `codex/milestone-4-workspace-studio` from
+`6bf1875`, with implementation commit `26924cf`. The disabled flow blueprint,
+prompt hashes, strict staging preparation, synthetic contracts, and integration
+fixture pass full verification (115 tests). Independent review found no
+actionable defects for this local scope. No Google state or shared-main files
+were changed by this task.
+
+Milestone 4 is not accepted or live. Studio's deterministic validation binding,
+event metadata, draft idempotency/thread targeting, and account tests remain
+unverified. See [Milestone 4 progress and next steps](../docs/implementation/MILESTONE_4.md)
+for evidence, branch boundaries, and the integration sequence. Preserve the
+Milestone 3 progress above when merging these notes.

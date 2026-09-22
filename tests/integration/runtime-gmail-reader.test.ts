@@ -114,7 +114,7 @@ describe("Apps Script Gmail metadata reader", () => {
     );
 
     expect(snapshot).toEqual({
-      schema_version: "1.0",
+      schema_version: "1.1",
       mailbox: approvedMailbox,
       threadId: "thread-1",
       messages: [
@@ -343,3 +343,94 @@ describe("Apps Script Gmail metadata reader", () => {
     ).rejects.toThrow("Gmail metadata read failed.");
   });
 });
+
+it("accepts RFC email local-parts from requested metadata without exposing message bodies", async () => {
+  const gateway = new Gateway();
+  gateway.messageResult = {
+    id: "message-1",
+    threadId: "thread-1",
+    internalDate: "1780000000000",
+    labelIds: ["INBOX"],
+    payload: {
+      headers: [
+        { name: "From", value: "Sender <sender@example.test>" },
+        { name: "To", value: "forwarded=recipient@example.test" },
+      ],
+      body: { data: "SANITIZED-FORBIDDEN-BODY" },
+    },
+  };
+  const snapshot = ThreadSnapshotSchema.parse(
+    await new GmailMetadataReader(gateway, {
+      mode: "requested_message_only",
+    }).getThreadSnapshot("message-1"),
+  );
+  expect(snapshot.schema_version).toBe("1.1");
+  expect(snapshot.messages[0]!.recipients).toEqual([
+    "forwarded=recipient@example.test",
+  ]);
+  expect(JSON.stringify(snapshot)).not.toContain("SANITIZED-FORBIDDEN-BODY");
+  expect(gateway.calls.some((call) => call.method === "thread:me")).toBe(false);
+});
+
+it.each([
+  [
+    '"Recipient, One" <one@example.test>, two@example.test',
+    ["one@example.test", "two@example.test"],
+  ],
+  [
+    '"comma,local"@example.test, other@example.test',
+    ['"comma,local"@example.test', "other@example.test"],
+  ],
+])(
+  "parses quoted recipient commas without splitting an address: %s",
+  async (header, recipients) => {
+    const gateway = new Gateway();
+    gateway.messageResult = {
+      id: "message-1",
+      threadId: "thread-1",
+      internalDate: "1780000000000",
+      labelIds: ["INBOX"],
+      payload: {
+        headers: [
+          { name: "From", value: "sender@example.test" },
+          { name: "To", value: header },
+        ],
+      },
+    };
+    const snapshot = ThreadSnapshotSchema.parse(
+      await new GmailMetadataReader(gateway, {
+        mode: "requested_message_only",
+      }).getThreadSnapshot("message-1"),
+    );
+    expect(snapshot.messages[0]!.recipients).toEqual(recipients);
+  },
+);
+
+it.each([
+  '"Unclosed, Name <one@example.test>',
+  "Name <one@example.test",
+  "Name one@example.test>",
+  "one@example.test,,two@example.test",
+])(
+  "rejects malformed recipient lists without returning partial addresses: %s",
+  async (header) => {
+    const gateway = new Gateway();
+    gateway.messageResult = {
+      id: "message-1",
+      threadId: "thread-1",
+      internalDate: "1780000000000",
+      labelIds: ["INBOX"],
+      payload: {
+        headers: [
+          { name: "From", value: "sender@example.test" },
+          { name: "To", value: header },
+        ],
+      },
+    };
+    await expect(
+      new GmailMetadataReader(gateway, {
+        mode: "requested_message_only",
+      }).getThreadSnapshot("message-1"),
+    ).rejects.toThrow("Gmail metadata read failed.");
+  },
+);

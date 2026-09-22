@@ -4,6 +4,12 @@ import { CategorySchema, DraftRiskSchema } from "../../domain/schemas.js";
 export const APPROVED_GMAIL_MAILBOX = "contact@elev8mediaky.com";
 
 const EmailSchema = z.string().email().max(320);
+/** Source addresses may use RFC local-parts that the default Gmail-style regex rejects. */
+export const SourceEmailSchema = z
+  .string()
+  .max(320)
+  .regex(/^[^\r\n]*$/)
+  .regex(z.regexes.rfc5322Email);
 
 const InterpretationSchema = z
   .object({
@@ -35,7 +41,7 @@ const ThreadMessageSchema = z
   })
   .strict();
 
-export const ThreadSnapshotSchema = z
+const LegacyThreadSnapshotSchema = z
   .object({
     schema_version: z.literal("1.0"),
     mailbox: EmailSchema,
@@ -43,6 +49,24 @@ export const ThreadSnapshotSchema = z
     messages: z.array(ThreadMessageSchema).min(1).max(1_000),
   })
   .strict();
+
+const CurrentThreadSnapshotSchema = LegacyThreadSnapshotSchema.extend({
+  schema_version: z.literal("1.1"),
+  messages: z
+    .array(
+      ThreadMessageSchema.extend({
+        sender: SourceEmailSchema,
+        recipients: z.array(SourceEmailSchema).max(100),
+      }),
+    )
+    .min(1)
+    .max(1_000),
+});
+
+export const ThreadSnapshotSchema = z.discriminatedUnion("schema_version", [
+  LegacyThreadSnapshotSchema,
+  CurrentThreadSnapshotSchema,
+]);
 
 /** Input contract; `receipt` may be omitted and is normalized to false by the schema. */
 export type ThreadSnapshot = z.input<typeof ThreadSnapshotSchema>;

@@ -151,9 +151,11 @@ export function deriveThreadState(
       new Date(commitment.deadlineAt).getTime() < nowTime,
   );
   const latestSignals = new Set(
-    latest.map(
-      (message) =>
-        `${messageDirection(message) ?? "unknown"}:${message.interpretation.kind}`,
+    latest.map((message) =>
+      JSON.stringify({
+        direction: messageDirection(message),
+        interpretation: message.interpretation,
+      }),
     ),
   );
   if (latestSignals.size > 1) {

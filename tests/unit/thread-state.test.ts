@@ -21,6 +21,23 @@ const fixture = async (name: string): Promise<ThreadSnapshot> =>
 const now = "2026-10-10T00:00:00.000Z";
 
 describe("deriveThreadState", () => {
+  it("treats equally recent routine and high-risk questions as ambiguous", async () => {
+    const snapshot = await fixture("direct-question");
+    const routine = { ...snapshot.messages[0], id: "a" };
+    snapshot.messages = [
+      routine,
+      {
+        ...routine,
+        id: "b",
+        interpretation: { ...routine.interpretation, risk: "review_only" },
+      },
+    ];
+    expect(deriveThreadState(snapshot, [], now)).toMatchObject({
+      waitingOn: "unknown",
+      draftRisk: "no_draft",
+      latestMessageId: null,
+    });
+  });
   it("orders a direct question by timestamp and waits on Cam", async () => {
     const state = deriveThreadState(await fixture("direct-question"), [], now);
     expect(state).toMatchObject({

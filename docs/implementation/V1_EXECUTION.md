@@ -448,3 +448,9 @@ exactly match the private pre-sweep backup. `CCC_GMAIL_INTAKE` was restored to
 false and verified; all other automatic flags remain false and
 `MANUAL_WRITES` remains enabled. No messages or drafts were sent or created.
 Do not retry or reset the checkpoint until the failure is diagnosed.
+
+The live cause remains unresolved. A proposed source change in the current review
+work adds only a fixed failure stage and category to the controlled error result;
+it never exposes provider messages or stack traces. This change is not yet merged
+or synchronized to Apps Script. Keep intake disabled until review, source sync, and
+a single bounded diagnostic invocation confirm a safe continuation point.

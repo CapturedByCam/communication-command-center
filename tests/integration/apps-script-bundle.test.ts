@@ -185,6 +185,7 @@ function createRuntime(
     };
     readonly promptButton?: "OK" | "CANCEL";
     readonly promptText?: string;
+    readonly failBatch?: boolean;
     readonly onPrompt?: (
       properties: Map<string, string>,
       reads: readonly string[],
@@ -193,6 +194,10 @@ function createRuntime(
 ) {
   const properties = new Map(Object.entries(options.properties ?? {}));
   const batchUpdate = vi.fn();
+  if (options.failBatch)
+    batchUpdate.mockImplementation(() => {
+      throw new Error("private provider failure detail");
+    });
   const deleted: string[] = [];
   const triggers = [...(options.triggers ?? [])];
   const tables = new Map<string, MockTable>(
@@ -730,6 +735,32 @@ describe("deployable Apps Script bundle", () => {
     expect(JSON.stringify(runtime.batchUpdate.mock.calls)).not.toContain(
       privateMarker,
     );
+  });
+
+  it("returns only a controlled diagnostic when a Sheets batch outcome is uncertain", async () => {
+    const runtime = createRuntime({
+      properties: {
+        CCC_GMAIL_INTAKE: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      failBatch: true,
+    });
+
+    const result = await runtime.context.cccReconcileGmail();
+
+    expect(result).toEqual({
+      ok: false,
+      error_code: "RECONCILIATION_FAILED",
+      failure_stage: "reconciliation",
+      failure_kind: "sheet_commit_uncertain",
+    });
+    expect(JSON.stringify(result)).not.toContain(
+      "private provider failure detail",
+    );
+    expect(JSON.stringify(runtime.logs.mock.calls)).not.toContain(
+      "private provider failure detail",
+    );
+    expect(runtime.tables.get("Queue")!.rows).toHaveLength(0);
   });
 
   it("retries a selected Gmail snapshot failure through the URL-less native bundle in one Queue, Audit, and Dead_Letter commit", async () => {

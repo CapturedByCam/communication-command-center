@@ -47,7 +47,10 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
   with zero processed, excluded, or failed rows, then returned only the generic
   `RECONCILIATION_FAILED` result. The checkpoint remains in enumeration; exact
   Queue and Dead_Letter values still match the private pre-sweep backup. Intake
-  is off and the cause is unresolved; do not retry until diagnosed.
+  is off and the live cause is unresolved. A proposed review change adds only
+  fixed failure stage/category labels; it is not yet merged or synchronized to
+  Apps Script. Do not retry until that change is reviewed and the live failure
+  category confirms a safe continuation point.
 - PR #34, #35 and #37 are merged. PR #37 merged at
   `60beecf5f76a77edd99daf99fad3917462cdf4cf` after required CI and review. The create-only draft provider PR #36 merged at
   `8f97b6b43b260534a9ee10c2f77aa403f08d3d95`; its factory remains uninvoked and is

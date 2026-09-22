@@ -23,6 +23,7 @@ import { migrateEmptyCommitments } from "./commitment-migration.js";
 import { runBriefing } from "./briefing-runtime.js";
 import { runtimeReconciler } from "./gmail-runtime.js";
 import { runBoundedGmailReconciliation } from "./bounded-gmail-runtime.js";
+import { SheetCommitUncertainError } from "./sheet-adapter.js";
 import {
   replaySelectedGmailQueueItem,
   retrySelectedGmailSnapshotInvalid,
@@ -632,14 +633,20 @@ function nativeGmail(): GmailMetadataGateway {
 }
 
 async function reconcile(studio: boolean) {
+  let failureStage:
+    "authorization" | "feature_flag" | "setup" | "reconciliation" =
+    "authorization";
   try {
     assertOwner();
+    failureStage = "feature_flag";
     if (!flag(studio ? "STUDIO_PROCESSING" : "GMAIL_INTAKE"))
       return codeResult(() => ({ ok: true, status: "disabled" }));
+    failureStage = "setup";
     const gateway = googleGateway(),
       gmail = nativeGmail(),
       id = workbookId(),
       now = new Date().toISOString();
+    failureStage = "reconciliation";
     const result = studio
       ? await runtimeReconciler(gateway, gmail, id, sha256).processStudioInbox(
           now,
@@ -658,10 +665,18 @@ async function reconcile(studio: boolean) {
         );
     // The domain result contains only fixed statuses and numeric counts.
     return codeResult(() => ({ ok: true, ...result }));
-  } catch {
+  } catch (error) {
+    const failureKind =
+      error instanceof SheetCommitUncertainError
+        ? "sheet_commit_uncertain"
+        : error instanceof Error && error.name === "GoogleJsonResponseException"
+          ? "google_api_failure"
+          : "unexpected_failure";
     return codeResult(() => ({
       ok: false,
       error_code: "RECONCILIATION_FAILED",
+      failure_stage: failureStage,
+      failure_kind: failureKind,
     }));
   }
 }

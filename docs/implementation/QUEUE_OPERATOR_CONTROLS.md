@@ -1,7 +1,9 @@
 # Queue operator controls (V1 decision)
 
 **Decision date:** 2026-09-22  
-**Status:** accepted for local implementation; disabled pending separate live review.
+**Status:** live accepted. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 EDT on
+2026-09-22 after Version 4 control acceptance and Version 5 health. The other six feature
+flags remain false; this activation made no Queue or source mutation.
 
 The bound workbook's owner may use explicit menu actions on exactly one selected
 `Queue` data row: **Resolve**, **Reopen**, and **Snooze**. Each action requires
@@ -33,9 +35,10 @@ action enum, so an accepted control is represented by its existing
 the operation-specific audit payload is hashed. This reuses the established
 audit contract without a schema change.
 
-`cccDisableAll` disables this flag along with every other feature flag. The
-menu may be visible while controls are disabled, but every manual command checks
-the owner and flag before any Queue read.
+`cccDisableAll` disables this flag along with every other feature flag. The menu may be
+visible while controls are disabled, but every manual command checks the owner and flag
+before any Queue read. At about 11:32 EDT, the Apps Script Triggers page showed
+`Showing 0 triggers` with no filters set.
 
 After each menu action the bound spreadsheet shows a short controlled toast for
 success, disabled, cancelled, changed-row conflict, or a generic failure. The

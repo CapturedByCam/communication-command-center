@@ -16,7 +16,15 @@ Updated 2026-09-22.
   verified build. Drift passed with unchanged `MYSELF`/`USER_DEPLOYING` access and an
   unauthenticated Google sign-in redirect. At 11:14:40 EDT, Version 5 `cccHealth`
   returned `ok:true`: all ten headers valid, all seven flags false,
-  `America/New_York`, and `send_capability:false`. No fresh trigger count is claimed.
+  `America/New_York`, and `send_capability:false`.
+- PR #35 merged at `c0c959d00d3b7b4769ea25e8f673d83bce0a3c14` at 11:19:34 EDT and
+  durable main fast-forwarded. Under standing authorization and after the verified
+  Version 4 guarded-control checks plus Version 5 same-code health, only
+  `CCC_MANUAL_WRITES` was enabled in the bound project. Fresh `cccHealth` at 11:24:50
+  EDT returned `ok:true`: ten valid headers, `CCC_MANUAL_WRITES:true`, the other six
+  flags false, `America/New_York`, and `send_capability:false`. Activation made no
+  source or Queue mutation. At about 11:32 EDT, the Apps Script Triggers page showed
+  `Showing 0 triggers` with no filters set. No trigger was installed.
 - At 09:37:42 EDT, selected replay of the original controlled Gmail Dead_Letter
   succeeded. Queue now has one item; Audit_Log has one new row; the same Dead_Letter is
   resolved as `manual_gmail_replay`; Config is unchanged. The 09:41:34 cursor resume
@@ -29,8 +37,9 @@ Updated 2026-09-22.
   row to `open` with `snooze_until:null` and `manual_override:true`. Bounded proof
   confirms five Queue rows and eleven Audit_Log rows.
 - At 09:50:20 EDT, `cccDisableAll` returned all seven flags off and zero managed
-  triggers. The later Version 5 health check again found all flags false; no later
-  trigger count is claimed. All tested features are currently disabled.
+  triggers. This historical all-off result precedes the current `CCC_MANUAL_WRITES`
+  activation. Queue controls are now available; automatic intake, drafting, Shortcut
+  capture, and briefing delivery remain disabled.
 - The accepted transient [Gmail source snapshot 1.1 decision](../docs/implementation/GMAIL_SNAPSHOT_V1_1.md)
   corrects valid RFC local-part handling without changing stored Sheet schemas. The
   detailed Version 1–5 evidence is in the [V1 execution record](../docs/implementation/V1_EXECUTION.md).
@@ -51,8 +60,8 @@ Updated 2026-09-22.
 
 ## Current gates
 
-1. Keep all features disabled while the next integration is prepared. Do not install a
-   trigger or enable drafting from this pilot.
+1. Use only the currently enabled guarded Queue controls as needed. Do not install a
+   trigger or enable automatic intake, drafting, Shortcut capture, or briefing delivery.
 2. Studio test add-on installation is verified in Test deployments: Application shows
    Workspace Studio, the button is Uninstall, and Installed add-ons is present. It added
    no scopes or consent. A freshly reloaded Studio flow, `CCC V1 — bounded staging
@@ -62,6 +71,11 @@ Updated 2026-09-22.
    starter binding, and model acceptance unresolved; the Admin passkey action is pending.
 3. Complete local Shortcut token/device acceptance and collect the required real-world
    pilot observations and usefulness ratings. Synthetic fixtures do not replace them.
+4. The create-only native draft provider is implemented at `9dc1cc6` with independent
+   review and 386 tests in 39 files passing, plus full local verification and planning.
+   Its binding is intentionally uninvoked: no compose scope, eligible model-context
+   resolver, deployment or live create acceptance. Native replacement and deletion
+   return unsupported; do not describe live drafting as ready.
 
 ## Decision and operating records
 

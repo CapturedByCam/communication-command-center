@@ -124,8 +124,15 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   verified build. Drift passed with unchanged `MYSELF`/`USER_DEPLOYING` access and an
   unauthenticated Google sign-in redirect. At 11:14:40 EDT, Version 5 `cccHealth`
   returned `ok:true`: all ten headers valid, all seven flags false,
-  `America/New_York`, and `send_capability:false`. No fresh Version 5 trigger count is
-  claimed; the 09:50 controlled zero-trigger result remains the latest such evidence.
+  `America/New_York`, and `send_capability:false`. PR #35 merged at
+  `c0c959d00d3b7b4769ea25e8f673d83bce0a3c14` at 11:19:34 EDT and durable main
+  fast-forwarded. Under standing authorization, only `CCC_MANUAL_WRITES` was enabled
+  after the verified Version 4 guarded-control checks and Version 5 same-code health.
+  Fresh `cccHealth` at 11:24:50 EDT returned `ok:true`: ten valid headers,
+  `CCC_MANUAL_WRITES:true`, the other six flags false, `America/New_York`, and
+  `send_capability:false`. No source or Queue mutation occurred during activation. No
+  current trigger count was then observed at about 11:32 EDT in the Apps Script Triggers
+  page: `Showing 0 triggers` with no filters set.
 - Workspace Studio test add-on installation is verified: Test deployments shows an
   Application deployment for Workspace Studio, an Uninstall button, and Installed
   add-ons. It required no new scope or consent. A freshly reloaded empty manual flow,
@@ -136,8 +143,9 @@ No email or Chat send transport exists in this runtime. No draft is created by i
 - Version 2 adds guarded Queue controls and a seventh flag, `CCC_MANUAL_WRITES`,
   which defaults false. CLI deployment changed source only, preserving the private
   access posture and existing properties. Version 4 live Gmail recovery, guarded
-  manual controls, briefing persistence and kill-switch checks have passed. All seven
-  feature flags are currently off; Version 1 remains available for rollback.
+  manual controls, briefing persistence and kill-switch checks have passed. Only
+  `CCC_MANUAL_WRITES` is currently enabled; automatic intake, drafting, Shortcut
+  capture, and briefing delivery remain disabled. Version 1 remains available for rollback.
 
 ## Runtime release verification
 
@@ -150,18 +158,17 @@ uncertainty feedback; its 12 affected Queue/bundle tests and build passed. Immut
 Version 2 deployment exactly matched that source build; its manifest scopes and owner-only
 access were unchanged. Version 4 later completed the live Gmail, manual-control and
 kill-switch checks; model acceptance remains separate.
-Gmail recovery PR #34 merged after independent review and required checks. The
-subsequent Studio custom-step branch passed full local verification: 370 tests in
-37 files; its release PR remains pending.
+Gmail recovery PR #34 and Studio custom-step PR #35 merged after independent review and
+required checks. The Studio branch passed full local verification: 370 tests in 37 files.
 
 ## Feature posture
 
 | Component | Implementation | Live posture |
 | --- | --- | --- |
 | Queue/Sheets | Actual adapter and atomic bounded commits | Ten tabs initialized; live health passed; five metadata-pilot Queue rows persisted with no raw content |
-| Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`; final all-off kill switch passed |
+| Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 after health passed, without a source or Queue mutation |
 | Gmail | Native read-only metadata worker, five messages per invocation, 30-day cursor | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
-| Drafts | Domain lifecycle and operation ledger | No bound provider, no compose scope, disabled |
+| Drafts | Domain lifecycle and operation ledger; create-only native provider slice implemented | Local focused provider tests passed; unbound, unscoped, undeployed, and pending final full checks, review, merge, and separate provider acceptance |
 | Studio | Versioned disabled configuration and staging validation | Test add-on installation verified with no new consent; custom step absent from the reloaded manual-flow UI, so account UI/admin/rollout, starter binding and model acceptance remain unverified; disabled |
 | Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Safe setup-blocked template exists in [Shortcut installation](../../shortcuts/SHORTCUT_INSTALLATION.md); no export, network request, token, or phone Shortcut installation; disabled |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
@@ -175,8 +182,9 @@ source IDs and strict pre-persistence validation.
 
 ## Remaining access and capability gates
 
-1. Keep all seven feature flags off while the next integration is prepared. Do not install
-   a trigger or enable drafting from this pilot; retain bounded controlled-code logging.
+1. Keep automatic intake, drafting, Shortcut capture, and briefing delivery disabled.
+   `CCC_MANUAL_WRITES` alone is enabled for guarded Queue controls. Do not install a
+   trigger; retain bounded controlled-code logging.
 2. Connect a supported interpretation provider with the required privacy behavior
    within an existing paid entitlement. The Studio test add-on is installed without
    new consent, but its custom action remains absent from the reloaded manual-flow UI.
@@ -201,3 +209,21 @@ source IDs and strict pre-persistence validation.
 V1 is **not accepted or ready for unattended daily use**. Local implementation and
 resource bootstrap are meaningful progress; the remaining live binding and pilot
 criteria stay open. See [Handoff](../../PMC/Handoff.md) for the release evidence.
+
+## Native draft provider preparation — 2026-09-22
+
+Decision [108](../wayfinder/tickets/108-native-draft-create-only.md) and implementation
+`9dc1cc6` add a native create-only transport plus an unbound owner/workbook/flag factory.
+No new OAuth scope or runtime entrypoint was added. Gmail reads are exact-message
+metadata only, with approved-profile/thread identity, inbound recipient, source age,
+strict reply-header and bulk exclusions. A differing Reply-To is rejected so sender
+eligibility cannot address an uncurated recipient. MIME uses UTF-8 Base64 body encoding
+with 76-character lines; padded Apps Script base64url is accepted and normalized.
+
+Independent review findings for Reply-To and native encoding were fixed. Additional
+regression tests reproduced and fixed non-ASCII/control Message-ID and synchronous
+authorization-error leakage. Full `pnpm verify` passed at 11:36 EDT: 386 tests in 39
+files, lint, typecheck, three JSON/Zod contracts and a callable Apps Script build;
+`pnpm validate:planning` also passed. Existing lifecycle tests retain reservation,
+uncertain-write, duplicate and manual-edit protections. These are synthetic/local
+results, not a live Gmail create. Native replacement/deletion make no provider calls.

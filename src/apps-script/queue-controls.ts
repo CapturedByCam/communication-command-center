@@ -4,7 +4,10 @@ import {
   queueItemFromRow,
   QueueRepository,
 } from "../adapters/sheets/queue-repository.js";
-import { assertHeaders, type CellValue } from "../adapters/sheets/sheet-table.js";
+import {
+  assertHeaders,
+  type CellValue,
+} from "../adapters/sheets/sheet-table.js";
 import { RuntimeSheetAdapter, type TableGateway } from "./sheet-adapter.js";
 
 const SnoozeTimestampSchema = z
@@ -94,10 +97,7 @@ export async function applyManualQueueControl(
 
   const now = request.now();
   if (Number.isNaN(now.getTime())) return rejected("INVALID_CLOCK");
-  if (
-    request.operation === "snooze" &&
-    !validSnooze(request.snoozeUntil, now)
-  )
+  if (request.operation === "snooze" && !validSnooze(request.snoozeUntil, now))
     return rejected("INVALID_SNOOZE_TIMESTAMP");
 
   const adapter = new RuntimeSheetAdapter(gateway);
@@ -112,7 +112,12 @@ export async function applyManualQueueControl(
         return rejected("SELECTION_CHANGED");
 
       const item = queueItemFromRow(headers, row);
-      const updated = transition(request.operation, item, now, request.snoozeUntil);
+      const updated = transition(
+        request.operation,
+        item,
+        now,
+        request.snoozeUntil,
+      );
       if (updated === undefined) return rejected("INVALID_SNOOZE_TIMESTAMP");
       if (updated === null) return rejected("STALE_STATE");
 
@@ -133,7 +138,10 @@ export async function applyManualQueueControl(
         result: "updated",
         error_code: null,
         payload_hash: request.sha256(
-          JSON.stringify({ operation: request.operation, item_id: item.item_id }),
+          JSON.stringify({
+            operation: request.operation,
+            item_id: item.item_id,
+          }),
         ),
         duration_ms: 0,
         actor: "manual_queue_control",

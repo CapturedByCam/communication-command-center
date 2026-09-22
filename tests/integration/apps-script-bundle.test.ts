@@ -92,7 +92,9 @@ function createRuntime(
         getActiveRange: () =>
           options.selection
             ? {
-                getSheet: () => ({ getName: () => options.selection!.sheetName }),
+                getSheet: () => ({
+                  getName: () => options.selection!.sheetName,
+                }),
                 getNumRows: () => options.selection!.numRows ?? 1,
                 getRow: () => options.selection!.row,
               }
@@ -289,10 +291,12 @@ describe("deployable Apps Script bundle", () => {
       "Resolve selected Queue row",
       "cccResolveSelectedQueueRow",
     );
-    await expect(runtime.context.cccResolveSelectedQueueRow()).resolves.toEqual({
-      ok: true,
-      status: "disabled",
-    });
+    await expect(runtime.context.cccResolveSelectedQueueRow()).resolves.toEqual(
+      {
+        ok: true,
+        status: "disabled",
+      },
+    );
     expect(runtime.reads).toEqual([]);
     expect(runtime.prompt).not.toHaveBeenCalled();
   });

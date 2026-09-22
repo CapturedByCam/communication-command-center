@@ -100,13 +100,17 @@ function setup(initial = item()) {
 describe("manual Queue controls", () => {
   it("resolves one snapshot-verified item, preserves draft and context fields, and writes one audit event", async () => {
     const t = setup();
-    await expect(applyManualQueueControl(t.gateway, t.request("resolve"))).resolves.toEqual({
+    await expect(
+      applyManualQueueControl(t.gateway, t.request("resolve")),
+    ).resolves.toEqual({
       ok: true,
       status: "resolved",
     });
     const queue = t.tables.get("Queue")!;
     const headers = queue.headers;
-    const row = Object.fromEntries(headers.map((header, index) => [header, queue.rows[0]![index]]));
+    const row = Object.fromEntries(
+      headers.map((header, index) => [header, queue.rows[0]![index]]),
+    );
     expect(row).toMatchObject({
       status: "resolved",
       resolved_at: "2026-09-22T16:00:00.000Z",
@@ -136,7 +140,9 @@ describe("manual Queue controls", () => {
   it("rolls back Queue and Audit_Log together when the provider batch fails", async () => {
     const t = setup();
     t.failNextCommit();
-    await expect(applyManualQueueControl(t.gateway, t.request("resolve"))).resolves.toEqual({
+    await expect(
+      applyManualQueueControl(t.gateway, t.request("resolve")),
+    ).resolves.toEqual({
       ok: false,
       error_code: "WRITE_UNCERTAIN",
     });

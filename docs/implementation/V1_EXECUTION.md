@@ -375,3 +375,25 @@ outbound promise extraction, reconciliation and the real working-week pilot
 remain unaccepted. Version 6 cannot be repointed directly at the migrated
 active workbook; older-runtime recovery requires the verified legacy backup
 restored to a new private workbook and coordinated binding.
+
+## 2026-09-22 Studio custom-step availability and locale fix
+
+Cam explicitly approved enabling Workspace Studio Custom steps access for the
+CapturedByCam root organizational unit while retaining unpublished test-step
+access. Admin saved ON with the checkbox checked. The installed private CCC
+action appeared in the Studio add-step picker and was added to the existing
+manual synthetic flow as Step 3. Its first configuration attempt reported
+missing script.locale permission. Source inspection showed the add-on did not
+read locale, so PR #45 removed useLocaleFromApp instead of widening OAuth
+scope. The focused contract test was red before the change and green after;
+build, required CI, CodeQL and independent review passed. PR #45 merged at
+8883ce187a27a0cbeba7ea9e1f5cd9ffa63fb6e9.
+
+The local clasp CLI lacked credentials, so the exact manifest field removal
+was applied in the authenticated Apps Script editor. It reported Saved to
+Drive. Reopening the Studio Step 3 card showed the intended Gmail ID and
+bounded JSON input fields with no permission error. The flow was not run,
+no real source ID or private content was bound, and CCC_STUDIO_PROCESSING
+remains disabled. Owner-only immutable web deployment Version 7 was not
+repointed. Studio model usefulness, starter-variable binding, and exact
+resolved-input/source retention remain unverified.

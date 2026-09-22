@@ -73,17 +73,19 @@ All Google messages remain unsent; Codex coordination is authorized.
 
 ## Remaining gates
 
-1. Studio test add-on installation is verified without new consent. The historical
-   manual-flow inspection found the custom step absent. Admin is now authenticated, but
-   CapturedByCam root Custom steps access is OFF; enabling it awaits action-time
-   confirmation and no Admin/OAuth/policy change occurred. The flow now has a
-   synthetic-only manual Ask Gemini run at 12:26:22 EDT with sources off, no skills,
-   Text output, and no custom/Google mutation step. The strict schema accepted its 12
-   fields; a pure synthetic `knownContact:false` staging call returned review-only with
-   no persistence/provider call. Stored synthetic output is visible for a reported 40
-   days, but resolved-input/source retention is unknown. Project evidence, starter
-   binding, retention meaning, and model usefulness remain open. No paid upgrade or
-   free-tier private-message workaround is authorized.
+1. Studio Custom steps access is ON for the approved CapturedByCam root
+   organizational unit, with unpublished test steps allowed. The installed
+   private CCC action is visible, and its configuration card now renders the
+   Gmail ID and bounded JSON fields after PR #45 removed an unused locale
+   permission option. The corresponding exact manifest edit is saved in the
+   authenticated Apps Script project. The manual synthetic flow now includes
+   the unconfigured, unrun private action as Step 3; CCC_STUDIO_PROCESSING
+   remains false. The earlier Ask Gemini synthetic-only run had sources off and
+   its 12-field result passed strict schema validation, but project evidence,
+   starter binding, real-model usefulness, and resolved-input/source retention
+   remain open. Studio reports stored synthetic output available for 40 days.
+   No real private content or Google mutation was used. Immutable web
+   deployment Version 7 was not changed by the editor manifest fix.
 2. Draft creation needs compose authorization, a trusted eligible context resolver
    and bounded live acceptance. Native replacement/deletion return unsupported to
    protect human edits. The new Commitment storage schema is migrated and deployed; outbound

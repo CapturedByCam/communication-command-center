@@ -74,3 +74,9 @@ Stop without changing external state when:
 - a secret appears in logs, fixtures, screenshots, or Git;
 - a flow begins sending instead of drafting;
 - a test fixture uses real private content that was not explicitly approved and sanitized.
+
+<!-- pmc:managed:start -->
+## Project Memory Core orientation
+
+At the start of a project task, read `PMC/Project.md` and `PMC/Current State.md`, then follow only the links relevant to the task. Treat `PMC/Inbox/Promotion Inbox.md` as proposals, not accepted project truth. At the end of an accepted milestone, update `PMC/Current State.md` and `PMC/Handoff.md` with repository-relative evidence.
+<!-- pmc:managed:end -->

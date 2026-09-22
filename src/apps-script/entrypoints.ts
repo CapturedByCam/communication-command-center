@@ -51,7 +51,6 @@ function codeResult(operation: () => unknown): unknown {
 export function doGet() {
   return json({ status: "rejected", error_code: "method_not_allowed" });
 }
-
 export function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("Communication Command Center")
@@ -258,19 +257,16 @@ export function cccDisableAll() {
     };
   });
 }
-
 function manualResult(result: unknown): unknown {
   // This path deliberately emits only controlled operation status, never cells or provider errors.
   console.info(JSON.stringify(result));
   return result;
 }
-
 async function controlSelectedQueueRow(operation: ManualQueueOperation) {
   try {
     assertOwner();
     if (!flag("MANUAL_WRITES"))
       return manualResult({ ok: true, status: "disabled" });
-
     const active = SpreadsheetApp.getActiveSpreadsheet();
     const id = workbookId();
     if (!active || active.getId() !== id)
@@ -283,7 +279,6 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
       range.getRow() < 2
     )
       return manualResult({ ok: false, error_code: "INVALID_SELECTION" });
-
     const gateway = googleGateway();
     const before = gateway.read(id, "Queue");
     const selectedRow = selectedQueueSnapshot(
@@ -293,7 +288,6 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
     );
     if (!selectedRow)
       return manualResult({ ok: false, error_code: "INVALID_SELECTION" });
-
     const ui = SpreadsheetApp.getUi();
     let snoozeUntil: string | undefined;
     if (operation === "snooze") {
@@ -329,7 +323,6 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
     return manualResult({ ok: false, error_code: "OPERATION_FAILED" });
   }
 }
-
 export function cccResolveSelectedQueueRow() {
   return controlSelectedQueueRow("resolve");
 }

@@ -200,7 +200,7 @@ describe("synchronous briefing runtime", () => {
       view.rows.some(
         (value) =>
           value[6] === "Reply" &&
-          value[7]!.toString().includes("mail.google.com"),
+          value[7] === "https://mail.google.com/mail/u/0/#all/cc_handlefirst01",
       ),
     ).toBe(true);
     expect(t.tables.get("Briefing_History")!.rows[0]![2]).toBe("none");

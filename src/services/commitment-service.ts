@@ -284,10 +284,30 @@ function parseSuggestedLocal(
 }
 
 function parseAbsoluteIso(text: string): string | null {
-  if (
-    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/i.test(
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(?:Z|([+-])(\d{2}):(\d{2}))$/i.exec(
       text,
-    )
+    );
+  if (!match) {
+    return null;
+  }
+  const [year, month, day, hour, minute, second, offsetHour, offsetMinute] = [
+    1, 2, 3, 4, 5, 6, 8, 9,
+  ].map((index) => Number(match[index] ?? "0"));
+  const calendar = new Date(`${match[1]}-${match[2]}-${match[3]}T00:00:00Z`);
+  if (
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59 ||
+    offsetHour > 23 ||
+    offsetMinute > 59 ||
+    Number.isNaN(calendar.valueOf()) ||
+    calendar.getUTCFullYear() !== year ||
+    calendar.getUTCMonth() + 1 !== month ||
+    calendar.getUTCDate() !== day
   ) {
     return null;
   }

@@ -21,7 +21,7 @@ actor.
 
 `normalizeDeadlineSuggestion({ text, anchorAt })` retains at most 200 characters
 of original text. It recognizes only explicit ISO calendar dates, `today`,
-`tomorrow`, `in N days`, and `next weekday`, interpreted using the required
+`tomorrow` and `in N days`, interpreted using the required
 `America/New_York` anchor. Absolute ISO timestamps and explicit local calendar
 dates with a valid AM/PM time can be normalized without an anchor. A date without
 a time, missing relative-date anchor, unsupported/ambiguous language, invalid
@@ -31,15 +31,19 @@ time, DST spring gap, or DST fall fold returns `deadlineAt: null` with
 ## Calendar candidates
 
 `buildCalendarCandidate()` returns a candidate record only. The
-`creationEligible` flag expresses a future integration precondition
-(`calendarApproved && calendarWritesEnabled`); `writePerformed` is always
-`false`, and this module contains no Calendar client.
+`creationEligible` requires an approved, enabled integration and a strict,
+valid ISO timestamp with an explicit offset. Other deadline text is retained
+only as data with `needsDateReview: true`; it cannot become a creation
+candidate. `writePerformed` is always `false`, and this module contains no
+Calendar client.
 
 ## Briefing
 
 `buildBriefing(items, commitments, health, generatedAt, options)` returns the
-eight product sections in fixed order. Resolved, snoozed, and explicitly snoozed
-items are excluded. Every remaining active item is assigned exactly once.
+eight product sections in fixed order. Resolved and archived items, plus active
+snoozes, are excluded; an expired snooze returns to active work. Every remaining
+active item is assigned exactly once. The upcoming-week section uses New York
+calendar-day boundaries, including across DST changes.
 `Handle first` has at most five entries; remaining active work appears in its
 next applicable section, with unclassified overflow placed under `Needs
 judgment` as `active item awaiting triage`. Commitment and system-health rows

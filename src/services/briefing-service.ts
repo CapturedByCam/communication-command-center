@@ -118,10 +118,13 @@ function isDueOnOrBeforeToday(deadlineAt: string | null, now: Date): boolean {
 function withinWeek(deadlineAt: string | null | undefined, now: Date): boolean {
   if (!deadlineAt) return false;
   const deadline = new Date(deadlineAt);
+  const today = newYorkDate(now);
+  const weekEnd = new Date(`${today}T00:00:00Z`);
+  weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
   return (
     !Number.isNaN(deadline.valueOf()) &&
     deadline >= now &&
-    deadline <= new Date(now.valueOf() + 7 * 24 * 60 * 60 * 1000)
+    newYorkDate(deadline) <= weekEnd.toISOString().slice(0, 10)
   );
 }
 

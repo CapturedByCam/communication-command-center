@@ -68,6 +68,12 @@ describe("normalizeDeadlineSuggestion", () => {
       });
     }
   });
+
+  it("rejects impossible absolute ISO calendar dates instead of normalizing them", () => {
+    expect(
+      normalizeDeadlineSuggestion({ text: "2026-02-30T19:30:00Z" }),
+    ).toMatchObject({ deadlineAt: null, needsDateReview: true });
+  });
 });
 
 describe("buildCalendarCandidate", () => {
@@ -87,7 +93,26 @@ describe("buildCalendarCandidate", () => {
       startAt: "2026-09-23T09:00:00-04:00",
       calendarApproved: true,
       creationEligible: true,
+      needsDateReview: false,
       writePerformed: false,
     });
+  });
+
+  it("requires a canonical validated offset timestamp before a candidate is eligible", () => {
+    for (const deadlineAt of [
+      "tomorrow at 9",
+      "2026-11-01T01:30:00",
+      "2026-02-30T09:00:00-05:00",
+    ]) {
+      expect(
+        buildCalendarCandidate({
+          itemId: "cc_abcdefghijkl",
+          title: "Call client",
+          deadlineAt,
+          calendarApproved: true,
+          calendarWritesEnabled: true,
+        }),
+      ).toMatchObject({ creationEligible: false, needsDateReview: true });
+    }
   });
 });

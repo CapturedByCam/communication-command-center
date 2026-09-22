@@ -148,4 +148,33 @@ describe("buildBriefing", () => {
     );
     expect(briefing.sections[2]!.entries).toHaveLength(1);
   });
+
+  it("uses New York calendar dates for the seven-day window across DST changes", () => {
+    for (const [now, deadline] of [
+      ["2026-03-08T00:30:00-05:00", "2026-03-15T23:30:00-04:00"],
+      ["2026-11-01T00:30:00-04:00", "2026-11-08T23:30:00-05:00"],
+    ]) {
+      const briefing = buildBriefing(
+        [
+          ...Array.from({ length: 5 }, (_, index) =>
+            item(`cc_dst_filler${index}`, {
+              priority_score: 100 - index,
+              urgency: "later",
+            }),
+          ),
+          item("cc_dst_week", {
+            priority_score: 1,
+            deadline_at: deadline,
+            urgency: "later",
+          }),
+        ],
+        [],
+        {},
+        now,
+      );
+      expect(
+        briefing.sections[6]!.entries.map((entry) => entry.itemId),
+      ).toContain("cc_dst_week");
+    }
+  });
 });

@@ -20,6 +20,9 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
     permissions:
       contents: write
       pull-requests: write
@@ -58,7 +61,7 @@ jobs:
         run: |
           gh api "repos/$GH_REPO/pulls/$PR_NUMBER" > "$RUNNER_TEMP/pull.json"
           gh api --paginate --slurp "repos/$GH_REPO/pulls/$PR_NUMBER/files" \
-            --jq 'add' > "$RUNNER_TEMP/files.json"
+            | jq 'add' > "$RUNNER_TEMP/files.json"
           node scripts/dependabot-auto-merge-policy.mjs \
             "$RUNNER_TEMP/pull.json" "$RUNNER_TEMP/files.json" >> "$GITHUB_OUTPUT"
 

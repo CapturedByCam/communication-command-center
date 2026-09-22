@@ -29,8 +29,7 @@
   "addOns": {
     "common": {
       "name": "Communication Command Center",
-      "logoUrl": "https://www.gstatic.com/images/icons/material/system/1x/assignment_black_48dp.png",
-      "useLocaleFromApp": true
+      "logoUrl": "https://www.gstatic.com/images/icons/material/system/1x/assignment_black_48dp.png"
     },
     "studio": {
       "flows": {

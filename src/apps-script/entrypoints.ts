@@ -17,6 +17,11 @@ import { literalCell } from "./google-sheet-gateway.js";
 import { runBriefing } from "./briefing-runtime.js";
 import { runGmailReconciliation, runtimeReconciler } from "./gmail-runtime.js";
 import type { GmailMetadataGateway } from "./gmail-reader.js";
+import {
+  applyManualQueueControl,
+  selectedQueueSnapshot,
+  type ManualQueueOperation,
+} from "./queue-controls.js";
 
 const FLAGS = [
   "GMAIL_INTAKE",
@@ -25,6 +30,7 @@ const FLAGS = [
   "DRAFT_CREATION",
   "DRAFT_REPLACEMENT",
   "BRIEFING_DELIVERY",
+  "MANUAL_WRITES",
 ] as const;
 function json(value: unknown) {
   return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(
@@ -44,6 +50,18 @@ function codeResult(operation: () => unknown): unknown {
 }
 export function doGet() {
   return json({ status: "rejected", error_code: "method_not_allowed" });
+}
+
+export function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("Communication Command Center")
+    .addItem("Health", "cccHealth")
+    .addItem("Disable all controls", "cccDisableAll")
+    .addSeparator()
+    .addItem("Resolve selected Queue row", "cccResolveSelectedQueueRow")
+    .addItem("Reopen selected Queue row", "cccReopenSelectedQueueRow")
+    .addItem("Snooze selected Queue row", "cccSnoozeSelectedQueueRow")
+    .addToUi();
 }
 export function doPost(e: GoogleAppsScript.Events.DoPost) {
   try {
@@ -239,6 +257,87 @@ export function cccDisableAll() {
       managed_triggers_remaining: remaining,
     };
   });
+}
+
+function manualResult(result: unknown): unknown {
+  // This path deliberately emits only controlled operation status, never cells or provider errors.
+  console.info(JSON.stringify(result));
+  return result;
+}
+
+async function controlSelectedQueueRow(operation: ManualQueueOperation) {
+  try {
+    assertOwner();
+    if (!flag("MANUAL_WRITES"))
+      return manualResult({ ok: true, status: "disabled" });
+
+    const active = SpreadsheetApp.getActiveSpreadsheet();
+    const id = workbookId();
+    if (!active || active.getId() !== id)
+      return manualResult({ ok: false, error_code: "WORKBOOK_MISMATCH" });
+    const range = active.getActiveRange();
+    if (
+      !range ||
+      range.getSheet().getName() !== "Queue" ||
+      range.getNumRows() !== 1 ||
+      range.getRow() < 2
+    )
+      return manualResult({ ok: false, error_code: "INVALID_SELECTION" });
+
+    const gateway = googleGateway();
+    const before = gateway.read(id, "Queue");
+    const selectedRow = selectedQueueSnapshot(
+      before.headers,
+      before.rows,
+      range.getRow() - 2,
+    );
+    if (!selectedRow)
+      return manualResult({ ok: false, error_code: "INVALID_SELECTION" });
+
+    const ui = SpreadsheetApp.getUi();
+    let snoozeUntil: string | undefined;
+    if (operation === "snooze") {
+      const response = ui.prompt(
+        "Snooze selected Queue row",
+        "Enter a future ISO timestamp with a numeric offset (for example 2026-09-25T14:30:00-04:00).",
+        ui.ButtonSet.OK_CANCEL,
+      );
+      if (response.getSelectedButton() !== ui.Button.OK)
+        return manualResult({ ok: true, status: "cancelled" });
+      snoozeUntil = response.getResponseText();
+    } else {
+      const response = ui.prompt(
+        `${operation === "resolve" ? "Resolve" : "Reopen"} selected Queue row`,
+        "Confirm this selected row action.",
+        ui.ButtonSet.OK_CANCEL,
+      );
+      if (response.getSelectedButton() !== ui.Button.OK)
+        return manualResult({ ok: true, status: "cancelled" });
+    }
+    return manualResult(
+      await applyManualQueueControl(gateway, {
+        operation,
+        spreadsheetId: id,
+        selectedRowIndex: range.getRow() - 2,
+        selectedRow,
+        snoozeUntil,
+        now: () => new Date(),
+        sha256,
+      }),
+    );
+  } catch {
+    return manualResult({ ok: false, error_code: "OPERATION_FAILED" });
+  }
+}
+
+export function cccResolveSelectedQueueRow() {
+  return controlSelectedQueueRow("resolve");
+}
+export function cccReopenSelectedQueueRow() {
+  return controlSelectedQueueRow("reopen");
+}
+export function cccSnoozeSelectedQueueRow() {
+  return controlSelectedQueueRow("snooze");
 }
 export function cccBuildBriefing() {
   return codeResult(() => {

@@ -22,6 +22,11 @@ function createRuntime(
     readonly queueRows?: unknown[][];
     readonly gmail?: { messages?: { id: string }[]; metadata?: unknown };
     readonly triggers?: { readonly handler: string }[];
+    readonly selection?: {
+      readonly sheetName: string;
+      readonly row: number;
+      readonly numRows?: number;
+    };
   } = {},
 ) {
   const properties = new Map(Object.entries(options.properties ?? {}));
@@ -45,6 +50,21 @@ function createRuntime(
     }));
   const reads: string[] = [];
   const logs = vi.fn();
+  const prompt = vi.fn(() => ({
+    getSelectedButton: () => "OK",
+    getResponseText: () => "2026-09-25T14:30:00-04:00",
+  }));
+  const menu = {
+    addItem: vi.fn().mockReturnThis(),
+    addSeparator: vi.fn().mockReturnThis(),
+    addToUi: vi.fn(),
+  };
+  const ui = {
+    Button: { OK: "OK" },
+    ButtonSet: { OK_CANCEL: "OK_CANCEL" },
+    prompt,
+    createMenu: vi.fn(() => menu),
+  };
   const lock = { tryLock: vi.fn(() => true), releaseLock: vi.fn() };
   const context = vm.createContext({
     console: { info: logs },
@@ -67,7 +87,18 @@ function createRuntime(
       }),
     },
     SpreadsheetApp: {
-      getActiveSpreadsheet: () => ({ getId: () => "book_abcdefghijklmnop" }),
+      getActiveSpreadsheet: () => ({
+        getId: () => "book_abcdefghijklmnop",
+        getActiveRange: () =>
+          options.selection
+            ? {
+                getSheet: () => ({ getName: () => options.selection!.sheetName }),
+                getNumRows: () => options.selection!.numRows ?? 1,
+                getRow: () => options.selection!.row,
+              }
+            : null,
+      }),
+      getUi: () => ui,
     },
     LockService: { getScriptLock: () => lock },
     CacheService: { getScriptCache: () => ({ get: () => null, put: vi.fn() }) },
@@ -134,7 +165,17 @@ function createRuntime(
     },
   });
   vm.runInContext(code, context);
-  return { context, properties, batchUpdate, deleted, lock, logs, reads };
+  return {
+    context,
+    properties,
+    batchUpdate,
+    deleted,
+    lock,
+    logs,
+    reads,
+    prompt,
+    menu,
+  };
 }
 
 describe("deployable Apps Script bundle", () => {
@@ -143,12 +184,16 @@ describe("deployable Apps Script bundle", () => {
     for (const name of [
       "doGet",
       "doPost",
+      "onOpen",
       "cccInitializePilot",
       "cccHealth",
       "cccDisableAll",
       "cccBuildBriefing",
       "cccReconcileGmail",
       "cccProcessStudio",
+      "cccResolveSelectedQueueRow",
+      "cccReopenSelectedQueueRow",
+      "cccSnoozeSelectedQueueRow",
     ])
       expect(typeof context[name]).toBe("function");
     expect(JSON.parse(context.doGet().value)).toEqual({
@@ -169,6 +214,7 @@ describe("deployable Apps Script bundle", () => {
         "DRAFT_CREATION",
         "DRAFT_REPLACEMENT",
         "BRIEFING_DELIVERY",
+        "MANUAL_WRITES",
       ].map((name) => [`CCC_${name}`, "true"]),
     );
     const initialized = createRuntime({ properties: enabled });
@@ -225,8 +271,30 @@ describe("deployable Apps Script bundle", () => {
       "DRAFT_CREATION",
       "DRAFT_REPLACEMENT",
       "BRIEFING_DELIVERY",
+      "MANUAL_WRITES",
     ])
       expect(runtime.properties.get(`CCC_${name}`)).toBe("false");
+  });
+
+  it("shows guarded controls but does not inspect Queue when manual writes are disabled", async () => {
+    const runtime = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_MANUAL_WRITES: "false",
+      },
+      selection: { sheetName: "Queue", row: 2 },
+    });
+    runtime.context.onOpen();
+    expect(runtime.menu.addItem).toHaveBeenCalledWith(
+      "Resolve selected Queue row",
+      "cccResolveSelectedQueueRow",
+    );
+    await expect(runtime.context.cccResolveSelectedQueueRow()).resolves.toEqual({
+      ok: true,
+      status: "disabled",
+    });
+    expect(runtime.reads).toEqual([]);
+    expect(runtime.prompt).not.toHaveBeenCalled();
   });
 
   it("runs a content-free persisted briefing synchronously and keeps disabled workers inert", async () => {

@@ -72,34 +72,48 @@ export async function upsertCommunicationItem(
   incoming: CommunicationItem,
   context: UpsertContext,
 ): Promise<UpsertResult> {
-  await Promise.all([
-    dependencies.queue.verifyHeaders(),
-    dependencies.audit.verifyHeaders(),
-  ]);
+  return dependencies.queue.runTransaction(async () => {
+    await Promise.all([
+      dependencies.queue.verifyHeaders(),
+      dependencies.audit.verifyHeaders(),
+    ]);
 
-  const existing = await dependencies.queue.getBySourceThread(
-    incoming.source,
-    incoming.source_thread_id,
-  );
-  const priorEvent = await dependencies.audit.findByCorrelationId(
-    context.correlationId,
-  );
-
-  if (priorEvent) {
-    if (!existing) {
-      throw new Error(
-        "Audit correlation exists without its canonical queue item",
-      );
-    }
-    const outcome = "duplicate_suppressed" as const;
-    await dependencies.audit.append(
-      buildAuditEvent(existing, outcome, context),
+    const existingEntry = await dependencies.queue.findBySourceThread(
+      incoming.source,
+      incoming.source_thread_id,
     );
-    return { outcome, item: existing };
-  }
+    const existing = existingEntry?.item ?? null;
+    const priorEvent = await dependencies.audit.findByCorrelationId(
+      context.correlationId,
+    );
 
-  const next = existing ? mergeIncomingItem(existing, incoming) : incoming;
-  const outcome = await dependencies.queue.upsert(next);
-  await dependencies.audit.append(buildAuditEvent(next, outcome, context));
-  return { outcome, item: next };
+    if (priorEvent) {
+      if (!existing) {
+        throw new Error(
+          "Audit correlation exists without its canonical queue item",
+        );
+      }
+      const outcome = "duplicate_suppressed" as const;
+      await dependencies.audit.append(
+        buildAuditEvent(existing, outcome, context),
+      );
+      return { outcome, item: existing };
+    }
+
+    if (
+      existing &&
+      Date.parse(incoming.updated_at) < Date.parse(existing.updated_at)
+    ) {
+      const outcome = "stale_suppressed" as const;
+      await dependencies.audit.append(
+        buildAuditEvent(existing, outcome, context),
+      );
+      return { outcome, item: existing };
+    }
+
+    const next = existing ? mergeIncomingItem(existing, incoming) : incoming;
+    const outcome = await dependencies.queue.upsert(next, existingEntry);
+    await dependencies.audit.append(buildAuditEvent(next, outcome, context));
+    return { outcome, item: next };
+  });
 }

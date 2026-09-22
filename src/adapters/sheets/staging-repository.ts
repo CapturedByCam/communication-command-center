@@ -73,33 +73,32 @@ export class StagingRepository {
       return [];
     }
 
-    const table = await this.adapter.readTable(this.spreadsheetId, sheetName);
-    const headers = assertHeaders(sheetName, table.headers);
-    const claimed: StudioStagingRecord[] = [];
+    return this.adapter.runTransaction(this.spreadsheetId, async () => {
+      const table = await this.adapter.readTable(this.spreadsheetId, sheetName);
+      const headers = assertHeaders(sheetName, table.headers);
+      const parsedRows = table.rows.map((row) => fromRow(headers, row));
+      const candidates = parsedRows
+        .map((record, rowIndex) => ({ record, rowIndex }))
+        .filter(({ record }) => record.processing_status === "new")
+        .slice(0, batchSize);
+      const claimed: StudioStagingRecord[] = [];
 
-    for (const [rowIndex, row] of table.rows.entries()) {
-      if (claimed.length >= batchSize) {
-        break;
+      for (const { record, rowIndex } of candidates) {
+        const next = StudioStagingSchema.parse({
+          ...record,
+          processing_status: "processing",
+        });
+        await this.adapter.updateRow(
+          this.spreadsheetId,
+          sheetName,
+          rowIndex,
+          recordToRow(headers, toRecord(next)),
+          table.rows[rowIndex],
+        );
+        claimed.push(next);
       }
-      const current = fromRow(headers, row);
-      if (current.processing_status !== "new") {
-        continue;
-      }
 
-      const next = StudioStagingSchema.parse({
-        ...current,
-        processing_status: "processing",
-      });
-      await this.adapter.updateRow(
-        this.spreadsheetId,
-        sheetName,
-        rowIndex,
-        recordToRow(headers, toRecord(next)),
-        row,
-      );
-      claimed.push(next);
-    }
-
-    return claimed;
+      return claimed;
+    });
   }
 }

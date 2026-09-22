@@ -14,6 +14,7 @@ export const AuditResultSchema = z.enum([
   "created",
   "updated",
   "duplicate_suppressed",
+  "stale_suppressed",
 ]);
 
 const AuditEventSchema = z

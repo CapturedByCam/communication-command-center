@@ -8,6 +8,10 @@ export interface SheetTable {
 }
 
 export interface SheetTableAdapter {
+  runTransaction<T>(
+    spreadsheetId: string,
+    operation: () => Promise<T>,
+  ): Promise<T>;
   readTable(spreadsheetId: string, sheetName: string): Promise<SheetTable>;
   appendRow(
     spreadsheetId: string,

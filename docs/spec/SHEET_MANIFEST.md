@@ -10,6 +10,7 @@
 - Any non-empty header mismatch stops the entire bootstrap before mutation.
 - Verification is read-only and reports missing tabs and exact header conflicts.
 - Repository code resolves values by header name and rejects drift before reading or writing rows.
+- Multi-row or multi-tab state changes require an adapter transaction with mutual exclusion and rollback. A real Sheets adapter must not be connected until it satisfies that contract.
 
 ## Tabs
 

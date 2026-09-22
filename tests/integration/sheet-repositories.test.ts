@@ -19,6 +19,14 @@ const spreadsheetId = "synthetic-sheet";
 
 class FakeSheetTableAdapter implements SheetTableAdapter {
   readonly tables = new Map<string, SheetTable>();
+  failNextAppendFor: string | null = null;
+  failUpdateCall: number | null = null;
+  beforeNextUpdate:
+    ((sheetName: string, rowIndex: number, table: SheetTable) => void) | null =
+    null;
+  private transactionTail: Promise<void> = Promise.resolve();
+  private undoActions: Array<() => void> | null = null;
+  private updateCallCount = 0;
 
   initializeManifest(): void {
     for (const definition of WORKBOOK_MANIFEST) {
@@ -26,6 +34,35 @@ class FakeSheetTableAdapter implements SheetTableAdapter {
         headers: [...definition.headers],
         rows: [],
       });
+    }
+  }
+
+  failAfterUpcomingUpdates(count: number): void {
+    this.failUpdateCall = this.updateCallCount + count;
+  }
+
+  async runTransaction<T>(
+    requestedSpreadsheetId: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    expect(requestedSpreadsheetId).toBe(spreadsheetId);
+    const previous = this.transactionTail;
+    let release: () => void = () => {};
+    this.transactionTail = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await previous;
+    this.undoActions = [];
+    try {
+      return await operation();
+    } catch (error) {
+      for (const undo of [...this.undoActions].reverse()) {
+        undo();
+      }
+      throw error;
+    } finally {
+      this.undoActions = null;
+      release();
     }
   }
 
@@ -51,7 +88,13 @@ class FakeSheetTableAdapter implements SheetTableAdapter {
   ): Promise<void> {
     expect(requestedSpreadsheetId).toBe(spreadsheetId);
     const table = this.requireTable(sheetName);
+    if (this.failNextAppendFor === sheetName) {
+      this.failNextAppendFor = null;
+      throw new Error(`synthetic append failure: ${sheetName}`);
+    }
+    const rowIndex = table.rows.length;
     table.rows.push([...row]);
+    this.undoActions?.push(() => table.rows.splice(rowIndex, 1));
   }
 
   async updateRow(
@@ -63,10 +106,23 @@ class FakeSheetTableAdapter implements SheetTableAdapter {
   ): Promise<void> {
     expect(requestedSpreadsheetId).toBe(spreadsheetId);
     const table = this.requireTable(sheetName);
+    if (this.beforeNextUpdate) {
+      const mutate = this.beforeNextUpdate;
+      this.beforeNextUpdate = null;
+      mutate(sheetName, rowIndex, table);
+    }
+    this.updateCallCount += 1;
+    if (this.failUpdateCall === this.updateCallCount) {
+      throw new Error(`synthetic update failure: ${sheetName}`);
+    }
     if (JSON.stringify(table.rows[rowIndex]) !== JSON.stringify(expectedRow)) {
       throw new ConcurrentRowChangeError(sheetName, rowIndex);
     }
+    const previous = [...table.rows[rowIndex]];
     table.rows[rowIndex] = [...row];
+    this.undoActions?.push(() => {
+      table.rows[rowIndex] = previous;
+    });
   }
 
   private requireTable(sheetName: string): SheetTable {
@@ -164,6 +220,27 @@ describe("idempotent Sheet repositories", () => {
     ]);
   });
 
+  it("serializes simultaneous delivery of the same first event", async () => {
+    const adapter = new FakeSheetTableAdapter();
+    adapter.initializeManifest();
+    const { queue, audit } = repositories(adapter);
+
+    const results = await Promise.all([
+      upsertCommunicationItem({ queue, audit }, baseItem, context(1)),
+      upsertCommunicationItem(
+        { queue, audit },
+        baseItem,
+        context(2, "correlation-1"),
+      ),
+    ]);
+
+    expect(results.map((result) => result.outcome)).toEqual([
+      "created",
+      "duplicate_suppressed",
+    ]);
+    expect(adapter.tables.get("Queue")?.rows).toHaveLength(1);
+  });
+
   it("preserves manual category, status, and waiting state", async () => {
     const adapter = new FakeSheetTableAdapter();
     adapter.initializeManifest();
@@ -250,6 +327,100 @@ describe("idempotent Sheet repositories", () => {
     ]);
   });
 
+  it("round-trips valid items with omitted optional booleans", async () => {
+    const adapter = new FakeSheetTableAdapter();
+    adapter.initializeManifest();
+    const queue = new QueueRepository(adapter, spreadsheetId);
+    const withoutOptionalBooleans: CommunicationItem = {
+      ...baseItem,
+      needs_date_review: undefined,
+      manual_override: undefined,
+    };
+
+    await queue.runTransaction(async () => {
+      await queue.upsert(withoutOptionalBooleans, null);
+    });
+
+    expect(await queue.getBySourceThread("gmail", "thread-1")).toMatchObject({
+      needs_date_review: false,
+      manual_override: false,
+    });
+  });
+
+  it("rejects an interleaved manual edit instead of overwriting it", async () => {
+    const adapter = new FakeSheetTableAdapter();
+    adapter.initializeManifest();
+    const { queue, audit } = repositories(adapter);
+    await upsertCommunicationItem({ queue, audit }, baseItem, context(1));
+    adapter.beforeNextUpdate = (sheetName, rowIndex, table) => {
+      if (sheetName !== "Queue") {
+        return;
+      }
+      const category = table.headers.indexOf("category");
+      const status = table.headers.indexOf("status");
+      const waitingOn = table.headers.indexOf("waiting_on");
+      const manualOverride = table.headers.indexOf("manual_override");
+      table.rows[rowIndex][category] = "aviation";
+      table.rows[rowIndex][status] = "snoozed";
+      table.rows[rowIndex][waitingOn] = "them";
+      table.rows[rowIndex][manualOverride] = true;
+    };
+
+    await expect(
+      upsertCommunicationItem(
+        { queue, audit },
+        {
+          ...baseItem,
+          updated_at: "2026-09-22T13:00:00Z",
+          content_hash: "b".repeat(64),
+        },
+        context(2),
+      ),
+    ).rejects.toBeInstanceOf(ConcurrentRowChangeError);
+    expect(await queue.getBySourceThread("gmail", "thread-1")).toMatchObject({
+      category: "aviation",
+      status: "snoozed",
+      waiting_on: "them",
+      manual_override: true,
+    });
+    expect(await audit.list()).toHaveLength(1);
+  });
+
+  it("rolls back a queue write when audit persistence fails", async () => {
+    const adapter = new FakeSheetTableAdapter();
+    adapter.initializeManifest();
+    const { queue, audit } = repositories(adapter);
+    adapter.failNextAppendFor = "Audit_Log";
+
+    await expect(
+      upsertCommunicationItem({ queue, audit }, baseItem, context(1)),
+    ).rejects.toThrow(/synthetic append failure/i);
+    expect(adapter.tables.get("Queue")?.rows).toHaveLength(0);
+    expect(adapter.tables.get("Audit_Log")?.rows).toHaveLength(0);
+
+    const newer: CommunicationItem = {
+      ...baseItem,
+      updated_at: "2026-09-22T13:00:00Z",
+      content_hash: "b".repeat(64),
+    };
+    await upsertCommunicationItem({ queue, audit }, newer, context(2));
+    const retry = await upsertCommunicationItem(
+      { queue, audit },
+      baseItem,
+      context(1),
+    );
+
+    expect(retry.outcome).toBe("stale_suppressed");
+    expect(await queue.getBySourceThread("gmail", "thread-1")).toMatchObject({
+      updated_at: "2026-09-22T13:00:00Z",
+      content_hash: "b".repeat(64),
+    });
+    expect((await audit.list()).map((event) => event.result)).toEqual([
+      "created",
+      "stale_suppressed",
+    ]);
+  });
+
   it("claims bounded new staging records and leaves other states alone", async () => {
     const adapter = new FakeSheetTableAdapter();
     adapter.initializeManifest();
@@ -294,6 +465,41 @@ describe("idempotent Sheet repositories", () => {
     expect((await staging.list()).map((row) => row.processing_status)).toEqual([
       "processing",
       "processed",
+    ]);
+  });
+
+  it("rolls back all staging claims when a later claim fails", async () => {
+    const adapter = new FakeSheetTableAdapter();
+    adapter.initializeManifest();
+    const staging = new StagingRepository(adapter, spreadsheetId);
+    const first: StudioStagingRecord = {
+      schema_version: "1.0",
+      ingest_id: "ingest_000001",
+      flow_run_id: "flow-1",
+      gmail_message_id: "message-1",
+      received_at: "2026-09-22T12:00:00Z",
+      sender_email: "sender@example.com",
+      subject: "First synthetic subject",
+      requires_response: true,
+      draft_risk: "routine",
+      processing_status: "new",
+    };
+    await staging.append(first);
+    await staging.append({
+      ...first,
+      ingest_id: "ingest_000002",
+      flow_run_id: "flow-2",
+      gmail_message_id: "message-2",
+      subject: "Second synthetic subject",
+    });
+    adapter.failAfterUpcomingUpdates(2);
+
+    await expect(staging.claimBatch(2)).rejects.toThrow(
+      /synthetic update failure/i,
+    );
+    expect((await staging.list()).map((row) => row.processing_status)).toEqual([
+      "new",
+      "new",
     ]);
   });
 

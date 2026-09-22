@@ -2,6 +2,7 @@ import { CommunicationItemSchema } from "../../domain/schemas.js";
 import type { CommunicationItem, Source } from "../../domain/types.js";
 import {
   assertHeaders,
+  ConcurrentRowChangeError,
   recordToRow,
   rowToRecord,
   type CellValue,
@@ -9,6 +10,12 @@ import {
 } from "./sheet-table.js";
 
 const sheetName = "Queue";
+
+export interface QueueEntry {
+  readonly item: CommunicationItem;
+  readonly rowIndex: number;
+  readonly expectedRow: readonly CellValue[];
+}
 
 function toRecord(
   item: CommunicationItem,
@@ -38,7 +45,7 @@ function toRecord(
     preview: item.preview,
     deadline_at: item.deadline_at,
     deadline_text: item.deadline_text,
-    needs_date_review: item.needs_date_review,
+    needs_date_review: item.needs_date_review ?? false,
     follow_up_at: item.follow_up_at,
     promised_follow_up: item.promised_follow_up,
     draft_status: item.draft_status,
@@ -46,7 +53,7 @@ function toRecord(
     confidence: item.confidence,
     classifier_version: item.classifier_version,
     content_hash: item.content_hash,
-    manual_override: item.manual_override,
+    manual_override: item.manual_override ?? false,
     snooze_until: item.snooze_until,
     resolved_at: item.resolved_at,
     raw_content_stored: item.raw_content_stored,
@@ -120,6 +127,10 @@ export class QueueRepository {
     private readonly spreadsheetId: string,
   ) {}
 
+  async runTransaction<T>(operation: () => Promise<T>): Promise<T> {
+    return this.adapter.runTransaction(this.spreadsheetId, operation);
+  }
+
   async verifyHeaders(): Promise<void> {
     const table = await this.adapter.readTable(this.spreadsheetId, sheetName);
     assertHeaders(sheetName, table.headers);
@@ -136,27 +147,45 @@ export class QueueRepository {
     sourceThreadId: string,
   ): Promise<CommunicationItem | null> {
     return (
-      (await this.list()).find(
-        (item) =>
-          item.source === source && item.source_thread_id === sourceThreadId,
-      ) ?? null
+      (await this.findBySourceThread(source, sourceThreadId))?.item ?? null
     );
   }
 
-  async upsert(item: CommunicationItem): Promise<"created" | "updated"> {
+  async findBySourceThread(
+    source: Source,
+    sourceThreadId: string,
+  ): Promise<QueueEntry | null> {
+    const table = await this.adapter.readTable(this.spreadsheetId, sheetName);
+    const headers = assertHeaders(sheetName, table.headers);
+    for (const [rowIndex, row] of table.rows.entries()) {
+      const item = fromRow(headers, row);
+      if (item.source === source && item.source_thread_id === sourceThreadId) {
+        return { item, rowIndex, expectedRow: row };
+      }
+    }
+    return null;
+  }
+
+  async upsert(
+    item: CommunicationItem,
+    expected: QueueEntry | null,
+  ): Promise<"created" | "updated"> {
     const validated = CommunicationItemSchema.parse(item);
     const table = await this.adapter.readTable(this.spreadsheetId, sheetName);
     const headers = assertHeaders(sheetName, table.headers);
-    const existingIndex = table.rows.findIndex((row) => {
-      const candidate = fromRow(headers, row);
-      return (
-        candidate.source === validated.source &&
-        candidate.source_thread_id === validated.source_thread_id
-      );
-    });
     const nextRow = recordToRow(headers, toRecord(validated));
 
-    if (existingIndex === -1) {
+    if (!expected) {
+      const duplicateExists = table.rows.some((row) => {
+        const candidate = fromRow(headers, row);
+        return (
+          candidate.source === validated.source &&
+          candidate.source_thread_id === validated.source_thread_id
+        );
+      });
+      if (duplicateExists) {
+        throw new ConcurrentRowChangeError(sheetName, -1);
+      }
       await this.adapter.appendRow(this.spreadsheetId, sheetName, nextRow);
       return "created";
     }
@@ -164,9 +193,9 @@ export class QueueRepository {
     await this.adapter.updateRow(
       this.spreadsheetId,
       sheetName,
-      existingIndex,
+      expected.rowIndex,
       nextRow,
-      table.rows[existingIndex],
+      expected.expectedRow,
     );
     return "updated";
   }

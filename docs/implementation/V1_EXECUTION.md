@@ -313,3 +313,15 @@ files, lint, typecheck, three JSON/Zod contracts and a callable Apps Script buil
 `pnpm validate:planning` also passed. Existing lifecycle tests retain reservation,
 uncertain-write, duplicate and manual-edit protections. These are synthetic/local
 results, not a live Gmail create. Native replacement/deletion make no provider calls.
+
+## Bounded chronology source candidate — 2026-09-22
+
+Decision [111](../wayfinder/tickets/111-bounded-gmail-chronology.md) adds fixed-window
+reference enumeration, per-thread metadata reconciliation and older commitment
+preservation. Studio and replay reuse the bounded evidence; unavailable coverage
+defers processing, transient reads retry, and historical recovery retains its
+original window. Independent review findings were resolved. Local verification
+covers 423 tests in 45 files, formatting, lint, types, schema, build and planning
+checks; the updated bundle suite passed after correcting two old flow expectations.
+See [implementation and migration boundaries](BOUNDED_GMAIL_CHRONOLOGY.md).
+This candidate is not deployed; protected PR checks precede merge.

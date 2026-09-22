@@ -347,6 +347,7 @@ function createRuntime(
   vm.runInContext(code, context);
   return {
     context,
+    tables,
     properties,
     batchUpdate,
     deleted,
@@ -645,7 +646,7 @@ describe("deployable Apps Script bundle", () => {
         metadata: {
           id: "synthetic-message",
           threadId: "synthetic-thread",
-          internalDate: String(Date.now()),
+          internalDate: String(Date.now() - 60_000),
           labelIds: ["INBOX"],
           payload: {
             headers: [
@@ -674,13 +675,47 @@ describe("deployable Apps Script bundle", () => {
 
     await expect(runtime.context.cccReconcileGmail()).resolves.toMatchObject({
       ok: true,
+      status: "more",
+      processed: 0,
+      failed: 0,
+    });
+    expect(runtime.gmailGets).not.toHaveBeenCalled();
+    // Apply the first Config batch so the next invocation sees persisted enumeration.
+    for (const request of runtime.batchUpdate.mock.calls[0]![0].requests) {
+      const change = request.updateCells;
+      const sheet = WORKBOOK_MANIFEST[change.start.sheetId - 1]!;
+      expect(sheet.name).toBe("Config");
+      const rows = change.rows.map(
+        (row: {
+          values: {
+            userEnteredValue?: {
+              stringValue?: string;
+              numberValue?: number;
+              boolValue?: boolean;
+            };
+          }[];
+        }) =>
+          row.values.map(
+            (cell) =>
+              cell.userEnteredValue?.stringValue ??
+              cell.userEnteredValue?.numberValue ??
+              cell.userEnteredValue?.boolValue ??
+              "",
+          ),
+      );
+      runtime.tables
+        .get(sheet.name)!
+        .rows.splice(change.start.rowIndex - 1, rows.length, ...rows);
+    }
+    await expect(runtime.context.cccReconcileGmail()).resolves.toMatchObject({
+      ok: true,
       status: "complete",
       processed: 1,
       excluded: 0,
       failed: 0,
     });
-    expect(runtime.batchUpdate).toHaveBeenCalledOnce();
-    const requestSheetIds = runtime.batchUpdate.mock.calls[0]![0].requests.map(
+    expect(runtime.batchUpdate).toHaveBeenCalledTimes(2);
+    const requestSheetIds = runtime.batchUpdate.mock.calls[1]![0].requests.map(
       (request: { updateCells: { start: { sheetId: number } } }) =>
         request.updateCells.start.sheetId,
     );
@@ -760,7 +795,7 @@ describe("deployable Apps Script bundle", () => {
       ]),
     );
     expect(requestSheetIds).not.toContain(sheetId("Config"));
-    expect(runtime.reads.some((range) => range.includes("Config"))).toBe(false);
+    expect(runtime.reads.some((range) => range.includes("Config"))).toBe(true);
     expect(JSON.stringify(runtime.batchUpdate.mock.calls)).not.toContain(
       privateMarker,
     );

@@ -98,6 +98,29 @@ const ReadRequestSchema = z
     }
   });
 
+const BoundedReferenceSchema = z
+  .object({ id: IdSchema, threadId: IdSchema })
+  .strict();
+const BoundedWindowSchema = z
+  .object({
+    from: z.string().datetime({ offset: true }),
+    to: z.string().datetime({ offset: true }),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    const from = Date.parse(value.from);
+    const to = Date.parse(value.to);
+    if (from >= to || to - from > maxWindowMillis) {
+      ctx.addIssue({ code: "custom", message: "Invalid Gmail time window." });
+    }
+  });
+
+/** A bounded, content-free pointer returned by Gmail's messages.list endpoint. */
+export interface BoundedGmailReference {
+  readonly id: string;
+  readonly threadId: string;
+}
+
 /** Minimal synchronous surface of Apps Script's Advanced Gmail service. */
 export interface GmailMetadataGateway {
   getProfile(userId: "me"): unknown;
@@ -161,7 +184,7 @@ function redactedReadError(error: unknown, cursor = false): Error {
   if (cursor && failure.cursorReason) {
     return new GmailReadError("CURSOR_EXPIRED");
   }
-  return new Error("Gmail metadata read failed.");
+  return new GmailReadError("READ_FAILED", "Gmail metadata read failed.");
 }
 
 function headerMap(headers: z.infer<typeof HeaderSchema>[]) {
@@ -337,6 +360,108 @@ export class GmailMetadataReader implements GmailReconciliationReader {
       messageIds: page.messages.map((message) => message.id),
       nextPageToken: page.nextPageToken ?? null,
     };
+  }
+
+  /**
+   * Enumerates a page of content-free Gmail references for fixed-window
+   * chronology. The provider query is intentionally shared with the legacy
+   * reader; every returned reference is later verified by metadata timestamp.
+   */
+  async listBoundedReferences(
+    request: Parameters<GmailReconciliationReader["listRecentMessages"]>[0],
+  ): Promise<{
+    readonly references: readonly BoundedGmailReference[];
+    readonly nextPageToken: string | null;
+  }> {
+    const parsed = ReadRequestSchema.parse(request);
+    if (parsed.limit > 20) {
+      throw new Error("Bounded Gmail reference page exceeds 20 messages.");
+    }
+    this.assertApprovedProfile();
+    const fromSeconds = Math.floor(Date.parse(parsed.from) / 1000);
+    const toSeconds = Math.floor(Date.parse(parsed.to) / 1000);
+    let result: unknown;
+    try {
+      result = this.gateway.listMessages("me", {
+        q: `after:${fromSeconds} before:${toSeconds} -label:spam -label:trash -category:promotions -category:forums -from:(no-reply)`,
+        ...(parsed.pageToken ? { pageToken: parsed.pageToken } : {}),
+        maxResults: parsed.limit,
+      });
+    } catch (error) {
+      throw redactedReadError(error, true);
+    }
+    const page = ListSchema.parse(result);
+    if (page.messages.length > parsed.limit) {
+      throw new Error("Gmail metadata read failed.");
+    }
+    return {
+      references: page.messages.map((message) =>
+        BoundedReferenceSchema.parse(message),
+      ),
+      nextPageToken: page.nextPageToken ?? null,
+    };
+  }
+
+  /**
+   * Builds a bounded chronology snapshot from exact message metadata only.
+   * Gmail Threads.get is deliberately not used because it can return history
+   * outside the accepted time window.
+   */
+  async getBoundedThreadSnapshot(
+    references: readonly BoundedGmailReference[],
+    window: { readonly from: string; readonly to: string },
+  ): Promise<unknown> {
+    const parsedWindow = BoundedWindowSchema.parse(window);
+    const parsedReferences = z
+      .array(BoundedReferenceSchema)
+      .min(1)
+      .max(50)
+      .parse(references);
+    const threadId = parsedReferences[0]?.threadId;
+    if (
+      !threadId ||
+      parsedReferences.some((reference) => reference.threadId !== threadId) ||
+      new Set(parsedReferences.map((reference) => reference.id)).size !==
+        parsedReferences.length
+    ) {
+      throw new Error(
+        "Bounded Gmail references must be unique and in one thread.",
+      );
+    }
+
+    this.assertApprovedProfile();
+    const from = Date.parse(parsedWindow.from);
+    const to = Date.parse(parsedWindow.to);
+    const messages = [];
+    for (const reference of parsedReferences) {
+      let actualMessage: unknown;
+      try {
+        actualMessage = this.gateway.getMessage("me", reference.id, {
+          format: "metadata",
+          metadataHeaders,
+        });
+      } catch (error) {
+        throw redactedReadError(error);
+      }
+      const message = MessageSchema.parse(actualMessage);
+      const internalDate = Number(message.internalDate);
+      if (
+        message.id !== reference.id ||
+        message.threadId !== reference.threadId ||
+        !Number.isSafeInteger(internalDate) ||
+        internalDate < from ||
+        internalDate >= to
+      ) {
+        throw new Error("Gmail metadata conflicts with the bounded window.");
+      }
+      messages.push(messageFromMetadata(message));
+    }
+    return ThreadSnapshotSchema.parse({
+      schema_version: "1.1",
+      mailbox: approvedMailbox,
+      threadId,
+      messages,
+    });
   }
 
   async getThreadSnapshot(messageId: string): Promise<unknown> {

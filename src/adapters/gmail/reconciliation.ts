@@ -92,10 +92,19 @@ type Retry = z.infer<typeof RetrySchema>;
 type ErrorCode = GmailDeadLetter["error_code"];
 
 export class GmailReadError extends Error {
-  constructor(readonly code: "CURSOR_EXPIRED" | "NOT_FOUND") {
-    super(code);
+  constructor(
+    readonly code: "CURSOR_EXPIRED" | "NOT_FOUND" | "READ_FAILED",
+    message: string = code,
+  ) {
+    super(message);
   }
 }
+
+/** The source is valid but has not yet been covered by a completed v2 scan. */
+export class GmailProjectionDeferred extends Error {}
+
+/** A bounded projection's provider read failed after its source was validated. */
+export class GmailProjectionReadFailure extends Error {}
 
 export interface GmailReconciliationReader extends GmailSnapshotReader {
   /** Adapter must apply the fixed mailbox, half-open time window, filters, and page limit. */
@@ -116,6 +125,18 @@ interface Dependencies {
   reader: GmailReconciliationReader;
   sha256: Sha256;
   getCommitments?: (snapshot: ThreadSnapshot) => Promise<ThreadCommitment[]>;
+  /**
+   * Optional authoritative projection for callers that have a complete,
+   * bounded chronology. The generic reconciler deliberately has no opinion
+   * about how that chronology is assembled.
+   */
+  project?: (input: {
+    readonly snapshot: ThreadSnapshot;
+    readonly requestedMessageId: string;
+    readonly window: { readonly from: string; readonly to: string };
+    readonly now: string;
+    readonly restrictToCallerWindow: boolean;
+  }) => Promise<CommunicationItem | null>;
 }
 
 export interface ReconciliationResult {
@@ -213,12 +234,15 @@ export class GmailReconciler {
     from: string,
     to: string,
     inclusiveEnd = false,
+    restrictProjectionToCallerWindow = false,
   ) {
     let snapshot: ThreadSnapshot;
-    let commitments: ThreadCommitment[];
+    let commitments: ThreadCommitment[] = [];
     try {
       snapshot = await this.client.getThreadSnapshot(messageId);
-      commitments = (await this.dependencies.getCommitments?.(snapshot)) ?? [];
+      if (!this.dependencies.project)
+        commitments =
+          (await this.dependencies.getCommitments?.(snapshot)) ?? [];
     } catch (error) {
       return { error: failureCode(error) } as const;
     }
@@ -233,14 +257,26 @@ export class GmailReconciler {
       )
         return { error: "SNAPSHOT_INVALID" } as const;
       return {
-        item: normalizeStagingItem(
-          snapshot,
-          commitments,
-          now,
-          this.dependencies.sha256,
-        ),
+        item: this.dependencies.project
+          ? await this.dependencies.project({
+              snapshot,
+              requestedMessageId: messageId,
+              window: { from, to },
+              now,
+              restrictToCallerWindow: restrictProjectionToCallerWindow,
+            })
+          : normalizeStagingItem(
+              snapshot,
+              commitments,
+              now,
+              this.dependencies.sha256,
+            ),
       } as const;
-    } catch {
+    } catch (error) {
+      if (error instanceof GmailProjectionDeferred)
+        return { deferred: true } as const;
+      if (error instanceof GmailProjectionReadFailure)
+        return { error: "READ_FAILED" } as const;
       return { error: "SNAPSHOT_INVALID" } as const;
     }
   }
@@ -313,6 +349,8 @@ export class GmailReconciler {
         now,
         from,
         to,
+        false,
+        true,
       );
       if (prepared.error || !prepared.item)
         return { ok: false, error_code: "NOT_ELIGIBLE" };
@@ -514,6 +552,12 @@ export class GmailReconciler {
           window.from,
           window.to,
         );
+        if ("deferred" in prepared) {
+          // Keep this exact pending ID for a later completed bounded scan.
+          // It is neither an invalid snapshot nor a provider retry.
+          result.status = "more";
+          break;
+        }
         if (prepared.error) {
           checkpoint.retry = await this.retryOrDeadLetter(
             messageId,
@@ -600,6 +644,10 @@ export class GmailReconciler {
             )
           : { error: "SNAPSHOT_INVALID" as const };
         let errorCode: ErrorCode | null = null;
+        if ("deferred" in prepared) {
+          result.status = "more";
+          continue;
+        }
         if (prepared.error) {
           errorCode = prepared.error;
           const nextRetry = await this.retryOrDeadLetter(

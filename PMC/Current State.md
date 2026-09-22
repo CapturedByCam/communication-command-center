@@ -105,3 +105,12 @@ private Queue review and the accepted guarded controls.
 - [Runtime operations](../docs/runbooks/RUNTIME_OPERATIONS.md)
 - [Synthetic evaluation](../docs/evaluation/SYNTHETIC_V1_REPORT.md)
 - Private resource links and bindings: ignored `.local/PILOT_RESOURCES.md`.
+
+## Bounded chronology integration in progress
+
+Decision 111 and its source candidate add bounded cross-page thread grouping,
+older obligation preservation and versioned checkpoint shards. Focused checks
+pass. Independent review confirmed the repaired replay/Studio interaction,
+deferred coverage, retries and historical recovery bounds. Required local verification passes;
+protected PR CI remains before merge. No deployment changed. See
+[implementation](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md).

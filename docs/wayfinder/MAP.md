@@ -83,3 +83,6 @@ Manual waiting-state decision, 2026-09-22: complete the documented waiting comma
 Commitment storage decision, 2026-09-22: persist immutable outbound evidence in
 versioned rows, with an explicit empty-only migration and separate provider
 binding. See [decision 110](tickets/110-commitment-provenance-storage.md).
+
+Bounded chronology decision, 2026-09-22: enumerate the fixed eligible window before
+thread reconciliation and preserve older obligation evidence. See [decision 111](tickets/111-bounded-gmail-chronology.md).

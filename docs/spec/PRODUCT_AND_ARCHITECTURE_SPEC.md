@@ -133,6 +133,8 @@ Apps Script is the V1 backend and must:
 - provide feature flags and kill switches;
 - run a reconciliation job so missed Studio events do not become silent data loss.
 
+Native bounded chronology follows [decision 111](../wayfinder/tickets/111-bounded-gmail-chronology.md): enumerate the fixed eligible window before per-thread projection, preserve older persisted obligations, and block incomplete evidence. Its checkpoint is versioned separately from the legacy cursor. Source integration and live provider acceptance are distinct; see [bounded chronology](../implementation/BOUNDED_GMAIL_CHRONOLOGY.md).
+
 ### 6.3 Google Sheets
 
 The workbook is the V1 operational store, not an archive.

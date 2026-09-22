@@ -70,6 +70,7 @@ export function onOpen() {
     .addItem("Resolve selected Queue row", "cccResolveSelectedQueueRow")
     .addItem("Reopen selected Queue row", "cccReopenSelectedQueueRow")
     .addItem("Snooze selected Queue row", "cccSnoozeSelectedQueueRow")
+    .addItem("Set selected Queue waiting state", "cccSetSelectedQueueWaiting")
     .addSeparator()
     .addItem(
       "Retry selected Gmail snapshot failure",
@@ -289,15 +290,19 @@ function manualResult(
         ? "Selected Queue row reopened."
         : outcome.status === "snoozed"
           ? "Selected Queue row snoozed."
-          : outcome.status === "disabled"
-            ? "Manual Queue controls are disabled."
-            : outcome.status === "cancelled"
-              ? "Queue action cancelled."
-              : outcome.error_code === "SELECTION_CHANGED"
-                ? "Queue row changed; no update was made."
-                : outcome.error_code === "WRITE_UNCERTAIN"
-                  ? "Queue action could not be confirmed. Check the row before retrying."
-                  : "Queue action did not run.";
+          : outcome.status === "waiting_updated"
+            ? "Selected Queue waiting state updated."
+            : outcome.status === "unchanged"
+              ? "Selected Queue row already has that waiting state."
+              : outcome.status === "disabled"
+                ? "Manual Queue controls are disabled."
+                : outcome.status === "cancelled"
+                  ? "Queue action cancelled."
+                  : outcome.error_code === "SELECTION_CHANGED"
+                    ? "Queue row changed; no update was made."
+                    : outcome.error_code === "WRITE_UNCERTAIN"
+                      ? "Queue action could not be confirmed. Check the row before retrying."
+                      : "Queue action did not run.";
   try {
     active?.toast(message, "Communication Command Center", 5);
   } catch {
@@ -343,7 +348,17 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
       });
     const ui = SpreadsheetApp.getUi();
     let snoozeUntil: string | undefined;
-    if (operation === "snooze") {
+    let waitingOn: string | undefined;
+    if (operation === "set_waiting") {
+      const response = ui.prompt(
+        "Set selected Queue waiting state",
+        "Enter exactly one value: me, them, none, or unknown.",
+        ui.ButtonSet.OK_CANCEL,
+      );
+      if (response.getSelectedButton() !== ui.Button.OK)
+        return manualResult(active, { ok: true, status: "cancelled" });
+      waitingOn = response.getResponseText();
+    } else if (operation === "snooze") {
       const response = ui.prompt(
         "Snooze selected Queue row",
         "Enter a future ISO timestamp with a numeric offset (for example 2026-09-25T14:30:00-04:00).",
@@ -369,6 +384,7 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
         selectedRowIndex: range.getRow() - 2,
         selectedRow,
         snoozeUntil,
+        waitingOn,
         now: () => new Date(),
         sha256,
         authorize: () => {
@@ -397,6 +413,9 @@ export function cccReopenSelectedQueueRow() {
 }
 export function cccSnoozeSelectedQueueRow() {
   return controlSelectedQueueRow("snooze");
+}
+export function cccSetSelectedQueueWaiting() {
+  return controlSelectedQueueRow("set_waiting");
 }
 
 function gmailReplayResult(

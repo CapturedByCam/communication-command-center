@@ -6,7 +6,7 @@
 flags remain false; this activation made no Queue or source mutation.
 
 The bound workbook's owner may use explicit menu actions on exactly one selected
-`Queue` data row: **Resolve**, **Reopen**, and **Snooze**. Each action requires
+`Queue` data row: **Resolve**, **Reopen**, **Snooze**, and **Set waiting state**. Each action requires
 the independently disabled `CCC_MANUAL_WRITES` flag. The controls do not run in
 the background and do not accept bulk selections.
 
@@ -28,6 +28,13 @@ only changes status-control fields plus `updated_at`. Draft identifiers, draft
 status, summaries, contacts, source data, hashes, and other context remain
 unchanged.
 
+Set waiting state accepts exactly `me`, `them`, `none`, or `unknown` for an open
+or snoozed item. It preserves status and snooze, sets `manual_override:true`, and
+changes only `waiting_on` plus `updated_at`. An identical waiting value returns
+`unchanged` without a timestamp or audit change. Resolved items must first be
+reopened; archived items are rejected. No Gmail call is made. See
+[decision 109](../wayfinder/tickets/109-manual-waiting-state.md).
+
 Queue and Audit_Log changes use the existing `RuntimeSheetAdapter` transaction
 and a single provider batch commit. The canonical audit schema has no manual
 action enum, so an accepted control is represented by its existing
@@ -37,7 +44,7 @@ audit contract without a schema change.
 
 `cccDisableAll` disables this flag along with every other feature flag. The menu may be
 visible while controls are disabled, but every manual command checks the owner and flag
-before any Queue read. At about 11:32 EDT, the Apps Script Triggers page showed
+before any Queue read. At about 11:51 EDT, the Apps Script Triggers page showed
 `Showing 0 triggers` with no filters set.
 
 After each menu action the bound spreadsheet shows a short controlled toast for

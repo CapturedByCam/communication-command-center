@@ -1,85 +1,81 @@
 # Current State
 
-Updated 2026-09-22.
+Updated 2026-09-22. V1 is not accepted for unattended daily use.
 
 ## Verified position
 
-- The authorized V1 release integrates private Sheets/Gmail runtime adapters, guarded
-  synchronous Shortcut intake, commitments/deadlines, deterministic briefing, privacy
-  tests and operational tooling. Required GitHub checks and reviews remain protected.
-- The private pilot workbook has ten valid manifest tabs in America/New_York, a private
-  pre-activation backup, and only the approved owner. Sheets hold bounded operational
-  metadata, never bodies or credentials.
-- Immutable owner-only Version 5 deployed at 11:09 EDT from `ae5d2ef`. Its source
-  SHA `9a0ba51a70ac6d2d728581a00c3f31d407c2230176d65e7553e7cf59b6abf2af` and semantic
-  manifest SHA `6d2df263d5686e5b903c655da411ce96d4403c71d249321f220be50ce7f0689d` match the
-  verified build. Drift passed with unchanged `MYSELF`/`USER_DEPLOYING` access and an
-  unauthenticated Google sign-in redirect. At 11:14:40 EDT, Version 5 `cccHealth`
-  returned `ok:true`: all ten headers valid, all seven flags false,
-  `America/New_York`, and `send_capability:false`.
-- PR #35 merged at `c0c959d00d3b7b4769ea25e8f673d83bce0a3c14` at 11:19:34 EDT and
-  durable main fast-forwarded. Under standing authorization and after the verified
-  Version 4 guarded-control checks plus Version 5 same-code health, only
-  `CCC_MANUAL_WRITES` was enabled in the bound project. Fresh `cccHealth` at 11:24:50
-  EDT returned `ok:true`: ten valid headers, `CCC_MANUAL_WRITES:true`, the other six
-  flags false, `America/New_York`, and `send_capability:false`. Activation made no
-  source or Queue mutation. At about 11:32 EDT, the Apps Script Triggers page showed
-  `Showing 0 triggers` with no filters set. No trigger was installed.
-- At 09:37:42 EDT, selected replay of the original controlled Gmail Dead_Letter
-  succeeded. Queue now has one item; Audit_Log has one new row; the same Dead_Letter is
-  resolved as `manual_gmail_replay`; Config is unchanged. The 09:41:34 cursor resume
-  then processed four records with zero exclusions or failures. Queue has five items,
-  Audit_Log has eleven rows, the one Dead_Letter remains resolved, and Config records
-  no pending or blocked retry while the window remains active.
-- Guarded Resolve, unchanged-row replay, Reopen and explicit-offset Snooze have passed
-  with `manual_override:true` and atomic audit behavior. At 09:45:58 EDT, direct Reopen correctly rejected the Snoozed row as
-  `STALE_STATE`, leaving it unchanged. The supported Resolve then Reopen sequence restored the first
-  row to `open` with `snooze_until:null` and `manual_override:true`. Bounded proof
-  confirms five Queue rows and eleven Audit_Log rows.
-- At 09:50:20 EDT, `cccDisableAll` returned all seven flags off and zero managed
-  triggers. This historical all-off result precedes the current `CCC_MANUAL_WRITES`
-  activation. Queue controls are now available; automatic intake, drafting, Shortcut
-  capture, and briefing delivery remain disabled.
-- The accepted transient [Gmail source snapshot 1.1 decision](../docs/implementation/GMAIL_SNAPSHOT_V1_1.md)
-  corrects valid RFC local-part handling without changing stored Sheet schemas. The
-  detailed Version 1–5 evidence is in the [V1 execution record](../docs/implementation/V1_EXECUTION.md).
-- No message send, draft creation, trigger installation, Google notification, or
-  installed phone Shortcut is claimed. The Gmail pilot remains metadata-only and generic
-  needs-review; it does not imply full-thread interpretation or draft readiness.
+- Immutable owner-only Apps Script Version 6 deployed at 11:51 EDT from source
+  `e23ee3a` (integrated candidate `42fc635`). Source SHA
+  `30ef121478437e554e485e91dcb32966a80592257a29998106f0e955c6f40853` and semantic
+  manifest SHA `6d2df263d5686e5b903c655da411ce96d4403c71d249321f220be50ce7f0689d`
+  match the verified build. Access remains `MYSELF` / `USER_DEPLOYING`;
+  unauthenticated requests redirect to Google sign-in. Version 5 is the prior
+  verified rollback target. No OAuth scope changed.
+- At 11:52:57 EDT, `cccHealth` returned `ok:true`: ten valid headers,
+  `America/New_York`, `MANUAL_WRITES:true`, the other six flags false, and
+  `send_capability:false`. At about 11:51 EDT the unfiltered Triggers page showed
+  zero triggers. Only guarded manual Queue controls are enabled.
+- The private workbook has ten manifest tabs and a verified private pre-activation
+  backup. The bounded Gmail recovery produced five generic metadata Queue items;
+  one controlled Dead_Letter is resolved. Its 30-day cursor has no pending/blocked
+  retry but the initial window is incomplete. No full-thread interpretation is
+  claimed and no background worker is enabled.
+- Resolve, Reopen, explicit-offset Snooze and selected Gmail replay passed on
+  Version 4. A Snoozed-to-Reopen attempt correctly rejected without mutation.
+  Version 6 **Set waiting state** passed: `unknown` to `them` added one audit,
+  identical `them` changed neither table, then restoration to `unknown` completed
+  at 11:56:36 EDT. Five Queue rows and thirteen Audit_Log rows remain. The tested
+  row retains `open`, `manual_override:true`, and `snooze_until:null`; only its
+  update timestamp differs from the pre-test row. All other Queue rows are exact.
+- The prior briefing test persisted eight sections and one history record without
+  delivery; its replay changed nothing. That projection predates the five Queue
+  items and must not be presented as a current briefing. Review Queue directly
+  until a fresh accepted projection exists.
+- PR #34 and #35 are merged. The create-only draft provider PR #36 merged at
+  `8f97b6b43b260534a9ee10c2f77aa403f08d3d95`; its factory remains uninvoked and is
+  absent from the emitted runtime. It adds no compose scope or live drafting.
+- Integrated waiting-control validation passed 392 tests in 39 files, schema,
+  formatting, lint, types, build and planning checks, plus independent review.
+  Its protected release merge is recorded in [V1 execution](../docs/implementation/V1_EXECUTION.md).
+- No Google email or Chat send, Gmail draft, trigger installation, phone capture,
+  Calendar mutation, billing upgrade, or private-content retention occurred.
 
 ## Accepted decisions
 
-- Standing authorization covers the private deployment, in-scope tests and reviewed
-  merges. The remaining bounded acceptance actions need verified state and eligible data,
-  not a separate approval.
-- The sole mailbox is `contact@elev8mediaky.com`; the initial lookback is 30 days; all
-  relative dates use America/New_York.
-- Code owns validation, IDs, chronology, persistence, retries and manual overrides.
-  Model output is untrusted and drafts require ownership/freshness checks.
-- Briefing generation writes the private Sheet only; no delivery transport exists.
+Standing authorization covers private deployment, in-scope tests and independently
+reviewed protected merges. Sole mailbox: `contact@elev8mediaky.com`; initial
+lookback: 30 days; relative dates: America/New_York. Code owns state and validates
+model suggestions. Manual overrides win. Sheets hold metadata, not message bodies.
+All Google messages remain unsent; Codex coordination is authorized.
 
-## Current gates
+## Remaining gates
 
-1. Use only the currently enabled guarded Queue controls as needed. Do not install a
-   trigger or enable automatic intake, drafting, Shortcut capture, or briefing delivery.
-2. Studio test add-on installation is verified in Test deployments: Application shows
-   Workspace Studio, the button is Uninstall, and Installed add-ons is present. It added
-   no scopes or consent. A freshly reloaded Studio flow, `CCC V1 — bounded staging
-   acceptance`, has only a manual starter and no CCC/custom add-on entry after its step
-   categories were inspected; no action, run, source ID, or model input was added. The
-   empty draft scaffold leaves account UI/admin/rollout gating, actual step availability,
-   starter binding, and model acceptance unresolved; the Admin passkey action is pending.
-3. Complete local Shortcut token/device acceptance and collect the required real-world
-   pilot observations and usefulness ratings. Synthetic fixtures do not replace them.
-4. The create-only native draft provider is implemented at `9dc1cc6` with independent
-   review and 386 tests in 39 files passing, plus full local verification and planning.
-   Its binding is intentionally uninvoked: no compose scope, eligible model-context
-   resolver, deployment or live create acceptance. Native replacement and deletion
-   return unsupported; do not describe live drafting as ready.
+1. Studio test add-on installation is verified without new consent, but its custom
+   step is absent from the inspected manual-flow UI. The flow has only a manual
+   starter, no action and no run. Admin passkey action, account/rollout availability,
+   real source-ID binding and privacy-compatible model acceptance remain pending.
+   No paid upgrade or free-tier private-message workaround is authorized.
+2. Draft creation needs compose authorization, a trusted eligible context resolver
+   and bounded live acceptance. Native replacement/deletion return unsupported to
+   protect human edits. Outbound promise extraction and Commitment persistence
+   also need a verified interpretation/runtime binding; domain tests alone do not
+   establish that product behavior.
+3. The native Shortcut is a setup-blocked two-action template, with no export,
+   endpoint/token configuration, network request or device acceptance. Complete
+   device setup and prove the write-only authentication path without exposing Queue
+   reads. Owner-only web access is not proof of phone compatibility.
+4. Collect real model observations, usefulness ratings and the required working
+   week after accepted bindings. Fifty synthetic policy fixtures are implementation
+   evidence, not real model accuracy or pilot completion.
 
-## Decision and operating records
+Keep automatic intake, Studio processing, drafting, Shortcut capture and briefing
+delivery disabled. Use the [Run comms guide](../docs/runbooks/RUN_COMMS.md) for
+private Queue review and the accepted guarded controls.
+
+## Operating records
 
 - [Handoff](Handoff.md)
+- [V1 execution](../docs/implementation/V1_EXECUTION.md)
 - [Runtime operations](../docs/runbooks/RUNTIME_OPERATIONS.md)
-- [Deployment runbook](../docs/runbooks/DEPLOYMENT_AND_OPERATIONS_RUNBOOK.md)
 - [Synthetic evaluation](../docs/evaluation/SYNTHETIC_V1_REPORT.md)
+- Private resource links and bindings: ignored `.local/PILOT_RESOURCES.md`.

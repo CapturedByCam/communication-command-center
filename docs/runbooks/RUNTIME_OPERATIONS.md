@@ -12,15 +12,15 @@ message.
 The checked-in manifest configures the web app with
 `webapp.access: "MYSELF"` and `webapp.executeAs: "USER_DEPLOYING"`. That is a
 private operator deployment: only the deploying operator can access it and it
-runs as that operator. Immutable Version 5 is deployed with this configuration. Its
+runs as that operator. Immutable Version 6 is deployed with this configuration. Its
 `SERVER_JS` source exactly matches `dist/Code.js` after LF normalization and its manifest
 semantically matches `dist/appsscript.json`; see the chronological evidence in
 [V1 execution](../implementation/V1_EXECUTION.md).
 
 The current live posture is `CCC_MANUAL_WRITES:true`; the other six feature flags remain
-false. Fresh Version 5 `cccHealth` at 11:24:50 EDT returned `ok:true`, ten valid headers,
-`America/New_York`, and `send_capability:false`, with no source or Queue mutation during
-activation. At about 11:32 EDT, the Apps Script Triggers page showed `Showing 0 triggers`
+false. Fresh Version 6 `cccHealth` at 11:52:57 EDT returned `ok:true`, ten valid headers,
+`America/New_York`, and `send_capability:false`. That read-only health check preceded
+the bounded Version 6 waiting-state acceptance. At about 11:51 EDT, the Apps Script Triggers page showed `Showing 0 triggers`
 with no filters set. Do not create time-driven triggers, enable an automatic feature, or
 enable drafting from this pilot. The manifest's Gmail scope is read-only; V1 has no send
 path. Historical Version 1–4 checks, including all-off kill-switch and disabled-worker
@@ -58,8 +58,8 @@ seven flags off and zero managed triggers.
 Keep automatic intake, drafting, Shortcut capture, and briefing delivery disabled. The
 owner may use only the accepted guarded Queue controls under `CCC_MANUAL_WRITES`; do not
 install a trigger or enable drafting from this pilot. The create-only draft-provider
-slice is implemented with local focused tests passing but remains unbound, unscoped and
-undeployed, pending final full checks, review, merge and separate provider acceptance.
+slice merged in PR #36 after independent review and full checks; it remains unbound
+and unscoped, pending a trusted context resolver and separate live provider acceptance.
 
 ## Offline deployment-drift check
 
@@ -97,7 +97,7 @@ existing workbook as a restore procedure.
 If a private deployment behaves unexpectedly, first run `cccDisableAll()` on
 the current private deployment to turn off flags and remove managed triggers.
 Then repoint the private deployment to the previously verified Apps Script
-version. Run `cccDisableAll()` again after rollback when available, and verify
+version (Version 5 for the current Version 6 release). Run `cccDisableAll()` again after rollback when available, and verify
 all flags are false and managed trigger count is zero.
 
 Rollback does not notify Google contacts, send messages, delete Gmail drafts,
@@ -108,7 +108,10 @@ applicable live-test evidence. Preserve owner-only access.
 ## Guarded Queue operations
 
 Use the owner-only Command Center menu after its live acceptance checks. Select
-one Queue data row, then Resolve, Reopen or Snooze. Snooze requires a future ISO
+one Queue data row, then Resolve, Reopen, Snooze or Set waiting state. Waiting accepts
+exactly `me`, `them`, `none`, or `unknown` for open/snoozed items and preserves status.
+An identical waiting value is a no-op. Version 6 live change/retry/restoration passed,
+leaving five Queue rows and thirteen Audit_Log rows. Snooze requires a future ISO
 timestamp with a numeric offset. `CCC_MANUAL_WRITES` defaults false and
 `cccDisableAll` disables it. The command checks owner and enablement before reading
 Queue and again after the prompt within the shared lock. It rejects a changed row

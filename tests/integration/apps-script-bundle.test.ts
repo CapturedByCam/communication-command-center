@@ -369,6 +369,7 @@ describe("deployable Apps Script bundle", () => {
       "doPost",
       "onOpen",
       "cccInitializePilot",
+      "cccMigrateEmptyCommitments",
       "cccHealth",
       "cccDisableAll",
       "cccBuildBriefing",

@@ -357,6 +357,13 @@ All drafts require Cam's review. V1 has no send action.
 - Hard deadlines remain queue items until fulfilled.
 - Calendar candidates require `calendar_approved=true`; creation is not automatic in V1.
 
+Commitment persistence uses the [versioned storage contract](../implementation/COMMITMENT_STORAGE.md).
+Code retains authoritative outbound message/evidence IDs and observation time;
+manual fulfillment records its named resolver. A model suggestion cannot supply
+identity or mark an obligation fulfilled. Legacy rows require explicit migration
+without invented provenance. Automatic extraction and chronology binding remain
+separate live acceptance requirements.
+
 ## 10. Data minimization and privacy
 
 ### Persist

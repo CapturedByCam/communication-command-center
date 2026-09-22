@@ -19,6 +19,7 @@ import {
   googleSheetServices,
 } from "./google-services.js";
 import { literalCell } from "./google-sheet-gateway.js";
+import { migrateEmptyCommitments } from "./commitment-migration.js";
 import { runBriefing } from "./briefing-runtime.js";
 import { runGmailReconciliation, runtimeReconciler } from "./gmail-runtime.js";
 import {
@@ -230,6 +231,40 @@ export function cccInitializePilot() {
     } finally {
       services.release();
     }
+  });
+}
+/** Explicit release migration; never called by initialization or a trigger. */
+export function cccMigrateEmptyCommitments() {
+  return codeResult(() => {
+    assertOwner();
+    const id = workbookId();
+    const services = googleSheetServices();
+    const result = migrateEmptyCommitments(
+      {
+        ...services,
+        read: (spreadsheetId) => {
+          // Inspect every row, including formulas that currently render blank.
+          const values =
+            Sheets!.Spreadsheets!.Values!.get(
+              spreadsheetId,
+              "'Commitments'!A:ZZ",
+              {
+                valueRenderOption: "FORMULA",
+              },
+            ).values ?? [];
+          return {
+            headers: (values[0] ?? []).map(String),
+            rows: values.slice(1),
+          };
+        },
+      },
+      id,
+      () => {
+        assertOwner();
+        return workbookId() === id && FLAGS.every((name) => !flag(name));
+      },
+    );
+    return { ok: true, ...result };
   });
 }
 export function cccHealth() {

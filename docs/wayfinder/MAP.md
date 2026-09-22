@@ -79,3 +79,7 @@ lock. Recheck authorization and the complete selected row after the prompt;
 commit Queue and Audit_Log together. See [Queue operator controls](../implementation/QUEUE_OPERATOR_CONTROLS.md).
 
 Manual waiting-state decision, 2026-09-22: complete the documented waiting command through the guarded selected-row transaction. See [decision 109](tickets/109-manual-waiting-state.md).
+
+Commitment storage decision, 2026-09-22: persist immutable outbound evidence in
+versioned rows, with an explicit empty-only migration and separate provider
+binding. See [decision 110](tickets/110-commitment-provenance-storage.md).

@@ -13,6 +13,10 @@ import {
   type BriefingHealth,
 } from "../services/briefing-service.js";
 import type { Commitment } from "../services/commitment-service.js";
+import {
+  commitmentFromStorageRow,
+  commitmentStorageToCommitment,
+} from "../adapters/sheets/commitment-repository.js";
 import type { TableChange, TableGateway } from "./sheet-adapter.js";
 
 const MAX_PROMISE_LENGTH = 500;
@@ -51,71 +55,17 @@ function isTimestamp(value: CellValue): value is string {
   );
 }
 
-function text(value: CellValue, max: number): string | null {
-  return typeof value === "string" && value.length <= max ? value : null;
-}
-
-function requiredText(value: CellValue, max: number): string {
-  const result = text(value, max);
-  if (!result) throw new Error("COMMITMENT_INVALID");
-  return result;
-}
-
-function optionalTimestamp(value: CellValue): string | null {
-  if (value === null) return null;
-  if (!isTimestamp(value)) throw new Error("COMMITMENT_INVALID");
-  return value;
-}
-
 function commitmentFromRow(
   headers: readonly string[],
   row: readonly CellValue[],
 ): Commitment {
-  const record = rowToRecord(headers, row);
-  const commitmentId = requiredText(record.commitment_id, 128);
-  const itemId = requiredText(record.item_id, 512);
-  const sourceThreadId = requiredText(record.source_thread_id, 512);
-  const promiseText = requiredText(record.promise_text, MAX_PROMISE_LENGTH);
-  const deadlineAt = optionalTimestamp(record.deadline_at);
-  const deadlineText =
-    record.deadline_text === null ? null : text(record.deadline_text, 200);
-  if (record.deadline_text !== null && deadlineText === null)
+  try {
+    return commitmentStorageToCommitment(
+      commitmentFromStorageRow(headers, row),
+    );
+  } catch {
     throw new Error("COMMITMENT_INVALID");
-  const status = record.status;
-  if (status !== "open" && status !== "fulfilled")
-    throw new Error("COMMITMENT_INVALID");
-  if (typeof record.manual_override !== "boolean")
-    throw new Error("COMMITMENT_INVALID");
-  const updatedAt = optionalTimestamp(record.updated_at);
-  if (!updatedAt) throw new Error("COMMITMENT_INVALID");
-  const fulfilledAt = optionalTimestamp(record.fulfilled_at);
-  const fulfillmentEvidenceId =
-    record.fulfillment_evidence_id === null
-      ? null
-      : requiredText(record.fulfillment_evidence_id, 512);
-  if (status === "fulfilled" && (!fulfilledAt || !fulfillmentEvidenceId))
-    throw new Error("COMMITMENT_INVALID");
-  if (status === "open" && (fulfilledAt || fulfillmentEvidenceId))
-    throw new Error("COMMITMENT_INVALID");
-  return {
-    commitmentId,
-    itemId,
-    sourceThreadId,
-    promiseText,
-    // These fields were not persisted in schema 1.0. The stable row identity
-    // and update timestamp preserve the local Commitment contract without a migration.
-    sourceEvidenceId: `commitment:${commitmentId}:${sourceThreadId}`,
-    observedAt: updatedAt,
-    deadlineAt,
-    deadlineText,
-    status,
-    fulfilledAt,
-    fulfillmentEvidenceId,
-    manualOverride: record.manual_override,
-    resolvedBy:
-      record.manual_override && status === "fulfilled" ? "manual" : null,
-    updatedAt,
-  };
+  }
 }
 
 function newYorkDate(value: Date): string {

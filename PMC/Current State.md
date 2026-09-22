@@ -50,6 +50,16 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
 - No Google email or Chat send, Gmail draft, trigger installation, phone capture,
   Calendar mutation, billing upgrade, or private-content retention occurred.
 
+## Commitment source update awaiting deployment
+
+The repository now includes a strict 1.1 Commitment storage contract, immutable
+outbound provenance, a guarded observation writer, and an explicit empty-only
+header migration. Briefing consumes actual persisted provenance and accepts a
+named manual resolver. See [storage and migration](../docs/implementation/COMMITMENT_STORAGE.md).
+This source update is not deployed: Version 6 and the live eleven-column
+Commitments table remain unchanged. Provider binding, automatic outbound
+extraction and complete chronology remain open; no promise was captured live.
+
 ## Accepted decisions
 
 Standing authorization covers private deployment, in-scope tests and independently
@@ -73,9 +83,9 @@ All Google messages remain unsent; Codex coordination is authorized.
    free-tier private-message workaround is authorized.
 2. Draft creation needs compose authorization, a trusted eligible context resolver
    and bounded live acceptance. Native replacement/deletion return unsupported to
-   protect human edits. Outbound promise extraction and Commitment persistence
-   also need a verified interpretation/runtime binding; domain tests alone do not
-   establish that product behavior.
+   protect human edits. Outbound promise extraction and the new Commitment storage writer
+   still need migration, deployment and a verified interpretation/runtime binding;
+   local integration tests alone do not establish that product behavior.
 3. The native Shortcut is a setup-blocked two-action template, with no export,
    endpoint/token configuration, network request or device acceptance. Complete
    device setup and prove the write-only authentication path without exposing Queue

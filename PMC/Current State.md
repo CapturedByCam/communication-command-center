@@ -38,8 +38,9 @@
 - [GitHub Wayfinder map](https://github.com/CapturedByCam/communication-command-center/issues/1)
 - All 13 source tickets are attached to the map as GitHub sub-issues.
 - All 13 decision tickets are closed with owner-approved resolutions.
-- The map issue is ready to close after its body is reconciled with the versioned map.
+- The reconciled map issue is closed as completed.
+- [Milestone 1 implementation issue #15](https://github.com/CapturedByCam/communication-command-center/issues/15) is open for the local domain core.
 
 ## Next action
 
-Close the reconciled Wayfinder map, then implement Milestone 1 locally in a dedicated worktree. Stop before any Google permission request, cloud resource creation, deployment, or production communication access.
+Implement issue #15 locally in a dedicated worktree and request review before merge. Stop before any Google permission request, cloud resource creation, deployment, or production communication access.

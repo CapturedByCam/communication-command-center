@@ -29,7 +29,10 @@ chronology or interpretation; those remain separate eligibility gates.
 
 Reply metadata is transient: one exact recipient, matching Subject, Message-ID,
 References and In-Reply-To. Reject ambiguous/multiple recipients, malformed
-headers, injection and unsupported encodings rather than guessing. The body is
+headers, injection and unsupported encodings rather than guessing. A Reply-To must
+normalize to the same sender address, preserving the known-contact eligibility gate.
+Message identifiers are visible ASCII; generated header lines stay within 998 octets.
+The body is
 plain text, bounded, UTF-8 MIME encoded and base64url wrapped for Gmail. No body,
 raw MIME, subject or recipient is persisted in the operation ledger or logs.
 Gmail remains the only store of the created unsent draft.

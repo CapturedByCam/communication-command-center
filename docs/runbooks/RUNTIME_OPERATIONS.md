@@ -1,32 +1,30 @@
 # Runtime Operations
 
-This runbook covers the private Apps Script pilot. Standing authorization covers
-the private owner-only deployment and bounded checks. It does not enable a feature
-flag or trigger, provision a Shortcut token, create a draft, deliver a notification,
-or send a Google message.
+This runbook covers the private Apps Script pilot. Standing authorization covers the
+private owner-only deployment and bounded checks. Following the verified Version 4
+guarded-control checks and Version 5 same-code health, `CCC_MANUAL_WRITES` alone is
+enabled for guarded Queue actions. This runbook does not itself change a flag or trigger,
+provision a Shortcut token, create a draft, deliver a notification, or send a Google
+message.
 
 ## Private deployment posture
 
 The checked-in manifest configures the web app with
 `webapp.access: "MYSELF"` and `webapp.executeAs: "USER_DEPLOYING"`. That is a
 private operator deployment: only the deploying operator can access it and it
-runs as that operator. Immutable version 2 is deployed with this configuration.
-Its `SERVER_JS` source exactly matches `dist/Code.js` after LF normalization and
-its manifest semantically matches `dist/appsscript.json`.
+runs as that operator. Immutable Version 5 is deployed with this configuration. Its
+`SERVER_JS` source exactly matches `dist/Code.js` after LF normalization and its manifest
+semantically matches `dist/appsscript.json`; see the chronological evidence in
+[V1 execution](../implementation/V1_EXECUTION.md).
 
-Keep all feature flags false and do not create time-driven triggers until the
-controlled live checks and feature-specific acceptance evidence pass. Version 1
-`cccHealth` and `cccGmailReadProbe` passed. At 08:51–08:53 EDT, Version 2 Settings
-showed the original six properties false and `CCC_MANUAL_WRITES` absent/default false;
-`cccDisableAll` then returned an empty enabled-flag list with zero managed triggers,
-and `cccHealth` returned `ok:true` with all ten headers valid. The health accessibility
-log truncates within its flags field, so it is not evidence of its unshown tail. The
-overnight save did not persist. The Mac relocked before a Version 2 Gmail worker click,
-so no worker, briefing, ingestion, manual control, or trigger action occurred. Version 2
-disabled `cccReconcileGmail` and `cccBuildBriefing` subsequently returned
-`{ok:true,status:'disabled'}` at 08:57:42 and 08:58:12 EDT. A bounded post-check found
-only headers in Queue, Briefing_View, Briefing_History, Audit_Log, Dead_Letter and
-Config. No triggers exist. The manifest's Gmail scope is read-only; V1 has no send path.
+The current live posture is `CCC_MANUAL_WRITES:true`; the other six feature flags remain
+false. Fresh Version 5 `cccHealth` at 11:24:50 EDT returned `ok:true`, ten valid headers,
+`America/New_York`, and `send_capability:false`, with no source or Queue mutation during
+activation. At about 11:32 EDT, the Apps Script Triggers page showed `Showing 0 triggers`
+with no filters set. Do not create time-driven triggers, enable an automatic feature, or
+enable drafting from this pilot. The manifest's Gmail scope is read-only; V1 has no send
+path. Historical Version 1–4 checks, including all-off kill-switch and disabled-worker
+evidence, remain below and in [V1 execution](../implementation/V1_EXECUTION.md).
 
 On 2026-09-22, IAB Settings confirmed all seven flags false after the kill switch. A
 single enabled Gmail batch then returned zero processed, four excluded and one failed;
@@ -57,9 +55,11 @@ controlled `STALE_STATE`; the supported Resolve then Reopen sequence restored it
 Queue rows and eleven Audit_Log rows. At 09:50:20 EDT, `cccDisableAll` returned all
 seven flags off and zero managed triggers.
 
-All feature flags must remain false while the next integration is prepared. The user has
-authorized future bounded acceptance work when its verified prerequisites are met; do not
-install a trigger or enable drafting from this pilot.
+Keep automatic intake, drafting, Shortcut capture, and briefing delivery disabled. The
+owner may use only the accepted guarded Queue controls under `CCC_MANUAL_WRITES`; do not
+install a trigger or enable drafting from this pilot. The create-only draft-provider
+slice is implemented with local focused tests passing but remains unbound, unscoped and
+undeployed, pending final full checks, review, merge and separate provider acceptance.
 
 ## Offline deployment-drift check
 

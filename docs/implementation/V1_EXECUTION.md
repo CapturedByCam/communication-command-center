@@ -449,8 +449,13 @@ false and verified; all other automatic flags remain false and
 `MANUAL_WRITES` remains enabled. No messages or drafts were sent or created.
 Do not retry or reset the checkpoint until the failure is diagnosed.
 
-The live cause remains unresolved. A proposed source change in the current review
-work adds only a fixed failure stage and category to the controlled error result;
-it never exposes provider messages or stack traces. This change is not yet merged
-or synchronized to Apps Script. Keep intake disabled until review, source sync, and
-a single bounded diagnostic invocation confirm a safe continuation point.
+The live cause remains unresolved. PR #52 merged the reviewed change that adds
+only fixed failure stage and category values to the controlled error result; it
+never exposes provider messages or stack traces. The exact bundle was built and
+passed required local and CI checks, but it is not synchronized to Apps Script:
+local `clasp` has no saved credentials, and the authenticated editor contains a
+large bundled file that cannot be safely patched by hand. Workspace Admin has
+enabled root Custom steps access with unpublished test steps still allowed; this
+does not change the Gmail runtime. Keep intake disabled and the checkpoint
+untouched until the exact merged bundle is synced and a single bounded diagnostic
+invocation confirms a safe continuation point.

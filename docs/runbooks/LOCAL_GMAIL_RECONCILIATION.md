@@ -4,7 +4,7 @@ This document describes the chronology/reconciliation contracts introduced for i
 
 ## Interfaces and source boundaries
 
-- `GmailClient.getThreadSnapshot(messageId)` validates a plain version 1.0 snapshot and verifies the requested message belongs to it. Only `contact@elev8mediaky.com` is an own identity; matching is case-insensitive. No aliases are enabled.
+- `GmailClient.getThreadSnapshot(messageId)` validates a plain version 1.0 or 1.1 snapshot and verifies the requested message belongs to it. Only `contact@elev8mediaky.com` is an own identity; matching is case-insensitive. No aliases are enabled.
 - `deriveThreadState(snapshot, commitments, now)` orders internal timestamps, validates commitment references, excludes automated/bulk/no-reply/spam/draft/receipt messages, and derives waiting state. Equal timestamps with conflicting interpretations require review. Unaddressed and self-addressed messages remain ambiguous. An overdue open outbound commitment survives acknowledgements and ambiguous chronology.
 - `normalizeStagingItem` builds a canonical version 1.0 item. Both intake paths use authoritative snapshots rather than trusting Studio's state/category hints. Interpretation enums and short summaries are validated; bodies and subjects are not accepted in snapshots. Manual category, status, waiting state, snooze, and resolution overrides are preserved by the existing upsert service.
 - `GmailReconciler.processStudioInbox(now, batchSize)` processes pending, failed, or previously claimed staging records using current snapshots. It updates staging status and a fixed error code in the same transaction as queue/audit writes. A message exactly at `now` is eligible.
@@ -32,14 +32,14 @@ Gmail snapshots dedupe against the current canonical content hash. This permits 
 
 The worker holds the workbook adapter's transaction across a bounded run. Queue, audit, staging status, dead letters, and checkpoint writes commit together or roll back together. Read/validation failures are handled as source failures; storage failures propagate and roll back instead of marking valid messages as poison records. `upsertCommunicationItemWithinTransaction` is internal composition for callers already holding that same transaction; normal callers use `upsertCommunicationItem`.
 
-This relies on the existing `SheetTableAdapter` mutual-exclusion, compare-and-swap, and rollback contract. Google Sheets does not gain transaction semantics from this interface. A real adapter must prove that contract, execution-time bounds, and crash recovery before connection or deployment. Local tests use an in-memory adapter with rollback and simulated concurrent edits.
+This relies on the `SheetTableAdapter` mutual-exclusion, compare-and-swap, and rollback contract. Google Sheets does not gain transaction semantics from this interface. The deployed runtime uses bounded Sheets batches and Script Lock for application writers; local tests still cover rollback and simulated concurrent edits. Provider failures remain indeterminate and require durable-state recovery, not a blind retry.
 
 Operational records include IDs or hashed staging IDs, fixed error codes, timing, cursor metadata, and SHA-256 hashes. Exception text, bodies, subjects, sender text, and model hints are never copied into `Config`, `Audit_Log`, or `Dead_Letter`. Dead-letter `payload_hash` hashes the operational source reference, not a retained failed payload. Existing Studio metadata is left in its staging row. Queue summaries are bounded, and previews are omitted by this normalizer. All fixtures are authored synthetic examples using reserved example domains; the sole real address is the already approved mailbox configuration.
 
 ## Versioning and migration
 
 - Existing canonical item/Studio schemas and workbook headers stay at their existing versions; no row migration is required.
-- Plain `ThreadSnapshot` is a new adapter contract at version `1.0`.
+- Plain `ThreadSnapshot` supports versions `1.0` and `1.1`; native metadata emits `1.1`. See [snapshot 1.1 migration](../implementation/GMAIL_SNAPSHOT_V1_1.md) for the backward-compatible address validation change.
 - `Config` key `gmail.reconciliation.v1` holds a strict checkpoint with `schema_version: "1.0"`.
 - Keys `gmail.studio.retry.v1.<hash>` hold strict version `1.0` retry envelopes.
 - Missing state initializes a local checkpoint; unknown versions, extra properties, duplicate checkpoint keys, or malformed existing state fail closed. No migration overwrites an existing row silently.
@@ -47,7 +47,7 @@ Operational records include IDs or hashed staging IDs, fixed error codes, timing
 
 ## Local verification and remaining gate
 
-Run focused chronology/reconciliation and contract tests, `pnpm verify`, and `pnpm validate:planning`. The normal build emits functional Apps Script entrypoints, which are checked by callable-bundle tests. The native runtime is deployed privately; worker/replay acceptance remains unverified. Test evidence covers missed-event recovery, current-state idempotency, reply transitions, manual overrides, pagination, restart/retry/dead-letter behavior, failed checkpoint rollback, redaction, and concurrent workers.
+Run focused chronology/reconciliation and contract tests, `pnpm verify`, and `pnpm validate:planning`. The normal build emits functional Apps Script entrypoints, which are checked by callable-bundle tests. The native runtime is deployed privately; bounded metadata-worker and selected replay acceptance are recorded in [V1 execution](../implementation/V1_EXECUTION.md). That evidence does not establish full-thread interpretation, model usefulness, drafting, or unattended trigger acceptance. Test evidence covers missed-event recovery, current-state idempotency, reply transitions, manual overrides, pagination, restart/retry/dead-letter behavior, failed checkpoint rollback, redaction, and concurrent workers.
 
 The 2026-09-22 standing authorization covers minimum in-scope Google permissions, private deployment and bounded pilot tests. Record exact scopes, approved account, 30-day query bounds, redaction and rollback before exercising each operation; do not repeat approval for the same authorized scope. Workspace Studio, Shortcut installation and live feature acceptance remain open as detailed in the V1 execution record. No Google email or Chat message may be sent.
 

@@ -66,11 +66,15 @@ function setup(initial = item()) {
     queue.headers.map((header) => itemToRecord(initial)[header] ?? null),
   );
   let commits = 0;
+  let reads = 0;
   let failCommit = false;
   const gateway: TableGateway = {
     acquire: () => undefined,
     release: () => undefined,
-    read: (_id, sheetName) => structuredClone(tables.get(sheetName)!),
+    read: (_id, sheetName) => {
+      reads++;
+      return structuredClone(tables.get(sheetName)!);
+    },
     commit: (_id, changes) => {
       commits++;
       if (failCommit) throw new Error("COMMIT_FAILED");
@@ -85,12 +89,14 @@ function setup(initial = item()) {
     selectedRow: structuredClone(queue.rows[0]!),
     now: () => new Date(now),
     sha256,
+    authorize: () => true,
   });
   return {
     gateway,
     request,
     tables,
     commits: () => commits,
+    reads: () => reads,
     failNextCommit: () => {
       failCommit = true;
     },
@@ -165,5 +171,18 @@ describe("manual Queue controls", () => {
         snoozeUntil: "2026-09-21T10:00:00-04:00",
       }),
     ).resolves.toEqual({ ok: false, error_code: "INVALID_SNOOZE_TIMESTAMP" });
+  });
+
+  it("rechecks authorization under the lock after the prompt snapshot and reads or writes nothing when disabled", async () => {
+    const t = setup();
+    await expect(
+      applyManualQueueControl(t.gateway, {
+        ...t.request("resolve"),
+        authorize: () => false,
+      }),
+    ).resolves.toEqual({ ok: true, status: "disabled" });
+    expect(t.reads()).toBe(0);
+    expect(t.commits()).toBe(0);
+    expect(t.tables.get("Audit_Log")!.rows).toHaveLength(0);
   });
 });

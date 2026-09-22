@@ -25,10 +25,15 @@ export interface ManualQueueControlRequest {
   readonly snoozeUntil?: string;
   readonly now: () => Date;
   readonly sha256: (value: string) => string;
+  /** Trusted runtime gate rechecked after the prompt, while the shared lock is held. */
+  readonly authorize: () => boolean;
 }
 
 export type ManualQueueControlResult =
-  | { readonly ok: true; readonly status: "resolved" | "open" | "snoozed" }
+  | {
+      readonly ok: true;
+      readonly status: "resolved" | "open" | "snoozed" | "disabled";
+    }
   | { readonly ok: false; readonly error_code: string };
 
 function rejected(error_code: string): ManualQueueControlResult {
@@ -105,6 +110,7 @@ export async function applyManualQueueControl(
   const audit = new AuditRepository(adapter, request.spreadsheetId);
   try {
     return await queue.runTransaction(async () => {
+      if (!request.authorize()) return { ok: true, status: "disabled" };
       const table = await adapter.readTable(request.spreadsheetId, "Queue");
       const headers = assertHeaders("Queue", table.headers);
       const row = table.rows[request.selectedRowIndex];

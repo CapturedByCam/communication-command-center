@@ -257,20 +257,46 @@ export function cccDisableAll() {
     };
   });
 }
-function manualResult(result: unknown): unknown {
+function manualResult(
+  active: GoogleAppsScript.Spreadsheet.Spreadsheet | null,
+  result: unknown,
+): unknown {
   // This path deliberately emits only controlled operation status, never cells or provider errors.
+  const outcome = result as { status?: string; error_code?: string };
+  const message =
+    outcome.status === "resolved"
+      ? "Selected Queue row resolved."
+      : outcome.status === "open"
+        ? "Selected Queue row reopened."
+        : outcome.status === "snoozed"
+          ? "Selected Queue row snoozed."
+          : outcome.status === "disabled"
+            ? "Manual Queue controls are disabled."
+            : outcome.status === "cancelled"
+              ? "Queue action cancelled."
+              : outcome.error_code === "SELECTION_CHANGED"
+                ? "Queue row changed; no update was made."
+                : "Queue action did not run.";
+  try {
+    active?.toast(message, "Communication Command Center", 5);
+  } catch {
+    // A UI feedback failure must not expose details or change the control result.
+  }
   console.info(JSON.stringify(result));
   return result;
 }
 async function controlSelectedQueueRow(operation: ManualQueueOperation) {
   try {
     assertOwner();
-    if (!flag("MANUAL_WRITES"))
-      return manualResult({ ok: true, status: "disabled" });
     const active = SpreadsheetApp.getActiveSpreadsheet();
+    if (!flag("MANUAL_WRITES"))
+      return manualResult(active, { ok: true, status: "disabled" });
     const id = workbookId();
     if (!active || active.getId() !== id)
-      return manualResult({ ok: false, error_code: "WORKBOOK_MISMATCH" });
+      return manualResult(active, {
+        ok: false,
+        error_code: "WORKBOOK_MISMATCH",
+      });
     const range = active.getActiveRange();
     if (
       !range ||
@@ -278,7 +304,10 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
       range.getNumRows() !== 1 ||
       range.getRow() < 2
     )
-      return manualResult({ ok: false, error_code: "INVALID_SELECTION" });
+      return manualResult(active, {
+        ok: false,
+        error_code: "INVALID_SELECTION",
+      });
     const gateway = googleGateway();
     const before = gateway.read(id, "Queue");
     const selectedRow = selectedQueueSnapshot(
@@ -287,7 +316,10 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
       range.getRow() - 2,
     );
     if (!selectedRow)
-      return manualResult({ ok: false, error_code: "INVALID_SELECTION" });
+      return manualResult(active, {
+        ok: false,
+        error_code: "INVALID_SELECTION",
+      });
     const ui = SpreadsheetApp.getUi();
     let snoozeUntil: string | undefined;
     if (operation === "snooze") {
@@ -297,7 +329,7 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
         ui.ButtonSet.OK_CANCEL,
       );
       if (response.getSelectedButton() !== ui.Button.OK)
-        return manualResult({ ok: true, status: "cancelled" });
+        return manualResult(active, { ok: true, status: "cancelled" });
       snoozeUntil = response.getResponseText();
     } else {
       const response = ui.prompt(
@@ -306,9 +338,10 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
         ui.ButtonSet.OK_CANCEL,
       );
       if (response.getSelectedButton() !== ui.Button.OK)
-        return manualResult({ ok: true, status: "cancelled" });
+        return manualResult(active, { ok: true, status: "cancelled" });
     }
     return manualResult(
+      active,
       await applyManualQueueControl(gateway, {
         operation,
         spreadsheetId: id,
@@ -317,10 +350,22 @@ async function controlSelectedQueueRow(operation: ManualQueueOperation) {
         snoozeUntil,
         now: () => new Date(),
         sha256,
+        authorize: () => {
+          try {
+            assertOwner();
+            const current = SpreadsheetApp.getActiveSpreadsheet();
+            return (
+              flag("MANUAL_WRITES") &&
+              Boolean(current && current.getId() === id && workbookId() === id)
+            );
+          } catch {
+            return false;
+          }
+        },
       }),
     );
   } catch {
-    return manualResult({ ok: false, error_code: "OPERATION_FAILED" });
+    return manualResult(null, { ok: false, error_code: "OPERATION_FAILED" });
   }
 }
 export function cccResolveSelectedQueueRow() {

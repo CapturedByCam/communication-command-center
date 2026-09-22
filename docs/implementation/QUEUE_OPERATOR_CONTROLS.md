@@ -9,7 +9,10 @@ the independently disabled `CCC_MANUAL_WRITES` flag. The controls do not run in
 the background and do not accept bulk selections.
 
 The prompt occurs before a Script Lock is acquired. Before the atomic write, the
-runtime re-reads and compares the complete selected row snapshot. Header drift,
+runtime rechecks the owner, current `CCC_MANUAL_WRITES` value, and bound workbook
+identity under that lock, then re-reads and compares the complete selected row
+snapshot. Disabling controls or losing trusted authorization while a prompt is
+open prevents any Queue read, audit append, or commit. Header drift,
 workbook or tab mismatch, a missing row, a changed row, an archived item, and an
 operation invalid for the item's current state fail closed. No selected-cell
 content appears in prompts, logs, return values, or errors.
@@ -33,3 +36,7 @@ audit contract without a schema change.
 `cccDisableAll` disables this flag along with every other feature flag. The
 menu may be visible while controls are disabled, but every manual command checks
 the owner and flag before any Queue read.
+
+After each menu action the bound spreadsheet shows a short controlled toast for
+success, disabled, cancelled, changed-row conflict, or a generic failure. The
+toast never includes Queue cells, identifiers, or provider error details.

@@ -50,6 +50,7 @@ function createRuntime(
     }));
   const reads: string[] = [];
   const logs = vi.fn();
+  const toast = vi.fn();
   const prompt = vi.fn(() => ({
     getSelectedButton: () => "OK",
     getResponseText: () => "2026-09-25T14:30:00-04:00",
@@ -89,6 +90,7 @@ function createRuntime(
     SpreadsheetApp: {
       getActiveSpreadsheet: () => ({
         getId: () => "book_abcdefghijklmnop",
+        toast,
         getActiveRange: () =>
           options.selection
             ? {
@@ -177,6 +179,7 @@ function createRuntime(
     reads,
     prompt,
     menu,
+    toast,
   };
 }
 
@@ -299,6 +302,11 @@ describe("deployable Apps Script bundle", () => {
     );
     expect(runtime.reads).toEqual([]);
     expect(runtime.prompt).not.toHaveBeenCalled();
+    expect(runtime.toast).toHaveBeenCalledWith(
+      "Manual Queue controls are disabled.",
+      "Communication Command Center",
+      5,
+    );
   });
 
   it("runs a content-free persisted briefing synchronously and keeps disabled workers inert", async () => {

@@ -106,11 +106,25 @@ private Queue review and the accepted guarded controls.
 - [Synthetic evaluation](../docs/evaluation/SYNTHETIC_V1_REPORT.md)
 - Private resource links and bindings: ignored `.local/PILOT_RESOURCES.md`.
 
-## Bounded chronology integration in progress
+## Bounded chronology source merged; private migration pending
 
-Decision 111 and its source candidate add bounded cross-page thread grouping,
-older obligation preservation and versioned checkpoint shards. Focused checks
-pass. Independent review confirmed the repaired replay/Studio interaction,
-deferred coverage, retries and historical recovery bounds. Required local verification passes;
-protected PR CI remains before merge. No deployment changed. See
-[implementation](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md).
+PR #42 merged as `4789030589d1f0168aff87de788f29dd80155e85` after independent
+review, repository verification and CodeQL. Local required checks passed,
+including 423 tests across 45 files. The current Apps Script deployment remains
+Version 6; PR #42 has not been pushed to that project or deployed.
+
+The approved-account Drive profile and exact private pilot workbook were
+verified. Its Commitments header remains the legacy eleven columns. A fresh
+private workbook backup was created and verified; its resource ID is kept only
+in ignored `.local/PILOT_RESOURCES.md`. Metadata shows the same manifest tabs
+and an extra `Sheet1` tab, which has been preserved.
+
+The migration is not started. `clasp` authentication identifies the approved
+account and lists Version 6, but `clasp run cccHealth` returns a server storage
+`NOT_FOUND`. The authenticated Apps Script editor control path is unavailable in this
+environment. Current script flags
+and triggers, and full Commitments-table emptiness, remain unverified. Neither
+`cccDisableAll` nor `cccMigrateEmptyCommitments` has run. Restore the supported
+authenticated editor path, verify flags/triggers are off, then run the guarded
+empty-only migration; a populated table is a hard stop. Do not push source or deploy until that preflight passes. See
+[implementation and migration gates](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md).

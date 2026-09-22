@@ -63,9 +63,10 @@ PR #45 removed that manifest option without adding an OAuth scope. The
 authenticated Apps Script editor was updated with the exact field removal and
 reported Saved to Drive. Reopening the Studio step then rendered both bounded
 input fields with no permission error. No run of the new step, source binding,
-Gmail action, or send occurred; CCC_STUDIO_PROCESSING remains false. The owner-only web
-deployment remains immutable Version 7, while this Studio fix is in the project
-editor source.
+Gmail action, or send occurred; CCC_STUDIO_PROCESSING remains false. The
+existing owner-only deployment was later updated to Version 8 for the separately
+reviewed Shortcut authorization/kill-switch fix; this Studio flow remains
+unrun and unbound.
 
 The current app-owned flow is Start manually → Ask Gemini, with Web
 search and Workspace sources off, no skills, Text output, and no Google

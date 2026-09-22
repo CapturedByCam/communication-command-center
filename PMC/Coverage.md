@@ -1,6 +1,6 @@
 # Durable Knowledge Coverage
 
-Updated 2026-09-22. The private Version 7 deployment is live, but V1 is not
+Updated 2026-09-22. The private Version 8 deployment is live, but V1 is not
 accepted for unattended use. [Current State](Current%20State.md) is the live
 posture record.
 
@@ -11,9 +11,9 @@ posture record.
 | Sheet persistence | Private workbook and adapter live; Commitment 1.1 header migrated with no Commitment rows | `docs/implementation/COMMITMENT_STORAGE.md`; `docs/implementation/V1_EXECUTION.md` |
 | Privacy and security | Owner-only deployment, no send capability, six automatic flags off and zero triggers verified | `docs/runbooks/RUNTIME_OPERATIONS.md`; Wayfinder decisions |
 | Gmail ingestion | Bounded metadata pilot created five review-only Queue rows; initial cursor incomplete; automatic intake disabled | Issue #21; `docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md` |
-| Workspace Studio | Test add-on installed and synthetic-only model run verified; root Custom steps access OFF; source binding and retention unresolved | `studio/`; Wayfinder 102 and 107; `PMC/Current State.md` |
+| Workspace Studio | Test add-on installed and synthetic-only model run verified; root Custom steps access ON with unpublished steps allowed; source binding and retention unresolved | `studio/`; Wayfinder 102 and 107; `PMC/Current State.md` |
 | Apple Shortcut | Setup-blocked local template exported; endpoint, token and device acceptance open | `shortcuts/SHORTCUT_INSTALLATION.md`; Wayfinder 101 |
 | Briefing | Eight-section generation and replay suppression verified without delivery; current projection is stale | `docs/implementation/V1_EXECUTION.md`; Wayfinder 104 |
-| Deployment | Existing owner-only Apps Script deployment points to immutable Version 7 with matching source/manifest and sign-in redirect | `docs/implementation/V1_EXECUTION.md`; `docs/runbooks/RUNTIME_OPERATIONS.md` |
+| Deployment | Existing owner-only Apps Script deployment points to immutable Version 8; editor health passes, and public phone access remains unconfigured | `docs/implementation/V1_EXECUTION.md`; `docs/runbooks/RUNTIME_OPERATIONS.md` |
 | Operations | Kill switch, health, private backup, deployment rollback drill and manual Queue controls verified; older-version recovery now requires a new legacy workbook copy | `docs/runbooks/RUNTIME_OPERATIONS.md`; `PMC/Handoff.md` |
 | Incident response | Runbooks and synthetic Shortcut-token rotation verified; no live incident response claimed | `docs/runbooks/SHORTCUT_TOKEN_ROTATION.md`; `docs/runbooks/DEPLOYMENT_AND_OPERATIONS_RUNBOOK.md` |

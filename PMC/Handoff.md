@@ -5,7 +5,7 @@ Updated 2026-09-22. V1 is not yet accepted for daily unattended use.
 ## Working now
 
 The private Queue has five metadata-pilot items. The existing owner-only
-deployment now points to verified immutable Version 7, with the 1.1
+deployment now points to immutable Version 8, with the 1.1
 Commitments workbook migration complete. At 15:07:25 EDT editor health passed
 all ten headers, New York time and no send capability, with only
 `CCC_MANUAL_WRITES` enabled. The unfiltered trigger check found zero.
@@ -16,6 +16,12 @@ manual-override preservation and atomic audit. Waiting input accepts exactly
 `me`, `them`, `none`, or `unknown` for open/snoozed items. Its live change/retry/
 restoration passed at 11:56 EDT; five Queue and thirteen audit rows remain. The
 first row is restored to open / unknown / manual override, with no snooze.
+
+PR #47's reviewed Shortcut quota and kill-switch transaction guards are now in
+the existing owner-only deployment as Version 8 (17:52 EDT). The 17:53:21 EDT
+health check passed all ten headers and confirmed no send capability; every
+automatic feature remains off and only the previously accepted manual Queue
+controls are enabled. Version 8 does not make the endpoint available to a phone.
 
 The disable-first deployment drill switched Version 6 to retained Version 5 and
 back, verifying each immutable build and unchanged owner-only access. Queue/Audit
@@ -52,7 +58,8 @@ unbound. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
   flow includes that unconfigured Step 3 but has not run it. CCC_STUDIO_PROCESSING
   is false. Real source binding, model usefulness, and exact resolved-input/source
   retention remain open; do not feed real private content until that gate is
-  resolved. Immutable owner-only web deployment Version 7 remains unchanged.
+  resolved. The existing owner-only web deployment is now Version 8; the
+  Studio step remains unrun.
 - Bind a privacy-compatible interpretation provider within an existing permitted
   entitlement. Prove real source IDs, strict validation, outbound-promise
   Commitments, draft eligibility and useful output. The create-only native draft

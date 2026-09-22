@@ -99,9 +99,24 @@ only into a new private copy of the verified backup. Preserve current rows,
 source messages, drafts and audit evidence. Nothing in this procedure sends a
 message or clears records.
 
-## Current source work
+## Current release state
 
-Bounded chronology candidate is unmerged; independent review is clean after
-repairing legacy Studio/manual replay overwrites, deferred coverage and recovery
-bounds. Required local verification passes; PR CI remains. See
-[implementation](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md).
+Bounded chronology PR #42 is merged at `4789030589d1f0168aff87de788f29dd80155e85`;
+review, required CI and CodeQL passed. Local required checks passed, including
+423 tests across 45 files. Live deployment remains Version 6. A fresh private
+pre-migration backup is verified and its ID is in ignored
+`.local/PILOT_RESOURCES.md`.
+
+Live migration is waiting for authenticated Apps Script editor control. Scoped
+`clasp` credentials identify the approved account, but `clasp run cccHealth`
+returned storage `NOT_FOUND`, and no authenticated editor control path is
+available in this environment.
+No flags/triggers or full Commitments rows were verified, and no disable,
+migration, source push or deployment occurred. Resume with read-only status,
+disable all controls and managed triggers, and verify they are off and the full
+Commitments table is empty. Stop for a populated table. Only after that preflight
+passes, push the reviewed source, run `cccMigrateEmptyCommitments` explicitly in
+the authenticated editor, verify the 17-column header and health, then deploy a
+private version with the approved safe flags only.
+See [chronology](../docs/implementation/BOUNDED_GMAIL_CHRONOLOGY.md) and
+[Commitment migration](../docs/implementation/COMMITMENT_STORAGE.md).

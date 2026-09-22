@@ -2,7 +2,7 @@
 
 Decision: [111](../wayfinder/tickets/111-bounded-gmail-chronology.md).
 
-## Source implementation awaiting release
+## Merged source; private activation pending
 
 The native intake candidate enumerates eligible ID/thread ID references in a
 fixed 30-day window, twenty per invocation. Only after enumeration finishes does
@@ -39,8 +39,20 @@ checkpoint and Queue/Audit recovery point before any approved repair. Do not
 change the phase to complete or erase missing evidence to force progress. A
 reviewed reset/migration path is required before restarting a blocked scan.
 
-This candidate is not deployed. Coordinate Commitment 1.1 header migration before
-activation. Provider interpretation, Studio installation,
+PR #42 merged as `4789030589d1f0168aff87de788f29dd80155e85` after independent
+review, full repository CI and CodeQL. Version 6 remains deployed. Complete the
+Commitment 1.1 preflight by disabling controls and managed triggers, verifying
+they are off, and confirming the full legacy table is empty. If it is empty,
+push this reviewed source, run the guarded migration explicitly in the
+authenticated editor, verify the schema and health, and deploy the accepted
+private version. A fresh private backup was created and verified; its ID is
+recorded only in ignored `.local/PILOT_RESOURCES.md`.
+
+The editor action is currently blocked by tooling: authenticated `clasp run
+cccHealth` returned storage `NOT_FOUND`, and an authenticated editor control path is
+unavailable in this environment. Thus live flags/triggers and full-table emptiness are
+unverified; the guarded migration and disable function have not run. No source
+push or deployment occurred. Provider interpretation, Studio installation,
 live bounded acceptance and pilot usefulness remain release requirements.
 
 Studio processing and selected replay use the same bounded projection when a v2
@@ -55,6 +67,5 @@ Focused reader, older-obligation and runtime checks pass. The legacy overwrite
 repair passes focused verification and independent review. Historical dead-letter
 recovery additionally requires the reused fixed window to fit its original caller
 bounds before reading thread metadata. Required local checks pass: formatting, lint, types, three JSON/Zod contracts,
-423 tests across 45 files (the updated bundle suite was rerun after two stale
-expectations were corrected), build and planning validation. Protected PR CI
-remains before merge.
+423 tests across 45 files, build and planning validation. Required PR CI and
+CodeQL passed before merge.

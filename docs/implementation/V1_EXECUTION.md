@@ -314,7 +314,7 @@ files, lint, typecheck, three JSON/Zod contracts and a callable Apps Script buil
 uncertain-write, duplicate and manual-edit protections. These are synthetic/local
 results, not a live Gmail create. Native replacement/deletion make no provider calls.
 
-## Bounded chronology source candidate — 2026-09-22
+## Bounded chronology source merged — 2026-09-22
 
 Decision [111](../wayfinder/tickets/111-bounded-gmail-chronology.md) adds fixed-window
 reference enumeration, per-thread metadata reconciliation and older commitment
@@ -324,4 +324,10 @@ original window. Independent review findings were resolved. Local verification
 covers 423 tests in 45 files, formatting, lint, types, schema, build and planning
 checks; the updated bundle suite passed after correcting two old flow expectations.
 See [implementation and migration boundaries](BOUNDED_GMAIL_CHRONOLOGY.md).
-This candidate is not deployed; protected PR checks precede merge.
+PR #42 merged at `4789030589d1f0168aff87de788f29dd80155e85`; local verification,
+required CI, CodeQL and independent review passed. Version 6 remains deployed.
+A fresh private backup is recorded in ignored `.local/PILOT_RESOURCES.md`.
+Migration preflight is blocked because `clasp run cccHealth` returned storage
+`NOT_FOUND`, and no authenticated editor control path was available. Flags,
+triggers and full Commitments-table emptiness are unverified. No disable,
+migration, source push or deployment was performed.

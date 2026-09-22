@@ -41,17 +41,17 @@ This is a regression suite for deterministic functions, not a measured pilot.
 Its 100% agreement reflects that the policy implementation matches these
 hand-labeled synthetic inputs; it does not establish production accuracy.
 
-The current codebase has no Gmail-thread parser/chronology resolver, actionability
-detector, model classifier, draft generator, deployed endpoint, or real mailbox
-corpus. Therefore this report does **not** measure the following acceptance
-thresholds:
+The integrated codebase has domain chronology/deadline services and deployable
+runtime adapters. This evaluation exercises deterministic policy functions only;
+it does not use a live model, full mailbox corpus or human draft ratings.
+Therefore this report does **not** measure the following acceptance thresholds:
 
 | Required pilot measure | Current status |
 | --- | --- |
 | Real or sanitized Gmail chronology correctness | Not measured; fixtures model only the resolved latest-message signal consumed by `deriveWaitingOn`. |
 | Actionable-detection precision | Not measured; no actionability classifier API exists yet. |
 | Duplicate suppression | Not measured in this evaluation; covered separately by repository contract tests. |
-| Deadline normalization | Not measured here; no chronology/deadline normalization service exists in this branch. |
+| Deadline normalization | Not measured here; chronology and deadline services have separate regression suites. |
 | Raw-content retention violations | Not measured end-to-end; this corpus contains no raw content. |
 | Auto-sent communications | Not measured end-to-end; no send path is implemented. |
 | Routine-draft usefulness | Not measured; no model drafts or human ratings exist. |

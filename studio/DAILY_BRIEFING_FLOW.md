@@ -1,54 +1,28 @@
-# Workspace Studio Flow — Daily Briefing Delivery v1
+# Workspace Studio — Daily Briefing configuration v1
 
-## Purpose
+Current posture: **disabled; no Google message delivery**.
 
-Deliver the deterministic queue produced by Apps Script. Studio may format the presentation but must not reorder, add, or remove items.
+Cam's 2026-09-22 clarification supersedes the earlier private Chat alert. Do not
+add or activate Notify me in Chat, Send email, or any other message action.
+The deterministic Apps Script `cccBuildBriefing` writes `Briefing_View` and
+`Briefing_History` with deliveryChannel=none. It has no delivery transport.
 
-## Starter
+## Sections
 
-**On a schedule**
+1. Handle first
+2. Quick wins
+3. Promises due or overdue
+4. Needs judgment
+5. Drafts ready
+6. Waiting on others
+7. Upcoming this week
+8. System health
 
-Approved configuration (Wayfinder ticket 104):
+## Verification before generation is enabled
 
-- Morning: 8:00 AM America/New_York
-- Delivery: private Google Chat notification linking the private `Briefing_View` Sheet
-- Afternoon cleanup: disabled until the first pilot week demonstrates value
-
-Keep this flow disabled. Milestone 4 prepares configuration; the briefing engine
-and live delivery verification belong to Milestone 6.
-
-## Steps
-
-1. **Get sheet contents**
-   - source: `Briefing_View`;
-   - read the bounded active range created by Apps Script.
-
-2. **Optional Ask Gemini**
-   - allowed only to improve wording;
-   - prompt must say: preserve every row, order, identifier, deadline, and status exactly;
-   - if the model output omits an item, use the deterministic text instead.
-
-3. **Notify me in Chat** using the approved private delivery channel.
-   - include the generated timestamp;
-   - include a link to the command-center Sheet;
-   - do not include full message bodies.
-
-## Briefing sections
-
-- Handle first
-- Quick wins
-- Promises due or overdue
-- Needs judgment
-- Drafts ready
-- Waiting on others
-- Upcoming this week
-- System health
-
-## Verification
-
-- resolved/snoozed items absent;
-- all active deterministic rows present;
-- order unchanged;
-- no private body content;
-- delivery failure recorded in `Audit_Log`;
-- on-demand ChatGPT view remains available if scheduled delivery fails.
+Verify resolved/snoozed records are excluded, ordering is deterministic, all eight
+sections appear, health is derived from validated records and checkpoint state,
+duplicate content is not appended, and no private content enters logs. A changed
+same-day view appends a new group; the latest group starts at sort_order 0.
+No Google delivery or scheduled trigger is active. On-demand ChatGPT reads the
+private Sheet and follows source links for context.

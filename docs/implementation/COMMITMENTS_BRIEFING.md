@@ -52,3 +52,40 @@ are supplementary and do not duplicate an item assignment.
 `writeBriefingView()` exposes adapter-neutral ordered sections for the future
 Sheet writer. `renderBriefingMarkdown()` is deterministic and contains item IDs
 where an item is present.
+
+## Apps Script projection runtime
+
+`runBriefing(gateway, spreadsheetId, now, sha256)` is the synchronous runtime
+adapter for the existing manifest tables. It reads `Queue`, `Commitments`,
+`Dead_Letter`, `Audit_Log`, and `Config` under one gateway lock, then validates
+each queue row through `queueItemFromRow`. Commitment rows are fail-closed:
+their IDs, bounded promise text, enum status, boolean override, and all
+present timestamps must be valid before a briefing can be persisted. The
+current `Commitments` sheet has no columns for `sourceEvidenceId`, `observedAt`,
+or `resolvedBy`; the adapter derives those internal fields from the stable row
+identity and `updated_at` without changing the workbook schema.
+
+Health is calculated from open `Dead_Letter` rows, `duplicate_suppressed`
+`Audit_Log` rows, Queue rows whose `draft_status` is `stale`, and the newest
+valid `gmail.reconciliation.v1` Config value. Its JSON is accepted only when
+`GmailCheckpointSchema.safeParse` validates it, and then only its
+`completedThrough` timestamp is used. The runtime calls the pure
+`buildBriefing` service and appends every one of its eight ordered sections to
+`Briefing_View`. An empty section is represented by a `No items` row. Item and
+promise rows carry only bounded operational metadata and their existing Queue
+`source_link`; no source body or message is persisted. A commitment row uses
+its linked Queue item ID to retain that source link.
+
+The projection is append-only. `briefing_date` is the `YYYY-MM-DD`
+America/New_York local date and `generated_at` is the full supplied timestamp.
+Prior `Briefing_View` rows are never replaced. A SHA-256 key over the local
+date, built sections, and health is stored as
+`Briefing_History.content_hash`; an identical rendered briefing returns
+`duplicate` without appending view or history rows. This includes the
+time-dependent result of an expired snooze, so a same-day change in active work
+creates a new version. Each append starts `sort_order` at zero, making the
+first row after the prior projection the boundary of the latest dated version.
+Otherwise the gateway atomically commits both appended tables with a history
+row whose `delivery_channel` is `none` and `delivery_status` is `generated`.
+The runtime has no Gmail, Calendar, or delivery client and does not send or
+draft messages.

@@ -2,355 +2,184 @@
 
 ## Runbook metadata
 
-- **Mode:** Generate / pilot deployment / operations
-- **Primary operator:** Codex with Cam at approval gates
-- **Behavior reviewer:** ChatGPT
-- **Environment:** local development, Google Workspace pilot, then production
-- **Scope:** repository, Apps Script backend, command-center Sheet, Workspace Studio flows, Apple Shortcut, briefing, monitoring, rollback
-- **Completion signal:** the approved vertical-slice tests pass, one synthetic Gmail event and one synthetic Shortcut event appear exactly once, one routine draft is created but not sent, the briefing renders deterministically, and all kill switches work
-- **Must remain unchanged:** unrelated repositories, unrelated Drive files, existing Gmail messages, existing Calendar events, Apple Messages database, and all account security settings not named in this runbook
+- **Mode:** authorized private V1 pilot preparation; live acceptance remains open.
+- **Primary operator:** approved owner account, using the bound private workbook
+  and Apps Script project.
+- **Current resources:** the private workbook is initialized with all ten manifest
+  tabs; its time zone is `America/New_York`; a private pre-activation backup is
+  verified. The resource bindings remain in ignored local records.
+- **Current safety state:** health verified every flag false; a later Gmail/briefing
+  pilot flag save was interrupted by screen lock and its outcome is unknown. No trigger, Shortcut
+  token, installed Shortcut, mailbox processing, or application-created draft
+  exists, and no application-created Google message has been sent.
+- **Deployment state:** immutable Apps Script version 1 is deployed as an
+  owner-only web app (`access: "MYSELF"`, `executeAs: "USER_DEPLOYING"`). The
+  deployed `Code.js` exactly matches `dist/Code.js` after LF normalization and
+  its manifest semantically matches `dist/appsscript.json`.
+- **Model state:** the privacy-compatible interpretation binding is blocked. The
+  inspected Cloud billing account is on an expired free trial; no paid upgrade
+  was authorized or made.
+
+See [Runtime operations](RUNTIME_OPERATIONS.md) for offline deployment-drift
+comparison, private backup handling, and version rollback.
 
 ## Safety classification
 
-| Action | Class |
-|---|---|
-| Read repository/docs, run local tests | Read-only |
-| Create private repo/branch/worktree | Reversible external change |
-| Create pilot Sheet/Apps Script project | Reversible external change |
-| Grant OAuth scopes / install Studio flow | Material external change; approval required |
-| Deploy web app endpoint | Material external change; approval required |
-| Store/rotate Shortcut token | Security-sensitive; approval required |
-| Create Gmail drafts | Reversible external change; approval required for pilot |
-| Send email, delete source content, scrape Messages DB | Prohibited in V1 |
-| Replace/clear production Sheet rows | Destructive; separate explicit approval required |
+| Action | Current treatment |
+| --- | --- |
+| Local build, tests, and offline drift comparison | Safe local work |
+| Private Apps Script test deployment | Version 1 deployed; owner-only and immutable |
+| `cccHealth` | Passed: ten valid headers and all six flags false at check time |
+| `cccGmailReadProbe` | Passed: approved mailbox, one bounded metadata message, no mutations |
+| Pilot processing flags | Gmail/briefing save attempted; screen lock left its outcome unknown |
+| Create a trigger, provision a Shortcut token, or install a Shortcut | Not yet performed; requires its documented live acceptance evidence |
+| Bind a model provider or make a paid billing change | Blocked; no paid upgrade |
+| Send Google email or Chat, including to the owner | Prohibited |
+| Delete drafts, source messages, workbook records, or clear production ranges | Prohibited by this runbook |
 
 ## Global stop conditions
 
-Stop immediately if:
-
-- the repository, branch, Google account, Sheet, Apps Script project, or flow target is uncertain;
-- the repository is public;
-- a secret appears in Git, logs, fixtures, screenshots, or the Sheet;
-- full message bodies are being persisted;
-- a flow sends instead of drafts;
-- a migration would overwrite non-empty production ranges;
-- authorization asks for scopes broader than the documented Gmail/Sheets/Drive/Calendar needs;
-- a smoke test touches a real external recipient;
-- duplicate or reconciliation behavior cannot be explained;
-- rollback depends on the failed component.
+Stop the current operation and leave all flags false if the owner account,
+bound workbook, or Apps Script project is not the verified target; a log or Sheet
+would contain source content or a secret; a check would create a draft or send a
+Google message; the model path requires a paid upgrade; or a command proposes
+clearing/replacing existing workbook data.
 
 ## Phase 0 — Verify targets
 
-### Operator
-
-Codex; Cam approves.
-
-### Steps
-
-1. Read `AGENTS.md`, the architecture spec, Wayfinder map, and implementation plan.
-2. Confirm the selected local repository parent.
-3. Confirm GitHub owner `CapturedByCam`, repository name `communication-command-center`, and private visibility.
-4. Confirm the Google Workspace account to use.
-5. Confirm whether PMC will create a new vault or connect an existing vault.
-6. Confirm no suitable existing repository is being repurposed.
-
-### Verification
-
-Record:
-
-- absolute local repository path;
-- GitHub URL after creation;
-- default branch;
-- clean Git status;
-- active Google account email without recording credentials;
-- selected vault location in machine-local configuration only.
-
-### Rollback
-
-Delete the newly created empty/private repository and local folder only if no project work or user data has been added and Cam approves. Otherwise archive rather than delete.
-
-## Phase 1 — Local build and tests
-
-### Operator
-
-Codex.
-
-### Steps
-
-1. Create an isolated worktree.
-2. Install locked dependencies.
-3. Run schema validation.
-4. Run unit and contract tests.
-5. Build the Apps Script bundle.
-6. Run lint and typecheck.
-7. Run `scripts/validate_planning_pack.py`.
-
-### Verification
-
-All commands exit zero. The build artifact contains no secret or fixture private content. Git status shows only intended files.
-
-### Rollback
-
-Remove the worktree or reset the branch to the last verified commit. Do not touch cloud resources.
-
-## Phase 2 — Create pilot Sheet
-
-### Approval gate
-
-Cam explicitly approves creation in the verified Google account.
-
-### Operator
-
-Codex.
-
-### Steps
-
-1. Run the workbook bootstrap against a newly created Sheet named `Communication Command Center — Pilot`.
-2. Create only the documented tabs and headers.
-3. Apply protected ranges to schema/config headers where supported.
-4. Set `Config.environment=pilot`.
-5. Set all feature flags false.
-6. Store the Sheet ID in Apps Script Properties or local ignored configuration, never in a public example if it exposes access.
-
-### Verification
-
-- tab names and header hashes match the repository manifest;
-- all tabs are empty except headers/config;
-- no existing file changed;
-- feature flags are false.
-
-### Rollback
-
-Move the pilot Sheet to Trash after exporting a sanitized header-only copy if needed. No source content should exist yet.
-
-## Phase 3 — Deploy Apps Script pilot
-
-### Approval gate
-
-Cam approves requested OAuth scopes and deployment.
-
-### Operator
-
-Codex.
-
-### Steps
-
-1. Create or attach the Apps Script project to the verified pilot resources.
-2. Set V8 runtime.
-3. Set Script Properties:
-   - environment;
-   - Sheet ID;
-   - time zone;
-   - feature flags;
-   - generated Shortcut token only after the authentication decision closes.
-4. Deploy a test version first.
-5. Execute synthetic bootstrap and upsert functions.
-6. Install the documented time-driven reconciliation trigger only after tests pass.
-7. Deploy the web app only after Shortcut authentication is approved.
-
-### Verification
-
-- Apps Script execution log contains synthetic IDs only;
-- no private content appears in logs;
-- invalid payload is rejected;
-- duplicate synthetic payload is idempotent;
-- reconciliation trigger runs with feature flags off;
-- endpoint performs no reads for the caller.
-
-### Rollback
-
-Disable triggers, set all feature flags false, disable the web-app deployment, rotate/delete the token, and retain the Sheet for inspection. Rollback must not require the endpoint.
-
-## Phase 4 — Configure Workspace Studio pilot
-
-### Approval gate
-
-Cam reviews every step and approves access.
-
-### Operator
-
-Codex builds; ChatGPT reviews prompts; Cam turns on.
-
-### Steps
-
-1. Verify required built-in actions are available.
-2. Create Gmail Intake flow from `studio/GMAIL_INTAKE_FLOW.md`.
-3. Bind it to the pilot Sheet and selected mailbox scope.
-4. Keep `Send a reply` absent.
-5. Turn on with a narrow synthetic sender filter.
-6. Trigger synthetic routine and review-only messages.
-7. Expand sender scope only after verification.
-8. Create Daily Briefing flow from `studio/DAILY_BRIEFING_FLOW.md` with delivery disabled until briefing tests pass.
-
-### Verification
-
-- routine synthetic email -> one staging row + one draft;
-- review-only email -> one staging row + no automatic draft;
-- newsletter -> no actionable queue item;
-- no sent messages;
-- no full body in Sheet;
-- duplicate suppression works after Apps Script processing.
-
-### Rollback
-
-Turn off the flows. Delete synthetic drafts. Keep staging/audit rows for diagnosis, then clear them only with explicit approval.
-
-## Phase 5 — Install Apple Shortcut pilot
-
-### Approval gate
-
-Shortcut authentication ticket is closed and Cam approves token storage.
-
-### Operator
-
-Codex constructs/specifies; Cam installs and tests.
-
-### Steps
-
-1. Generate a 256-bit random token outside Git.
-2. Store it in Script Properties.
-3. Put it into Cam's local Shortcut.
-4. Build actions exactly from `shortcuts/ADD_TO_COMMAND_CENTER.md`.
-5. Test with synthetic text.
-6. Test retry using the same idempotency key.
-7. Test invalid-token behavior with a temporary wrong token.
-8. Restore the correct token.
-
-### Verification
-
-- one item created;
-- duplicate retry creates none;
-- invalid token returns no data and stores no content;
-- original text absent from Queue and logs;
-- kill switch blocks intake.
-
-### Rollback
-
-Disable shortcut intake flag, rotate/delete the token, disable the web deployment if needed, and delete the Shortcut from devices.
-
-## Phase 6 — Enable briefing and ChatGPT operation
-
-### Approval gate
-
-Cam approves delivery channel and schedule.
-
-### Steps
-
-1. Generate deterministic `Briefing_View`.
-2. Compare rendered order to expected fixture order.
-3. Turn on one scheduled delivery.
-4. Use ChatGPT connected apps to read the queue and relevant source context.
-5. Test `Run comms`, draft review, snooze, waiting-state override, and resolution.
-6. Confirm every state change creates an audit event.
-
-### Verification
-
-- scheduled and on-demand views agree;
-- no omitted active items;
-- no message body in the briefing;
-- manual overrides persist after reconciliation;
-- no send action is available.
-
-### Rollback
-
-Turn off briefing flow. Continue using the Sheet manually. ChatGPT remains on-demand only.
+The verified target is the existing private pilot workbook and bound Apps Script
+project recorded in ignored local resource notes. Bootstrap already completed:
+it created ten manifest tabs, set `America/New_York`, and set all flags false.
+The backup is private and owned only by the approved account.
+
+Open the verified bound Apps Script project for controlled checks. Do not create
+a new workbook or repoint the project.
+
+## Phase 1 — Local build and offline verification
+
+From the repository root, run:
+
+```sh
+pnpm verify
+pnpm build
+node scripts/check-deployment-drift.mjs \
+  --content .local/apps-script-project-content.json \
+  --dist dist
+```
+
+Obtain the `projects.getContent` response through the approved read-only path and
+keep it under `.local/`; it can contain source. `STATUS=drift` or
+`STATUS=invalid` blocks the deployment investigation. The checker emits only
+status and hashes, never source.
+
+## Phase 2 — Workbook and bootstrap state
+
+Do not rerun bootstrap as a routine operation. The initialized workbook is the
+current pilot state. Its required checks are: exactly ten manifest tabs, matching
+headers, `America/New_York`, empty operational rows, and these Script Properties
+set to `false`:
+
+```text
+CCC_GMAIL_INTAKE
+CCC_STUDIO_PROCESSING
+CCC_SHORTCUT_INTAKE
+CCC_DRAFT_CREATION
+CCC_DRAFT_REPLACEMENT
+CCC_BRIEFING_DELIVERY
+```
+
+If a private backup must be restored, create a **new** private workbook from it.
+Never overwrite, clear, import into, or replace the initialized workbook. Follow
+the detailed procedure in [Runtime operations](RUNTIME_OPERATIONS.md).
+
+## Phase 3 — Private Apps Script test deployment
+
+Immutable Apps Script version 1 is deployed privately with `MYSELF` /
+`USER_DEPLOYING`; exact deployed code and semantic manifest comparison against
+`dist` passed. Do not create a domain, logged-in-user, or anonymous deployment.
+No token or phone test is active.
+
+`cccHealth()` passed at 03:14:57 EDT. Its controlled result confirmed `ok: true`, valid headers, all six flags false,
+`time_zone: "America/New_York"`, and `send_capability: false`. After that
+result, run `cccGmailReadProbe()` and require `ok: true`,
+`mailbox_verified: true`, `bounded_days: 30`, `raw_content_stored: false`, and
+`mutations: 0`. Then run `cccDisableAll()` and require `ok: true`, empty
+`flags_enabled`, and `managed_triggers_remaining: 0`.
+
+These checks use controlled counts/statuses. They do not enable processing,
+create drafts, or send messages. Stop if any expected result is absent.
+
+## Phase 4 — Workspace Studio and model binding
+
+Keep Studio disabled. The native metadata path is bounded and review-only; it
+does not establish a model interpretation binding, full-thread classification,
+or draft ownership. The current free-trial billing state cannot be upgraded for
+this pilot. Resume this phase only when an existing permitted entitlement can
+meet the privacy and validation requirements.
+
+## Phase 5 — Apple Shortcut
+
+No token is provisioned and no Shortcut is installed. Keep
+`CCC_SHORTCUT_INTAKE=false` and retain the owner-only test deployment. After the
+private endpoint and token live acceptance tests are complete, use the exact
+local action inventory in [Add to Command Center](../../shortcuts/ADD_TO_COMMAND_CENTER.md).
+Do not change web-app access for a phone before invalid-token, replay, redaction,
+and kill-switch behavior are evidenced.
+
+## Phase 6 — Briefing and drafts
+
+The deterministic briefing implementation writes only the private Sheet and has
+no delivery transport. Keep `CCC_BRIEFING_DELIVERY=false`. Keep
+`CCC_DRAFT_CREATION=false` and `CCC_DRAFT_REPLACEMENT=false`: there is no bound
+draft provider or compose scope. No Gmail or Chat message, including a self
+notification, may be sent.
 
 ## Phase 7 — Pilot evaluation
 
-### Steps
-
-1. Use the approved sample set.
-2. Label expected actionability, category, waiting state, deadline, risk, and draft usefulness.
-3. Run the system.
-4. Record mismatches as sanitized fixtures.
-5. Fix rules or prompts through reviewed changes.
-6. Re-run the full regression suite.
-7. Produce the pilot report.
-
-### Production gate
-
-Production may be enabled only when:
-
-- acceptance thresholds pass;
-- zero privacy or auto-send violations exist;
-- rollback and token rotation were exercised;
-- all open security/blocking decisions are closed;
-- Cam explicitly approves.
+Live processing and unattended daily use are not accepted. After health and
+probe checks, provider binding, Shortcut acceptance, and each single-feature test are
+complete, collect the required working-week observations and human draft-usefulness
+ratings. The 50 synthetic cases remain implementation evidence, not real-pilot
+acceptance.
 
 ## Routine operations
 
-### Daily
-
-- inspect `System health`;
-- review failed/dead-letter items;
-- review drafts before sending;
-- resolve or snooze completed items.
-
-### Weekly
-
-- review duplicate/error counts;
-- review overdue commitments;
-- sample classification quality;
-- confirm feature flags;
-- check Studio and Apps Script activity;
-- update PMC Current State when behavior changed.
-
-### Monthly
-
-- rotate the Shortcut token during pilot or immediately after any suspected exposure;
-- export a sanitized backup of configuration and operational rows;
-- run drift checks against Sheet headers, Apps Script deployment, Studio flow spec, and schemas;
-- review OAuth connections and remove unused access.
+Until live acceptance completes, the only routine operational action is to keep
+the flags false and use the Sheet as a private initialized record. When resuming
+after an interruption, run `cccHealth()` and then `cccDisableAll()` before any
+new bounded test. Keep source context in Gmail and never copy bodies to Sheets,
+logs, fixtures, or operational notes.
 
 ## Incident procedures
 
-### Suspected token leak
+### Suspected Shortcut token exposure
 
-1. Disable shortcut intake flag.
-2. Disable endpoint deployment if abuse is active.
-3. Rotate token in Script Properties.
-4. Update only trusted Shortcuts.
-5. Inspect content-free audit metadata.
-6. Re-enable after a successful invalid/valid-token smoke test.
+There is no provisioned token today. If a token later exists and exposure is
+suspected, run `cccDisableAll()`, keep the owner-only deployment private, inspect
+content-free audit metadata, and follow the assisted rotation procedure before
+any later test. Do not send a notification or delete unrelated data.
 
-### Full content found in Sheet/logs
+### Unexpected runtime behavior
 
-1. Disable all intake and drafting.
-2. Preserve minimal evidence without copying the content elsewhere.
-3. Identify the writer and affected ranges.
-4. Remove content only after Cam approves and a backup/impact assessment is complete.
-5. Add a regression test.
-6. Rotate secrets if content included them.
-7. Do not resume until verification proves minimization.
+Run `cccDisableAll()` from the authenticated Apps Script editor. Confirm every
+flag is false and `managed_triggers_remaining` is zero. Preserve the private
+workbook, source messages, drafts, and audit evidence. If code rollback is
+needed, repoint only the private deployment to the previously verified version;
+then run `cccDisableAll()` again. See [Runtime operations](RUNTIME_OPERATIONS.md).
 
-### Duplicate storm
+### Source content or secret appears in a Sheet or log
 
-1. Disable affected intake path.
-2. Keep reconciliation off if it worsens duplication.
-3. Inspect idempotency keys and source IDs.
-4. Fix and test on a copied pilot Sheet.
-5. Merge duplicate rows only through a reviewed migration.
-6. Re-enable one source at a time.
-
-### Wrong or harmful drafts
-
-1. Turn off draft creation while leaving intake on.
-2. Delete affected unsent drafts after review.
-3. classify the missed risk category;
-4. add fixtures and rules;
-5. re-enable only after regression tests pass.
+Run `cccDisableAll()` and preserve minimal evidence without reproducing the
+content. Stop further processing, identify the writer and affected range, and
+fix the writer plus a regression test. Do not clear, overwrite, delete, or export
+records under this runbook.
 
 ## Final evidence packet
 
-Before declaring the project complete, provide:
-
-- verified repository/branch/commit;
-- test, lint, typecheck, schema, build, and smoke-test output;
-- Sheet/tab/header manifest;
-- Apps Script deployment version;
-- enabled feature flags;
-- Studio flow versions and screenshots with private content redacted;
-- Shortcut version and token-rotation date without the token;
-- rollback test evidence;
-- unresolved assumptions;
-- PMC Current State and Handoff links.
+Before claiming an accepted pilot, record the verified commit/version, local
+check results, manifest/header check, private deployment posture, current flag
+state, controlled live-check results, model-binding evidence, Shortcut acceptance
+evidence, and unresolved gates. Include links to
+[V1 execution](../implementation/V1_EXECUTION.md), [PMC current state](../../PMC/Current%20State.md),
+and [runtime operations](RUNTIME_OPERATIONS.md). Never include resource IDs,
+tokens, source content, or OAuth material.

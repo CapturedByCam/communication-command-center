@@ -1,10 +1,10 @@
-# Communication Command Center — Planning Pack
+# Communication Command Center
 
 **Planning date:** 2026-09-21
 **Project owner:** Cam
 **Implementation lead:** Codex
 **Product/architecture/review lead:** ChatGPT
-**Status:** Planning complete; no repository, cloud deployment, Google flow, Shortcut, or production data has been created by this pack.
+**Status:** V1 runtime implemented with private pilot bootstrap verified; live model/device integration and pilot acceptance remain. Start with [Morning handoff](PMC/Handoff.md) and [Current State](PMC/Current%20State.md).
 
 ## Destination
 
@@ -50,5 +50,5 @@ Build a privacy-conscious communication command center that:
 - No model-generated object is trusted until code validates and normalizes it.
 - No destructive or external deployment action without Cam's explicit approval.
 - No unrelated existing GitHub repository may be repurposed for this project.
-- The initial GitHub repository should be private.
+- The GitHub repository is intentionally public; runtime resources and secrets remain private.
 - The initial Apple Messages path is manual Share Sheet capture, not unattended database scraping.

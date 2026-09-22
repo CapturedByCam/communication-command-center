@@ -24,10 +24,9 @@ Workspace Studio handles bounded Gmail event orchestration. Apps Script owns det
 
 ## Active workstreams
 
-- Milestone 3 Gmail chronology and reconciliation using synthetic or sanitized fixtures
-- Milestone 4 local Studio configuration and validation in parallel; see [progress and next steps](../docs/implementation/MILESTONE_4.md)
-- Repository CI and public-repository protection through issue #19 and PR #20
-- Deferred implementation gates listed in [Current State](Current%20State.md)
+- Authorized V1 runtime release and live pilot preparation through Milestone 7
+- Remaining model/Studio binding, device setup and elapsed pilot acceptance
+- See [Current State](Current%20State.md) for verified status and boundaries
 
 ## Decisions and procedures
 

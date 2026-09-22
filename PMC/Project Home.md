@@ -5,7 +5,7 @@ Communication Command Center is a privacy-conscious, human-reviewed system for t
 ## Current milestone
 
 Milestone 7 private pilot preparation is underway. Immutable owner-only Apps
-Script Version 7 and the empty Commitment 1.1 migration are verified. Only
+Script Version 8 and the empty Commitment 1.1 migration are verified. Only
 guarded manual Queue controls are enabled; automatic intake, Studio processing,
 drafting, Shortcut capture and briefing delivery remain disabled. V1 is not
 accepted for unattended daily use. See [Current State](Current%20State.md) for

@@ -134,10 +134,10 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   current trigger count was observed at about 11:32 EDT in the Apps Script Triggers
   page: `Showing 0 triggers` with no filters set.
 - Workspace Studio test add-on installation is verified with no new scope or consent.
-  The historical reloaded manual-flow inspection found no CCC/custom action. Admin is
-  now authenticated, but CapturedByCam root Custom steps access is OFF; Allow unpublished
-  test steps is checked but disabled, and action-time confirmation to enable access is
-  pending. No Admin/OAuth/policy/runtime change occurred. The current app-owned flow is
+  The historical reloaded manual-flow inspection found no CCC/custom action. At that
+  time CapturedByCam root Custom steps access was OFF. Cam later approved turning it
+  ON with unpublished test steps allowed; the private action is now visible and its
+  configuration card opens. The current app-owned flow is
   Start manually → Ask Gemini with Web search and Workspace sources off, no skills, Text
   output, and no custom/Google mutation step. A synthetic-only manual run succeeded at
   12:26:22 EDT. `StudioInterpretationSchema` accepted all 12 required fields with no
@@ -253,7 +253,7 @@ required checks. The Studio branch passed full local verification: 370 tests in 
 | Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 after health passed, without a source or Queue mutation |
 | Gmail | Native read-only metadata worker, five messages per invocation, 30-day cursor | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
 | Drafts | Domain lifecycle, operation ledger and reviewed create-only provider merged in PR #36 | Uninvoked and absent from the emitted runtime; no compose scope or live create acceptance; replacement/deletion unsupported |
-| Studio | Versioned disabled configuration and staging validation | Test add-on installation verified; historical custom-step absence is distinct from current Admin-authenticated availability. Root Custom steps access is OFF pending action-time confirmation. A synthetic-only manual Ask Gemini run succeeded, but source binding, strict semantic acceptance, resolved-input retention meaning, and model usefulness remain unverified; disabled |
+| Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. It remains unrun and unbound; source binding, strict semantic acceptance, resolved-input retention meaning, and model usefulness remain unverified; processing disabled |
 | Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Safe setup-blocked template exists in [Shortcut installation](../../shortcuts/SHORTCUT_INSTALLATION.md); no export, network request, token, or phone Shortcut installation; disabled |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
 | Calendar | Reviewable candidates only | No Calendar mutation or runtime scope |
@@ -271,10 +271,10 @@ source IDs and strict pre-persistence validation.
    trigger; retain bounded controlled-code logging.
 2. Connect a supported interpretation provider with the required privacy behavior
    within an existing paid entitlement. The Studio test add-on is installed without
-   new consent. Its historical custom-step absence does not decide current availability:
-   Admin is authenticated but root Custom steps access is OFF pending action-time
-   confirmation. Starter binding, strict semantic acceptance, retention meaning, and
-   model usefulness remain pending.
+   new consent. Cam approved and Admin enabled root Custom steps access while retaining
+   unpublished test steps. The private action is visible and configurable, but has not
+   run. Starter binding, strict semantic acceptance, retention meaning, and model
+   usefulness remain pending.
    Draft ownership/revision data remains unbound. The inspected
    Cloud project showed an expired free trial and a free-trial billing account;
    Vertex requires enabled billing. No billing upgrade was made. Free Gemini API
@@ -394,6 +394,28 @@ was applied in the authenticated Apps Script editor. It reported Saved to
 Drive. Reopening the Studio Step 3 card showed the intended Gmail ID and
 bounded JSON input fields with no permission error. The flow was not run,
 no real source ID or private content was bound, and CCC_STUDIO_PROCESSING
-remains disabled. Owner-only immutable web deployment Version 7 was not
-repointed. Studio model usefulness, starter-variable binding, and exact
-resolved-input/source retention remain unverified.
+remains disabled. The existing owner-only deployment was later updated to
+Version 8 for the separately reviewed Shortcut authorization/kill-switch fix;
+this Studio flow remains unrun and unbound. Studio model usefulness,
+starter-variable binding, and exact resolved-input/source retention remain
+unverified.
+
+## 2026-09-22 Shortcut gate hardening deployment
+
+PR #47 merged after independent review, required CI and CodeQL. It moves the
+authenticated malformed-request quota check ahead of the rejection sink and
+rechecks authorization and the global disable state while holding the shared
+Sheet transaction lock. `cccDisableAll` takes that same lock before disabling
+flags/removing managed triggers, so an admitted persistence write cannot race
+past shutdown. Token rotation remains disable-first.
+
+The merged build was saved to the authenticated Apps Script editor and the
+existing owner-only deployment was updated to Version 8 at 17:52 EDT. Execute-as
+owner and `MYSELF` access were preserved; no public endpoint was created. The
+17:53:21 EDT editor health execution returned `ok:true`, all ten expected sheet
+headers valid, timezone `America/New_York`, no send capability, and flags
+`GMAIL_INTAKE`, `STUDIO_PROCESSING`, `SHORTCUT_INTAKE`, `DRAFT_CREATION`,
+`DRAFT_REPLACEMENT`, and `BRIEFING_DELIVERY` false. The accepted
+`MANUAL_WRITES` flag is the only true flag. No flow, message, draft, trigger, or
+Shortcut request was run. Phone/device acceptance and an endpoint accessible to
+Shortcuts remain open.

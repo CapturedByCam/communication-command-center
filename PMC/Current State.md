@@ -4,17 +4,22 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
 
 ## Verified position
 
-- Existing owner-only Apps Script deployment updated to immutable Version 7 at
-  about 15:04 EDT. Cloning Version 7 reproduced the reviewed bundle exactly
-  (LF-normalized SHA-256 `40e8a3afe7595104d7ba05fc87088360d0f92c569abe430bdd8ecfb246739383`)
-  and the same semantic manifest. Access remains `MYSELF` /
-  `USER_DEPLOYING`; an anonymous request redirected to Google sign-in. The
-  manifest introduces no new OAuth scope. Version 6 cannot directly run
-  against the migrated 1.1 workbook; see the recovery gate below.
+- Existing owner-only Apps Script deployment now points to immutable Version 8
+  (2026-09-22 17:52 EDT), after PR #47 hardened Shortcut quota and kill-switch
+  checks under the shared lock. Execution remains as the owner and access stays
+  `MYSELF`; the deployment URL and access scope were unchanged. The previous
+  Version 7 source/manifest verification remains in the execution history.
+  Version 6 cannot directly run against the migrated 1.1 workbook; see the
+  recovery gate below.
 - At 15:07:25 EDT, editor `cccHealth` returned `ok:true`: ten valid headers,
   `America/New_York`, `MANUAL_WRITES:true`, the other six flags false, and
   `send_capability:false`. The unfiltered Triggers page showed zero triggers.
   Only previously accepted guarded manual Queue controls are enabled.
+- At 17:53:21 EDT, the Version 8 editor `cccHealth` again returned `ok:true`:
+  all ten sheet headers valid, `America/New_York`, `send_capability:false`,
+  and all automatic processing, intake, draft, replacement, and delivery flags
+  false. `MANUAL_WRITES` remains the sole true flag. No trigger or message
+  action was installed or invoked.
 - The private workbook has ten manifest tabs and a verified private pre-activation
   backup. A new private restore copy passed all ten exact manifest headers and
   New York time checks. The owner-only deployment was switched from Version 6 to
@@ -51,7 +56,7 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
 
 ## Commitment storage released; provider integration pending
 
-The repository and private Version 7 deployment include strict 1.1 Commitment
+The repository and private Version 8 deployment include strict 1.1 Commitment
 storage, bounded outbound chronology, a guarded observation writer, and
 briefing provenance validation. After a verified empty-table preflight and private
 backup, `cccMigrateEmptyCommitments` returned `migrated` with schema 1.1 at
@@ -84,8 +89,9 @@ All Google messages remain unsent; Codex coordination is authorized.
    its 12-field result passed strict schema validation, but project evidence,
    starter binding, real-model usefulness, and resolved-input/source retention
    remain open. Studio reports stored synthetic output available for 40 days.
-   No real private content or Google mutation was used. Immutable web
-   deployment Version 7 was not changed by the editor manifest fix.
+   No real private content or Google mutation was used. The existing owner-only
+   deployment was later updated to Version 8 for the separately reviewed
+   Shortcut gate fix; the Studio flow remains unrun.
 2. Draft creation needs compose authorization, a trusted eligible context resolver
    and bounded live acceptance. Native replacement/deletion return unsupported to
    protect human edits. The new Commitment storage schema is migrated and deployed; outbound
@@ -130,9 +136,9 @@ Direct Sheet reads confirmed the exact 17-column header and an empty data
 range. The 15:00:42 editor health check passed all ten manifest headers,
 New York time, all seven flags off and no send capability.
 
-Immutable Version 7 exactly matches the reviewed build and private manifest;
-the existing owner-only deployment now points to it. Anonymous access redirects
-to Google sign-in. Only the accepted manual-control flag was restored; the
-15:07:25 health check and unfiltered zero-trigger page verified the final safe
-posture. Queue and Audit_Log populated rows matched the private backup exactly.
+Immutable Version 7 exactly matched the reviewed build and private manifest.
+The existing owner-only deployment was later updated to Version 8 after PR #47;
+the 17:53:21 health check verified all ten headers, no send capability, all
+automatic flags false, and the accepted manual-control flag as the sole true
+flag. Queue and Audit_Log populated rows matched the private backup exactly.
 Automatic provider features remain disabled pending the gates above.

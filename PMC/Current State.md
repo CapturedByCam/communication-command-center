@@ -17,7 +17,8 @@ Updated 2026-09-22.
   every feature disabled. The workbook uses America/New_York.
 - A private pre-activation backup exists. Both Sheets have only the approved owner.
 - Immutable owner-only version 2 is deployed and matches the tested build.
-- Live health and a bounded Gmail metadata probe passed; zero mailbox mutations.
+- Version 1 live health and a bounded Gmail metadata probe passed; zero mailbox
+  mutations. Version 2 live menu, health and disable checks remain pending.
 - Guarded owner-only Queue controls support Resolve, Reopen and explicit-offset
   Snooze with manual overrides, conflict checks and atomic audits. The independent
   `CCC_MANUAL_WRITES` flag defaults off; live menu acceptance remains open.

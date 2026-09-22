@@ -8,7 +8,7 @@
 - **Current resources:** the private workbook is initialized with all ten manifest
   tabs; its time zone is `America/New_York`; a private pre-activation backup is
   verified. The resource bindings remain in ignored local records.
-- **Current safety state:** health verified every flag false; a later Gmail/briefing
+- **Current safety state:** version 1 health verified its six flags false; a later Gmail/briefing
   pilot flag save was interrupted by screen lock and its outcome is unknown. No trigger, Shortcut
   token, installed Shortcut, mailbox processing, or application-created draft
   exists, and no application-created Google message has been sent.
@@ -28,9 +28,9 @@ comparison, private backup handling, and version rollback.
 | Action | Current treatment |
 | --- | --- |
 | Local build, tests, and offline drift comparison | Safe local work |
-| Private Apps Script test deployment | Version 1 deployed; owner-only and immutable |
-| `cccHealth` | Passed: ten valid headers and all six flags false at check time |
-| `cccGmailReadProbe` | Passed: approved mailbox, one bounded metadata message, no mutations |
+| Private Apps Script test deployment | Version 2 deployed; owner-only and immutable |
+| `cccHealth` | Version 1 baseline passed: ten valid headers and six flags false at check time; version 2 check pending |
+| `cccGmailReadProbe` | Version 1 baseline passed: approved mailbox, one bounded metadata message, no mutations |
 | Pilot processing flags | Gmail/briefing save attempted; screen lock left its outcome unknown |
 | Create a trigger, provision a Shortcut token, or install a Shortcut | Not yet performed; requires its documented live acceptance evidence |
 | Bind a model provider or make a paid billing change | Blocked; no paid upgrade |

@@ -27,7 +27,8 @@ manual overrides and user drafts; keep private content and secrets out of Git/lo
 - Repository: CapturedByCam/communication-command-center, intentionally public.
 - Main project is the durable vault; use dedicated worktrees for implementation.
 - Private resource links are in ignored `.local/PILOT_RESOURCES.md`.
-- Pilot Sheet initialized; owner-only version 2 deployed; health and Gmail probe passed.
+- Pilot Sheet initialized; owner-only version 2 deployed. Health and Gmail probe
+  passed on version 1; version 2 live menu/health/disable checks remain pending.
 - A later manual pilot flag save was interrupted by screen lock; verify current
   flags before continuing. No background triggers exist.
 - No live ingestion, model/draft provider, installed Shortcut or scheduled worker

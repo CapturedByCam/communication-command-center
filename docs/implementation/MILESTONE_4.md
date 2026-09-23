@@ -70,19 +70,19 @@ Subsequent accepted decisions supersede the proposed path in this historical sna
 
 ## Remaining gates and next actions
 
-1. Keep `CCC_STUDIO_PROCESSING` disabled while actual starter-variable binding, model acceptance, and exact resolved-input/source retention remain unproven.
+1. Keep `CCC_STUDIO_PROCESSING` disabled while live starter-variable resolution, model acceptance, and exact resolved-input/source retention remain unproven.
 2. Literal-source acceptance is complete: one eligible Gmail resource ID staged exactly one metadata-only record, identical replay and changed-immutable-input replay made no further write, and the final disabled run left the workbook unchanged.
-3. Bind the actual Gmail starter message-ID variable and separately bind the bounded interpretation string. Prove useful real-message interpretation only after retention is accepted.
+3. The disabled draft flow now binds the Gmail starter's `Email ID` variable to the private step and uses a synthetic bounded interpretation placeholder. Prove the starter's resolved value and useful real-message interpretation only after retention is accepted.
 4. Complete the separately gated native create-only draft acceptance only after a trusted interpreted context, compose authorization, runtime binding, and provider evidence exist. It must not replace or delete drafts.
-5. Milestone 4 completes after starter binding, model usefulness, retention, and the remaining live flag-transition path pass. Native draft behavior is a separate provider gate.
+5. Milestone 4 completes after live starter-variable resolution, model usefulness, retention, and the remaining live flag-transition path pass. Native draft behavior is a separate provider gate.
 
 ## Implementation rulings
 
 - Preserve existing staging schema 1.0. Introduce only a local extraction
   contract and validator; the existing Sheets/backend contract remains stable
   while Milestone 3 proceeds. Cost: live wiring remains follow-up work.
-- Keep `CCC_STUDIO_PROCESSING` disabled while account UI availability,
-  starter-variable binding, and model acceptance are unproven. The custom Apps
+- Keep `CCC_STUDIO_PROCESSING` disabled while live starter-variable resolution,
+  retention, and model acceptance are unproven. The custom Apps
   Script step is accepted by decision 107 and strictly stages metadata; it
   cannot draft or send. Cost: full milestone acceptance awaits integration.
 - Keep Task 11 draft persistence in a separate implementation slice from this

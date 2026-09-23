@@ -1,6 +1,6 @@
 # Current State
 
-Updated 2026-09-23 (14:32 EDT). V1 is not accepted for unattended daily use.
+Updated 2026-09-23 (14:55 EDT). V1 is not accepted for unattended daily use.
 
 ## Verified position
 
@@ -174,8 +174,10 @@ All Google messages remain unsent; Codex coordination is authorized.
    metadata-only `Studio_Inbox` row was added; duplicate and conflict checks
    changed neither that row nor `Audit_Log`. `CCC_STUDIO_PROCESSING` is false
    again, the live resource ID was removed from the saved flow, and the final
-   disabled run made no further write. Actual Gmail starter-variable binding,
-   real-model usefulness, the mid-invocation flag-off path, and exact
+   disabled run made no further write. A separate disabled draft flow now binds
+   the Gmail starter's `Email ID` variable to the private action and preserves
+   that binding after reopen; it has not been run or turned on. Live starter
+   resolution, real-model usefulness, the mid-invocation flag-off path, and exact
    resolved-input/source retention remain open. Studio reports stored synthetic
    output available for 40 days. No draft or send occurred.
 2. Draft creation needs compose authorization, a trusted eligible context resolver

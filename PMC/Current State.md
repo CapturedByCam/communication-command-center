@@ -243,3 +243,32 @@ remains unknown. A separate diagnostic source branch distinguishes those two
 paths but is not deployed. Two read-only CLI health attempts failed before
 script execution with Apps Script storage `NOT_FOUND`; they changed no state.
 The 01:35 editor health check remains the latest confirmed live posture.
+
+## 2026-09-23 Phase 1 Gmail pilot acceptance
+
+The seven-day Gmail pilot is complete. PRs #60 and #61 added fixed, content-free
+Sheets failure labels and the failing table/read target; live execution identified
+the original failure as a Sheets values read rather than a Gmail message read.
+PR #62 removed the redundant all-table header preflight from every one-thread
+invocation while retaining per-table header checks at each actual repository
+read. All three PRs passed required CI, were merged into the pilot branch, and
+were pushed to the approved Apps Script project with an exact code readback.
+The owner-only manifest posture remained `MYSELF` / `USER_DEPLOYING`.
+
+The fixed window from `2026-09-16T04:55:06.000Z` through
+`2026-09-23T04:55:06.000Z` enumerated four immutable reference shards containing
+65 message references and 53 unique threads. Bounded manual invocations resumed
+the existing cursor without a reset. Rapid bursts produced two controlled,
+sanitized Sheets values-read failures; after pacing the calls, processing
+continued from the same checkpoint. The final call returned `status=complete`,
+`failed=0`. The durable checkpoint now has `phase=complete`, `nextThread=53`,
+`completedThrough=2026-09-23T04:55:06.000Z`, and no retry or error.
+
+`CCC_GMAIL_INTAKE` was returned to false. The 10:11 EDT `cccHealth` run passed all
+ten workbook headers, `America/New_York`, and `send_capability=false`; every
+automatic flag is false and only the previously accepted `MANUAL_WRITES` control
+is true. No Google email, Chat message, or Gmail draft was sent or created. This
+accepts the bounded Gmail pilot for Milestone 3 / Phase 1. It does not accept V1
+for unattended daily use: Studio source/model binding, create-only draft
+acceptance, Shortcut device authentication, populated-data recovery, the
+separate 30-day backfill, and the working-week usefulness evaluation remain open.

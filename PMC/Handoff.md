@@ -197,3 +197,25 @@ last confirmed live check. Preserve the seven-day cursor and all automatic
 features off. Resolve the execution access issue, verify exact deployed source
 and current flags, then use read-only Sheets probes or the reviewed fixed
 diagnostic before considering another reconciliation invocation.
+
+## 2026-09-23 Phase 1 final handoff
+
+The seven-day Gmail pilot is complete and its cursor was never reset. PRs #60,
+#61, and #62 diagnosed the failure as a sanitized Sheets values read, exposed
+only the affected table/read target, and removed redundant all-table preflight
+reads from each bounded invocation. The reviewed source was deployed to the
+approved project with exact code readback; owner-only access was preserved.
+
+The fixed window contains four reference shards, 65 message references, and 53
+unique threads. The final checkpoint is `phase=complete`, `nextThread=53`,
+`completedThrough=2026-09-23T04:55:06.000Z`, with no retry or error. The final
+invocation returned `status=complete` and `failed=0`. Gmail intake is off again.
+The 10:11 EDT health run passed all ten headers, New York time, all automatic
+flags off, and no send capability; `MANUAL_WRITES` is the only enabled control.
+No Google message or Gmail draft was sent or created.
+
+Phase 1 / Milestone 3 can be closed after this evidence merges. Continue with
+the still-open V1 gates tracked in issue #32: Studio source/model acceptance,
+create-only draft authorization and acceptance, Shortcut token/device testing,
+populated-data recovery, the deferred 30-day backfill, and the real working-week
+evaluation. Do not enable automatic processing or any send path for those phases.

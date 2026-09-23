@@ -613,3 +613,48 @@ with Apps Script storage `NOT_FOUND`; the Executions page shows zero-second
 failed Execution API entries. No cursor, Queue, flags, trigger or deployment was
 changed. The last confirmed live flag posture remains the 01:35:56 editor
 health check. Keep intake off and preserve the cursor.
+
+## 2026-09-23 Phase 1 Gmail pilot completion
+
+PR #60 merged at `34ca466a0631c052f78c8f6b895b499a23ebef86`, PR #61
+merged at `e98e043cd9ee0f1d4199f21d3b498e1b5e2f6af6`, and PR #62
+merged at `1517f5579ab408753cda8857e3dc2ddd2580f1ae`. The first two
+changes preserve sanitized outer errors while distinguishing Sheets values and
+metadata reads and naming only the fixed table/read target. The live diagnostic
+identified `Studio_Inbox:headers`, showing the original generic error was a
+Sheets read failure. Source review then found the bounded Gmail entrypoint was
+reading every workbook header before each one-thread transaction even though
+the repositories already validate the tables they use. PR #62 removed only that
+redundant preflight and added a regression assertion that a Gmail run does not
+read `Studio_Inbox`.
+
+Focused integration verification passed before each merge. The final code
+change passed the 19-test Apps Script bundle suite, `pnpm typecheck`,
+`pnpm build`, and required CI. The reviewed bundle was pushed to the approved
+Apps Script project. A fresh source pull matched `dist/Code.js`; the manifest
+remained owner-only with `access=MYSELF` and `executeAs=USER_DEPLOYING`.
+
+The existing version 2 checkpoint was preserved throughout diagnosis and
+resumption. The fixed seven-day window was
+`2026-09-16T04:55:06.000Z` through `2026-09-23T04:55:06.000Z`.
+Its four reference shards contain 65 message references covering 53 unique
+threads. Rapid repeated manual calls later produced controlled
+`sheet_values_read_failure` results at `Audit_Log:rows`; those calls made no
+cursor advance and processing resumed from the same checkpoint after pacing.
+No retry record or blocked state was introduced.
+
+At 10:09:23 EDT, the last bounded call returned
+`{"ok":true,"status":"complete","processed":0,"excluded":1,"failed":0}`.
+Direct Config readback then showed `phase=complete`, `nextThread=53`,
+`completedThrough=2026-09-23T04:55:06.000Z`, `retry=null`, and
+`error_code=null`. `CCC_GMAIL_INTAKE` was saved as false. At 10:11:12 EDT,
+`cccHealth` returned `ok=true`, all ten exact headers valid,
+`America/New_York`, all six automatic flags false, `MANUAL_WRITES=true`, and
+`send_capability=false`.
+
+No Google email, Chat message, Gmail draft, trigger, Shortcut capture, Calendar
+change, or raw-content persistence was performed. The bounded Gmail pilot meets
+the Milestone 3 exit condition and closes Phase 1. The separate 30-day backfill
+remains deferred. This does not complete V1 or authorize unattended daily use;
+the remaining provider, device, recovery, draft, and working-week gates remain
+tracked in issue #32.

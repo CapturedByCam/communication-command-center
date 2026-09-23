@@ -67,6 +67,7 @@ function context(): DraftContext {
       source_thread_id: "thread-1",
       captured_at: now,
       updated_at: now,
+      contact: { email: "sender@example.com" },
       category: "active_project",
       status: "open",
       waiting_on: "me",
@@ -122,9 +123,22 @@ const request = {
   threadId: "thread-1",
   sourceMessageId: "message-1",
   body: "Synthetic response\nwith a second line.",
+  expectedRecipient: "sender@example.com",
+  authorizeWrite: async () => true,
 };
 
 describe("native Gmail create-only draft provider", () => {
+  it("rechecks live authorization after source inspection and before create", async () => {
+    const s = setup();
+    const authorizeWrite = vi.fn(async () => false);
+
+    await expect(
+      s.transport.create({ ...request, authorizeWrite }),
+    ).resolves.toEqual({ outcome: "unsupported" });
+    expect(authorizeWrite).toHaveBeenCalledOnce();
+    expect(s.gateway.calls).not.toContain("create");
+  });
+
   it("performs zero source reads when creation authorization is absent", async () => {
     const s = setup();
     s.authorizeCreate.mockReturnValue(false);
@@ -159,6 +173,17 @@ describe("native Gmail create-only draft provider", () => {
       },
     };
     await expect(s.guard(loadContext)("cc_synthetic001")).resolves.toBeNull();
+  });
+
+  it("requires the curated Queue contact to match the fresh Gmail reply recipient", async () => {
+    const s = setup();
+    const mismatched = context();
+    mismatched.item.contact = { email: "other@example.com" };
+
+    await expect(
+      s.guard(async () => mismatched)("cc_synthetic001"),
+    ).resolves.toBeNull();
+    expect(s.gateway.calls).toEqual(["profile", "message"]);
   });
 
   it("accepts the inclusive 30-day lower bound and rejects the exclusive current-time bound", async () => {

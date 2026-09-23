@@ -1,6 +1,6 @@
 # Current State
 
-Updated 2026-09-23 (14:55 EDT). V1 is not accepted for unattended daily use.
+Updated 2026-09-23 (15:36 EDT). V1 is not accepted for unattended daily use.
 
 ## Verified position
 
@@ -128,8 +128,18 @@ Updated 2026-09-23 (14:55 EDT). V1 is not accepted for unattended daily use.
   the checkpoint and is recorded at the end of this file and in [V1 execution](../docs/implementation/V1_EXECUTION.md).
 - PR #34, #35 and #37 are merged. PR #37 merged at
   `60beecf5f76a77edd99daf99fad3917462cdf4cf` after required CI and review. The create-only draft provider PR #36 merged at
-  `8f97b6b43b260534a9ee10c2f77aa403f08d3d95`; its factory remains uninvoked and is
-  absent from the emitted runtime. It adds no compose scope or live drafting.
+  `8f97b6b43b260534a9ee10c2f77aa403f08d3d95`. The current candidate adds an
+  owner-only selected-Queue-row entrypoint around that provider. It revalidates
+  the exact row, curated contact, fresh Gmail reply recipient, bounded model
+  fields, source identity, workbook binding, kill switch and pending reservation
+  at the provider boundary before creating one unsent draft. A successful create
+  projects `generated` and the draft ID into the unchanged Queue row; projection
+  failure is recovery-required and cannot duplicate the draft. It adds no compose
+  scope and has not been deployed or invoked.
+- The selected-row draft candidate passed independent review remediation, 446 tests
+  in 46 files, formatting, lint, typecheck, three schema checks, the callable Apps
+  Script build, planning validation and diff checks. The final independent review
+  found no remaining merge blocker; the later stale-write message regression also passed.
 - Integrated hardening validation passed 393 tests in 39 files, schema,
   formatting, lint, types, build and planning checks. The tested
   [Shortcut token rotation procedure](../docs/runbooks/SHORTCUT_TOKEN_ROTATION.md)

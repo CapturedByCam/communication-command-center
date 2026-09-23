@@ -454,6 +454,7 @@ describe("deployable Apps Script bundle", () => {
       "cccReopenSelectedQueueRow",
       "cccSnoozeSelectedQueueRow",
       "cccSetSelectedQueueWaiting",
+      "cccCreateDraftForSelectedQueueRow",
       "cccRetrySelectedGmailSnapshotFailure",
       "cccReplaySelectedGmailQueueItem",
     ])
@@ -465,6 +466,25 @@ describe("deployable Apps Script bundle", () => {
     expect(
       JSON.parse(context.doPost({ postData: { contents: "private" } }).value),
     ).toEqual({ status: "rejected", error_code: "unavailable" });
+  });
+
+  it("blocks the selected-row draft entrypoint before prompts, reads, or Gmail calls while disabled", async () => {
+    const runtime = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_DRAFT_CREATION: "false",
+      },
+      selection: { sheetName: "Queue", row: 2 },
+      queueRows: [selectedQueueRow()],
+    });
+
+    await expect(
+      runtime.context.cccCreateDraftForSelectedQueueRow(),
+    ).resolves.toEqual({ outcome: "blocked", code: "DISABLED" });
+    expect(runtime.prompt).not.toHaveBeenCalled();
+    expect(runtime.reads).toEqual([]);
+    expect(runtime.gmailGets).not.toHaveBeenCalled();
+    expect(runtime.batchUpdate).not.toHaveBeenCalled();
   });
 
   it("rate limits unauthenticated Shortcut requests before parsing their body", () => {

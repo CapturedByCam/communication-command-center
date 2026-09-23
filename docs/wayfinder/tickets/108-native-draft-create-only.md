@@ -45,19 +45,27 @@ an opaque receipt, not a conditional Gmail revision; it never enables replacemen
 Malformed or wrong-thread create responses and uncertain API outcomes must never
 be retried automatically and remain recovery-required in the existing ledger.
 
-This slice adds a tested provider and preflight context guard only. It does not
-add compose scope, an invokable draft entrypoint, deployment permissions or an
-eligible interpretation provider. These are explicit remaining binding steps,
-not claims of a working drafting integration.
+The follow-up selected-row runtime adds an owner-only invokable acceptance path.
+It requires the current Queue row, an exact active curated contact, strict bounded
+interpretation JSON, reviewed transient plain text, fresh Gmail source metadata,
+and repeated owner/workbook/flag checks. The curated Queue email must match the
+fresh reply recipient. Immediately before the provider write, it rechecks the
+live context, recipient, kill switch and pending reservation. A successful create
+projects `generated` and the Gmail draft ID into the same unchanged Queue row;
+a projection conflict returns recovery-required, while the durable ledger blocks
+duplicate creation. It has no send, replacement or deletion operation. The manifest
+still lacks compose scope, and the runtime is not deployed or live accepted; those
+remain explicit gates rather than claims of a working integration.
 
 ## Acceptance
 
 Tests cover disabled/unauthorized zero-read paths; exact profile/message/thread
 binding; lower/upper age boundaries and clock advancement; strict headers and
 UTF-8 MIME; duplicate-header and CRLF injection rejection; independent checks
-before reservation and create; controlled provider failures; no body/header log or
-ledger retention; and no update, delete or send calls. Existing lifecycle tests
-must still prove pending/uncertain reservations block duplicate creates.
+before reservation and at the final provider boundary; concurrent Queue-recipient
+change rejection; controlled provider failures; Queue projection after create; no
+body/header log or ledger retention; and no update, delete or send calls. Existing
+lifecycle tests must still prove pending/uncertain reservations block duplicate creates.
 
 ## Sources and rollback
 
@@ -65,6 +73,7 @@ must still prove pending/uncertain reservations block duplicate creates.
 - [Draft creation](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.drafts/create)
 - [Draft replacement](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.drafts/update)
 
-Leave creation and replacement flags false. With the adapter unbound, removing
-its source changes no Google state. Preserve any future app-owned draft and its
-ledger when a write outcome is uncertain; do not delete or recreate it blindly.
+Leave creation and replacement flags false. Without compose authorization and a
+reviewed deployment, the selected-row entrypoint cannot create a live draft.
+Preserve any future app-owned draft and its ledger when a write outcome is
+uncertain; do not delete or recreate it blindly.

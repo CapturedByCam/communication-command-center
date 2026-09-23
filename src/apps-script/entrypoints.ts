@@ -40,6 +40,8 @@ import {
   selectedQueueSnapshot,
   type ManualQueueOperation,
 } from "./queue-controls.js";
+import { createSelectedQueueDraft } from "./draft-create-runtime.js";
+import { readStudioContacts } from "./studio-native.js";
 
 const FLAGS = [
   "GMAIL_INTAKE",
@@ -88,6 +90,10 @@ export function onOpen() {
     .addItem("Reopen selected Queue row", "cccReopenSelectedQueueRow")
     .addItem("Snooze selected Queue row", "cccSnoozeSelectedQueueRow")
     .addItem("Set selected Queue waiting state", "cccSetSelectedQueueWaiting")
+    .addItem(
+      "Create unsent draft for selected Queue row",
+      "cccCreateDraftForSelectedQueueRow",
+    )
     .addSeparator()
     .addItem(
       "Retry selected Gmail snapshot failure",
@@ -490,6 +496,147 @@ export function cccSnoozeSelectedQueueRow() {
 }
 export function cccSetSelectedQueueWaiting() {
   return controlSelectedQueueRow("set_waiting");
+}
+
+export function manualDraftMessage(result: unknown): string {
+  const outcome = result as { outcome?: string; code?: string };
+  return outcome.outcome === "created"
+    ? "Unsent Gmail draft created for the selected Queue row."
+    : outcome.outcome === "existing"
+      ? "The selected Queue row already has this draft."
+      : outcome.outcome === "stale"
+        ? "An unsent Gmail draft was created but became stale; review recovery before retrying."
+        : outcome.outcome === "recovery_required"
+          ? "Draft outcome needs manual recovery review before any retry."
+          : outcome.code === "DISABLED"
+            ? "Gmail draft creation is disabled."
+            : outcome.code === "INELIGIBLE"
+              ? "The selected Queue row is not eligible for routine drafting."
+              : outcome.code === "INVALID_INPUT"
+                ? "The interpretation or draft input is invalid."
+                : "No Gmail draft was created.";
+}
+
+function manualDraftResult(
+  active: GoogleAppsScript.Spreadsheet.Spreadsheet | null,
+  result: unknown,
+): unknown {
+  const outcome = result as { outcome?: string; code?: string };
+  const message = manualDraftMessage(result);
+  try {
+    active?.toast(message, "Communication Command Center", 7);
+  } catch {
+    // Feedback failure must not expose transient input or alter the result.
+  }
+  console.info(
+    JSON.stringify({
+      outcome: outcome.outcome ?? "blocked",
+      code: outcome.code ?? null,
+    }),
+  );
+  return result;
+}
+
+/** Owner-only, selected-row acceptance path. It can create an unsent draft but has no send operation. */
+export async function cccCreateDraftForSelectedQueueRow() {
+  try {
+    assertOwner();
+    const active = SpreadsheetApp.getActiveSpreadsheet();
+    if (!flag("DRAFT_CREATION"))
+      return manualDraftResult(active, {
+        outcome: "blocked",
+        code: "DISABLED",
+      });
+    const id = workbookId();
+    if (!active || active.getId() !== id)
+      return manualDraftResult(active, {
+        outcome: "blocked",
+        code: "INELIGIBLE",
+      });
+    const range = active.getActiveRange();
+    if (
+      !range ||
+      range.getSheet().getName() !== "Queue" ||
+      range.getNumRows() !== 1 ||
+      range.getRow() < 2
+    )
+      return manualDraftResult(active, {
+        outcome: "blocked",
+        code: "INVALID_INPUT",
+      });
+
+    const gateway = googleGateway();
+    const before = gateway.read(id, "Queue");
+    const selectedRow = selectedQueueSnapshot(
+      before.headers,
+      before.rows,
+      range.getRow() - 2,
+    );
+    if (!selectedRow)
+      return manualDraftResult(active, {
+        outcome: "blocked",
+        code: "INVALID_INPUT",
+      });
+
+    const ui = SpreadsheetApp.getUi();
+    const interpretationPrompt = ui.prompt(
+      "Create unsent Gmail draft",
+      "Paste the strict bounded interpretation JSON for this selected row. The JSON is validated and is not persisted.",
+      ui.ButtonSet.OK_CANCEL,
+    );
+    if (interpretationPrompt.getSelectedButton() !== ui.Button.OK)
+      return manualDraftResult(active, {
+        outcome: "blocked",
+        code: "DISABLED",
+      });
+    const interpretationText = interpretationPrompt.getResponseText();
+    if (Utilities.newBlob(interpretationText).getBytes().length > 12_000)
+      return manualDraftResult(active, {
+        outcome: "blocked",
+        code: "INVALID_INPUT",
+      });
+    let interpretation: unknown;
+    try {
+      interpretation = JSON.parse(interpretationText);
+    } catch {
+      return manualDraftResult(active, {
+        outcome: "blocked",
+        code: "INVALID_INPUT",
+      });
+    }
+
+    const draftPrompt = ui.prompt(
+      "Confirm unsent Gmail draft",
+      "Paste the reviewed plain-text draft. Choosing OK creates one unsent Gmail draft if every eligibility and kill-switch check still passes.",
+      ui.ButtonSet.OK_CANCEL,
+    );
+    if (draftPrompt.getSelectedButton() !== ui.Button.OK)
+      return manualDraftResult(active, {
+        outcome: "blocked",
+        code: "DISABLED",
+      });
+
+    return manualDraftResult(
+      active,
+      await createSelectedQueueDraft({
+        gateway,
+        spreadsheetId: id,
+        selectedRowIndex: range.getRow() - 2,
+        selectedRow,
+        interpretation,
+        draftText: draftPrompt.getResponseText(),
+        getCuratedContacts: () => readStudioContacts(gateway, id),
+        now: () => new Date().toISOString(),
+        hash: sha256,
+        newOperationId: () => Utilities.getUuid(),
+      }),
+    );
+  } catch {
+    return manualDraftResult(null, {
+      outcome: "blocked",
+      code: "STATE_UNAVAILABLE",
+    });
+  }
 }
 
 function gmailReplayResult(

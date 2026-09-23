@@ -8,6 +8,8 @@ const target = {
   threadId: "thread-one",
   sourceMessageId: "message-one",
   body: "Thanks for the update. Café.",
+  expectedRecipient: "known@example.com",
+  authorizeWrite: async () => true,
 };
 
 function services(enabled: boolean, email = owner) {

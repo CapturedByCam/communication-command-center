@@ -1,9 +1,9 @@
 # Local Gmail draft lifecycle
 
 This document describes the versioned draft lifecycle and native create-only
-provider boundary. The runtime has no send operation. The provider is implemented
-locally but remains uninvoked in production: compose authorization, eligible
-model context, deployment binding, and live create acceptance are separate gates.
+provider boundary. The runtime has no send operation. An owner-only selected-row
+entrypoint is implemented locally but remains uninvoked in production: compose
+authorization, deployment, and live create acceptance are separate gates.
 Synthetic tests do not establish live Gmail behavior. See [Decision 108](../wayfinder/tickets/108-native-draft-create-only.md) and [V1 execution](../implementation/V1_EXECUTION.md).
 
 ## Entry points and prerequisites
@@ -18,7 +18,9 @@ Synthetic tests do not establish live Gmail behavior. See [Decision 108](../wayf
 The writer requires an approved mailbox, a `DraftRepository`, a draft-only
 transport, a trusted context resolver, separate drafting and external-write
 flags, SHA-256 hashing, UUID generation, and an injected clock. There are no
-default-enabled flags and no production bindings in this slice.
+default-enabled flags. `cccCreateDraftForSelectedQueueRow` supplies the local
+manual acceptance binding: a user selects one Queue row and supplies strict
+bounded interpretation JSON plus reviewed plain text. The input is transient.
 
 The context resolver must independently load the canonical item, authoritative
 Gmail source identifiers/hash, curated-contact knowledge, and current risk
@@ -26,8 +28,9 @@ facts. Never pass a model response directly as trusted context. The schema is
 strict, and deterministic risk rules can only make the model's eligibility more
 restrictive. Manual overrides, review/sent states, uncertain classification,
 non-routine consequences, mismatched sources, and a mailbox outside the
-configured scope block creation. Source and flags are checked again after the
-reservation commits.
+configured scope block creation. The current Queue contact must resolve exactly
+in the active curated registry and match the fresh Gmail reply recipient. Source
+and flags are checked again after the reservation commits.
 
 ## Persistence and contract version
 
@@ -92,9 +95,8 @@ conditional-write contract is accepted and verified.
 
 ## Remaining integration work
 
-- Bind the reviewed create-only provider only after private deployment, compose
-  authorization, eligible model-context resolution, and live create acceptance
-  are separately verified.
+- Add only the approved compose scope, deploy the reviewed selected-row binding,
+  and complete one bounded live create acceptance without sending.
 - Maintain the trusted resolver's current source/risk facts and preserve Queue
   draft IDs, stale status, and human review through reconciliation.
 - Implement reviewed uncertain-write recovery against exact mailbox/thread/provider

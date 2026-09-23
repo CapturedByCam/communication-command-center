@@ -5,6 +5,7 @@ import {
 } from "../adapters/gmail/gmail-client.js";
 import {
   DraftContextSchema,
+  type DraftCreateRequest,
   type DraftTarget,
   type DraftTransport,
 } from "../adapters/gmail/draft-writer.js";
@@ -447,7 +448,10 @@ export function createNativeDraftContextGuard(
         threadId: context.sourceThreadId,
         sourceMessageId: context.sourceMessageId,
       });
-      return source ? context : null;
+      const curatedRecipient = context.item.contact?.email?.toLowerCase();
+      return source && curatedRecipient === source.recipient.toLowerCase()
+        ? context
+        : null;
     } catch {
       return null;
     }
@@ -458,13 +462,15 @@ export function createNativeDraftContextGuard(
 export class NativeGmailCreateOnlyTransport implements DraftTransport {
   constructor(private readonly dependencies: NativeDraftProviderDependencies) {}
 
-  async create(
-    request: DraftTarget & { readonly body: string },
-  ): Promise<unknown> {
+  async create(request: DraftCreateRequest): Promise<unknown> {
     const body = validPlainText(request.body);
     if (!body) return { outcome: "unsupported" };
     const source = await inspectSource(this.dependencies, request);
-    if (!source || !(await allowed(this.dependencies)))
+    if (
+      !source ||
+      !request.expectedRecipient ||
+      source.recipient.toLowerCase() !== request.expectedRecipient.toLowerCase()
+    )
       return { outcome: "unsupported" };
     let raw: string;
     try {
@@ -482,6 +488,15 @@ export class NativeGmailCreateOnlyTransport implements DraftTransport {
       return { outcome: "unsupported" };
     }
     if (raw.length > 100_000) return { outcome: "unsupported" };
+    try {
+      if (
+        !(await allowed(this.dependencies)) ||
+        !(await request.authorizeWrite())
+      )
+        return { outcome: "unsupported" };
+    } catch {
+      return { outcome: "unsupported" };
+    }
     try {
       const response = createResponse.safeParse(
         await this.dependencies.gateway.createDraft("me", {

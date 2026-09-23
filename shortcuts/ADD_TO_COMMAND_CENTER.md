@@ -94,17 +94,29 @@ The server never retains `shared_text` or these model-field values.
 This artifact is an installation specification, not proof that the Shortcut or
 endpoint has been installed, granted access, or activated.
 
-### Signed-file feasibility on this device
+## Installed macOS pilot variant
+
+The accepted local Mac Shortcut uses a compact shell implementation because the
+installed Shortcuts action library did not expose Generate UUID. Its final
+actions are Receive Share Sheet input, Run Shell Script, and Show Result. The
+shell receives Shortcut Input as arguments, runs without administrator access,
+and implements the same trimming, 12,000-character limit, timestamp, UUID,
+fixed review-only payload, HTTPS POST, and status mapping described above. It
+falls back to the clipboard only when no argument exists and never writes the
+shared text to disk. It allocates the UUID before a two-attempt request loop, so
+one automatic transport retry reuses the exact same payload and idempotency key.
+
+This variant is macOS-only. The portable native action inventory above remains
+the source for a future iPhone or iPad installation. Current live evidence is
+recorded in [Shortcut installation](SHORTCUT_INSTALLATION.md).
+
+### Signed-file handling
 
 The official macOS `shortcuts` command can sign an existing Shortcut file with
 `shortcuts sign --input INPUT --output OUTPUT`; it has no command to create or
-export a Shortcut. This device's `shortcuts list` currently returns `Couldn't
-communicate with a helper application.`, so a signed `.shortcut` artifact
-cannot be produced or verified offline from this repository. Do not handcraft
-a workflow file: action identifiers and signing metadata must come from the
-Shortcuts app. The device-only blocker is Shortcuts helper access plus a local
-Shortcut created in the app (or a trusted existing export) to supply as the
-signing input.
+export a Shortcut. Do not handcraft a workflow file. The preserved signed export
+is the earlier setup-blocked template only. The working Shortcut contains a
+private token and must not be exported, committed, or shared.
 
 ## Secret handling
 
@@ -123,6 +135,6 @@ See `shortcuts/example-payload.json`. Its token and text are non-secret syntheti
 - invalid token -> `rejected`, no content logged;
 - invalid enum -> safe fallback or dead letter;
 - oversized text -> Shortcut stops locally;
-- network failure -> user can retry with the same idempotency key during that run;
+- network failure -> one automatic retry uses the same idempotency key during that run;
 - shared pricing/complaint text -> item marked for human judgment;
 - no queue data returned to the phone.

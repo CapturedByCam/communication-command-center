@@ -92,7 +92,7 @@ Script editor if an already-enabled pilot action must stop; it disables all flag
 and removes this app's managed triggers. It does not send a message or clear
 operational records.
 
-The native Shortcut is only a setup-blocked template. See
-[Shortcut installation](../../shortcuts/SHORTCUT_INSTALLATION.md): no export,
-network request, endpoint, token, or capture acceptance exists. Do not use it to
-capture communications.
+The private macOS Shortcut has passed synthetic endpoint and device acceptance.
+See [Shortcut installation](../../shortcuts/SHORTCUT_INSTALLATION.md). Keep
+`CCC_SHORTCUT_INTAKE` off outside deliberate captures, never export or share the
+working token-bearing Shortcut, and repeat acceptance before any mobile install.

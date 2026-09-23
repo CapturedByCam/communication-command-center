@@ -4,6 +4,20 @@ Updated 2026-09-23 (midday EDT). V1 is not accepted for unattended daily use.
 
 ## Verified position
 
+- The Mac Shortcut and authenticated write-only endpoint gate passed at about
+  13:40 EDT on 2026-09-23. A private 256-bit token now exists only in Script
+  Properties and the installed **Add to Communication Command Center** Shortcut.
+  Disabled, invalid-token, fixed-UUID duplicate, oversized-body, and
+  pre-authentication rate-limit checks passed with synthetic input. The installed
+  Shortcut produced two additional synthetic `apple_share_sheet` Queue items;
+  together with the fixed-UUID endpoint row, all three are `open` / `other` /
+  `later` / `unknown`. The Queue has 147 data items after these acceptance rows.
+  The final native action uses Share Sheet input, non-administrator `zsh`, and
+  status-only Show Result. It allocates one UUID before a two-attempt request
+  loop so its single automatic transport retry reuses the same payload and ID.
+  `CCC_SHORTCUT_INTAKE` is false again. No private input,
+  token, endpoint, Google message, or Gmail draft was stored in tracked evidence.
+  This accepts the Mac pilot only; no iPhone/iPad installation is claimed.
 - The current populated Queue now has fresh on-demand briefing acceptance. At
   12:34 EDT on 2026-09-23, a single `cccBuildBriefing` call generated the same
   eight deterministic sections with `deliveryChannel=none`; an immediate replay
@@ -37,12 +51,11 @@ Updated 2026-09-23 (midday EDT). V1 is not accepted for unattended daily use.
   ten requests per minute before parsing, including valid requests, which also
   limits one user's capture rate; Apps Script does not expose a trustworthy
   caller address, so this is not full denial-of-service protection.
-  After Cam's Google Admin allowlist change for `script.googleusercontent.com`,
-  Chrome's site details showed Insecure content set to Allow. Opening the
-  Version 11 URL in Chrome reached the content host and returned only the fixed
-  `method_not_allowed` JSON for GET. This confirms the browser route and safe
-  GET rejection; it does not validate authenticated Shortcut POST or device
-  acceptance. No write request was sent. A live `cccHealth` check passed all
+  Before the September 23 device acceptance, Cam's Google Admin allowlist change
+  for `script.googleusercontent.com` let Chrome reach Version 11 and receive the
+  fixed `method_not_allowed` JSON for GET. That earlier check confirmed only the
+  browser route; the authenticated POST and Mac device evidence at the top of
+  this record supersedes that limited status. A live `cccHealth` check passed all
   ten headers, New York time and no send capability; all six automatic flags
   were false, `MANUAL_WRITES` alone was true, and the unfiltered Triggers page
   showed zero triggers.
@@ -58,7 +71,7 @@ Updated 2026-09-23 (midday EDT). V1 is not accepted for unattended daily use.
   `America/New_York`, `MANUAL_WRITES:true`, the other six flags false, and
   `send_capability:false`. The unfiltered Triggers page showed zero triggers.
   Only previously accepted guarded manual Queue controls are enabled.
-- Cam explicitly approved anonymous access for a separate Shortcut endpoint.
+- Historical pre-acceptance evidence: Cam explicitly approved anonymous access for a separate Shortcut endpoint.
   Historical Version 10 was deployed as `ANYONE_ANONYMOUS` / `USER_DEPLOYING`;
   Version 11 now supersedes it, while the existing owner-only Version 9 remains
   unchanged. Unauthenticated GET returns only the
@@ -66,8 +79,9 @@ Updated 2026-09-23 (midday EDT). V1 is not accepted for unattended daily use.
   ten headers, New York time, no send capability, Gmail/Studio/Shortcut/draft/
   briefing flags false and `MANUAL_WRITES` true. A synthetic unauthenticated
   POST returned the expected `disabled` response after following Google's
-  content redirect, with intake off and no mutation. No token was configured
-  and no Shortcut/device acceptance occurred. The
+  content redirect, with intake off and no mutation. At that time no token was
+  configured and no device acceptance had occurred; the September 23 evidence
+  at the top of this record supersedes that state. The
   endpoint deployment URL is in the ignored private `.local/PILOT_RESOURCES.md`.
 - At 17:53:21 EDT, the Version 8 editor `cccHealth` again returned `ok:true`:
   all ten sheet headers valid, `America/New_York`, `send_capability:false`,
@@ -169,13 +183,11 @@ All Google messages remain unsent; Codex coordination is authorized.
    promise extraction and the guarded writer still need a verified
    interpretation/runtime binding and live acceptance; local integration tests alone do not establish
    that product behavior.
-3. The native Shortcut remains a setup-blocked two-action template. Version 11
-   is a separately deployed anonymous endpoint; Chrome can now reach its host
-   after Cam's Admin allowlist change, and GET returns the fixed rejection.
-   A synthetic POST previously returned `disabled` with intake off. No token is
-   provisioned, no Shortcut endpoint/token configuration or device acceptance
-   exists. Complete device setup and prove the authenticated write-only path
-   without exposing Queue reads.
+3. The native Mac Shortcut and its write-only endpoint are accepted. Keep the
+   token confined to Script Properties and the local Shortcut, leave intake off
+   outside deliberate captures, and rotate the token if the working Shortcut is
+   ever exported or shared. Mobile installation remains unaccepted and separate
+   from the current Mac pilot.
 4. Collect real model observations, usefulness ratings and the required working
    week after accepted bindings. Fifty synthetic policy fixtures are implementation
    evidence, not real model accuracy or pilot completion.

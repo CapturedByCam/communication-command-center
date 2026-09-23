@@ -256,7 +256,7 @@ required checks. The Studio branch passed full local verification: 370 tests in 
 | Gmail | Native read-only metadata worker with a configurable seven-day initial pilot and deferred 30-day backfill | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
 | Drafts | Domain lifecycle, operation ledger and reviewed create-only provider merged in PR #36 | Uninvoked and absent from the emitted runtime; no compose scope or live create acceptance; replacement/deletion unsupported |
 | Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. It remains unrun and unbound; source binding, strict semantic acceptance, resolved-input retention meaning, and model usefulness remain unverified; processing disabled |
-| Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Safe setup-blocked template exists in [Shortcut installation](../../shortcuts/SHORTCUT_INSTALLATION.md); no export, network request, token, or phone Shortcut installation; disabled |
+| Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Private macOS Shortcut and token are installed; authenticated write-only capture, duplicate, invalid-token, size, rate-limit, and kill-switch checks passed with synthetic input; intake is disabled again. iPhone/iPad installation is not accepted |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
 | Calendar | Reviewable candidates only | No Calendar mutation or runtime scope |
 
@@ -283,10 +283,10 @@ source IDs and strict pre-persistence validation.
    terms are unsuitable for private-message processing here. An eligible existing
    billed project or a verified Workspace binding is needed before implementation
    can be completed and tested against that provider.
-3. Complete the private local Shortcut token and device installation using
-   [the action inventory](../../shortcuts/ADD_TO_COMMAND_CENTER.md). The owner-only
-   pilot endpoint must not be mistaken for an anonymous phone-ready endpoint.
-   Live invalid-token, replay, redaction and kill-switch tests precede access changes.
+3. The Mac Shortcut gate is accepted. Keep its token private and intake off
+   outside deliberate captures. A future iPhone/iPad installation remains a
+   separate device-specific acceptance task; it is not required for the current
+   Mac pilot.
 4. Bind outbound-promise extraction and live Commitment persistence; the native
    metadata runtime does not supply interpreted commitments. Then collect actual model/pilot observations and human draft-usefulness ratings,
    including the required working week. [50 synthetic policy cases](../evaluation/SYNTHETIC_V1_REPORT.md)
@@ -716,3 +716,46 @@ valid, `America/New_York`, all six automatic flags false,
 draft, trigger, or other delivery action was created. This closes the current
 briefing generation and same-input duplicate gate without enabling unattended
 delivery.
+
+## 2026-09-23 Mac Shortcut and write-only endpoint acceptance
+
+Cam authorized the private Shortcut credential and the required local Shortcut
+configuration. A new 256-bit token was stored only in Apps Script Script
+Properties and the local **Add to Communication Command Center** Shortcut. The
+anonymous Version 11 URL remains only in the ignored private resource record and
+the local Shortcut. Neither value was added to GitHub, Sheets, screenshots, or
+tracked files.
+
+The live endpoint passed bounded synthetic checks. With intake off, a correct
+token returned `rejected/disabled`. During the controlled enabled window, a
+wrong token returned `rejected/unauthorized`; one fixed UUID returned
+`needs_review`, then `duplicate` with the same item ID; an oversized body
+returned `rejected/payload_too_large`; and eleven concurrent wrong-token
+requests produced seven unauthorized and four rate-limited responses. The flag
+was returned to false after each test window.
+
+The native Mac Shortcut was changed from the setup guard to Receive Share Sheet
+input, a non-administrator `zsh` action, and status-only Show Result. The shell
+performs the documented trim, empty/size checks, ISO timestamp, UUID, fixed
+review-only schema 1.0 payload, authenticated POST, and bounded status mapping.
+It accepts Share Sheet input as arguments to avoid a blocking stdin conversion
+and uses the clipboard only when no argument exists. No request text is written
+to disk.
+
+The final installed shell allocates one UUID before a two-attempt request loop;
+one automatic transport retry therefore reuses the exact same in-memory payload
+and idempotency key. A sanitized copy passed `zsh -n`, and final action readback
+confirmed the UUID-before-loop and same-payload structure.
+
+Two installed-Shortcut synthetic captures were observed in Queue in addition to
+the fixed-UUID endpoint acceptance row. All three `apple_share_sheet` rows are
+`open` / `other` / `later` / `unknown`; the fixed UUID replay produced only one
+item. The Queue schema contains no `shared_text`, `auth_token`, `contact_hint`,
+`app_hint`, or `model_fields` headers. The final native configuration was read
+back with Share Sheet input, argument passing, administrator mode off, Show
+Result attached to Shell Script Result, and `CCC_SHORTCUT_INTAKE=false`.
+
+This closes the Mac device and authenticated write-only Shortcut gate. The
+installed shell implementation is macOS-only; no iPhone/iPad installation is
+claimed. No Google email, Chat message, Gmail draft, trigger, Calendar change,
+or private source-content capture occurred.

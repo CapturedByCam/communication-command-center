@@ -4,6 +4,16 @@ Updated 2026-09-23 (midday EDT). V1 is not yet accepted for daily unattended use
 
 ## Working now
 
+The Mac **Add to Communication Command Center** Shortcut and its authenticated
+write-only endpoint passed synthetic acceptance at about 13:40 EDT. The token is
+stored only in Script Properties and the local Shortcut. Disabled,
+invalid-token, fixed-UUID duplicate, oversized-body, rate-limit, and installed
+device capture checks passed. Queue now has 147 data items, including three
+synthetic `apple_share_sheet` acceptance rows; two came from the installed Mac
+Shortcut. The final action chain is Share Sheet input, non-administrator `zsh`,
+and status-only Show Result. Shortcut intake is false again. Do not export the
+working token-bearing Shortcut. This does not establish an iPhone/iPad install.
+
 The optional 30-day metadata backfill was stopped at Cam's direction after 135
 of 193 unique threads. Its preserved checkpoint is `phase=processing`,
 `nextThread=135`, across 12 shards, with no retry or error. Gmail intake is off.
@@ -23,9 +33,10 @@ with every other sheet unchanged. Briefing delivery is off again, and the 12:36
 health check passed all headers with no send capability and all automatic flags
 false.
 
-The private Queue now has 144 metadata items after the accepted Gmail pilot and
-partial optional backfill. The five-item manual-control evidence below is the
-earlier acceptance baseline. The existing owner-only
+Before Shortcut acceptance, the private Queue had 144 metadata items after the
+accepted Gmail pilot and partial optional backfill. The current total is 147 as
+recorded above. The five-item manual-control evidence below is the earlier
+acceptance baseline. The existing owner-only
 deployment now points to immutable Version 9, with the 1.1
 Commitments workbook migration complete. At 15:07:25 EDT editor health passed
 all ten headers, New York time and no send capability, with only
@@ -99,11 +110,10 @@ unbound. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
   Commitments, draft eligibility and useful output. The create-only native draft
   provider is merged in PR #36 but unbound; compose authorization/live acceptance
   remain open. Replacement and deletion stay unsupported to preserve human edits.
-- Finish the local [Shortcut installation](../shortcuts/SHORTCUT_INSTALLATION.md)
-  using the now-accessible native editor. A safe setup-blocked export is saved
-  locally, but no token, endpoint or live capture was configured. Prove the endpoint's
-  write-only authentication and invalid-token/replay/rate-limit/kill-switch behavior
-  before capture. Owner-only web deployment is not phone acceptance.
+- The local Mac [Shortcut installation](../shortcuts/SHORTCUT_INSTALLATION.md)
+  is accepted. Keep its token private and `CCC_SHORTCUT_INTAKE` off outside
+  deliberate captures. The working Shortcut must not be exported or shared.
+  A future iPhone/iPad install needs its own synthetic acceptance.
 - After bindings pass, collect the required real working-week observations and
   human usefulness ratings. Fifty passing synthetic cases cannot replace them.
 
@@ -117,7 +127,7 @@ and deployment authorization remain valid.
 - [Current State](Current%20State.md): exact deployed hashes and feature posture.
 - [V1 execution](../docs/implementation/V1_EXECUTION.md): chronological live evidence.
 - [Shortcut token rotation](../docs/runbooks/SHORTCUT_TOKEN_ROTATION.md): disable-first
-  procedure and synthetic retired/current-token regression; live device gate remains.
+  procedure and synthetic retired/current-token regression; the Mac device gate is closed.
 - [Runtime operations](../docs/runbooks/RUNTIME_OPERATIONS.md): verified access,
   deployment drift, backup and rollback.
 - [Issue #32](https://github.com/CapturedByCam/communication-command-center/issues/32):
@@ -152,26 +162,25 @@ no trigger or send capability is active.
 
 Remaining blockers are the privacy-compatible real interpretation provider and
 Workspace Studio retention/source-binding decision, compose authorization and draft
-acceptance, local Shortcut endpoint/device setup, then a real working-week
-pilot. See [Current State](Current%20State.md) and
+acceptance, then a real working-week pilot. The Mac Shortcut gate is closed. See
+[Current State](Current%20State.md) and
 [V1 execution](../docs/implementation/V1_EXECUTION.md).
 
 Cam's Google Admin allowlist change for `script.googleusercontent.com` is locally
 applied. Chrome's site details show Insecure content set to Allow; opening the
 active Version 11 endpoint in Chrome now returns only the fixed
 `method_not_allowed` response for a read-only GET. This clears the browser
-reachability check but does not test an authenticated Shortcut POST. No write
-request was sent. The previous synthetic anonymous POST returned `disabled`
-while Shortcut intake was off. No token is provisioned, no Shortcut endpoint or
-device capture has been configured, and device acceptance remains open. Keep
-intake and all other automatic features disabled. See the latest dated evidence
-in [V1 execution](../docs/implementation/V1_EXECUTION.md).
+reachability check. The later September 23 authenticated endpoint and Mac device
+acceptance supersedes the earlier GET-only status. Keep intake and all other
+automatic features disabled outside deliberate bounded use. See the latest dated
+evidence in [V1 execution](../docs/implementation/V1_EXECUTION.md).
 
 ## 2026-09-22 live acceptance continuation
 
-Chrome reachability is now verified after the Admin allowlist change: the
+At the September 22 checkpoint, Chrome reachability was verified after the Admin allowlist change: the
 Version 11 endpoint returns its fixed safe rejection for a browser GET. This
-does not establish authenticated Shortcut acceptance. One bounded manual Gmail
+did not yet establish authenticated Shortcut acceptance; the September 23
+acceptance recorded above supersedes it. One bounded manual Gmail
 reconciliation call processed one item; the durable version 2 checkpoint is
 still in processing at `nextThread=9` across 12 reference shards, with no
 retry or error. A later single call processed one item with zero exclusions or
@@ -182,14 +191,12 @@ are enabled. No Google email, message or draft was sent or created. The fresh
 Admin UI readback is paused at Google's passkey step-up; earlier Chrome site
 details showed Insecure content allowed, and the safe browser GET passed.
 
-Continue the bounded Gmail window only one manual invocation at a time, checking
-the checkpoint before each run and returning `CCC_GMAIL_INTAKE` to false after
-each invocation. Leave the window open if a retry/error appears; do not reset
-its cursor. Before daily-use acceptance, resolve the Studio source-binding and
-retention question, bind and verify draft creation without enabling send, finish
-Shortcut token/device acceptance, and collect the required real working-week
-observations and human usefulness ratings. Synthetic results do not satisfy
-those live gates. Keep automatic features off.
+This paragraph records the September 22 state and is superseded by the later
+Gmail and Shortcut acceptance sections. Before daily-use acceptance, resolve
+the Studio source-binding and retention question, bind and verify draft creation
+without enabling send, and collect the required real working-week observations
+and human usefulness ratings. Synthetic results do not satisfy those live
+gates. Keep automatic features off.
 
 ## 2026-09-23 Gmail pilot handoff
 
@@ -237,8 +244,8 @@ No Google message or Gmail draft was sent or created.
 
 Phase 1 / Milestone 3 is closed. The later optional 30-day backfill is preserved
 at `nextThread=135` and intentionally stopped. Populated-data recovery is
-verified. The remaining issue #32 gates are Studio source/model acceptance,
-create-only draft authorization and acceptance, Shortcut token/device testing,
-and the real working-week evaluation. The current briefing and its same-input
-duplicate behavior are accepted. Do not enable automatic processing or any send
-path for those phases.
+verified. The Mac Shortcut token/device gate is now also closed. The remaining
+issue #32 gates are Studio source/model acceptance, create-only draft
+authorization and acceptance, and the real working-week evaluation. The current
+briefing and its same-input duplicate behavior are accepted. Do not enable
+automatic processing or any send path for those phases.

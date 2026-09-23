@@ -1157,19 +1157,23 @@ describe("deployable Apps Script bundle", () => {
     });
     expect(JSON.stringify(result)).not.toContain("PRIVATE");
   });
-  it("copies an explicit least-privilege manifest with no send-capable Gmail scope", () => {
+  it("allows only the approved draft scope and exposes no Gmail send operation", () => {
     const manifest = JSON.parse(readFileSync("dist/appsscript.json", "utf8"));
     expect(manifest.timeZone).toBe("America/New_York");
     expect(manifest.oauthScopes).toContain(
       "https://www.googleapis.com/auth/gmail.readonly",
     );
+    expect(manifest.oauthScopes).toContain(
+      "https://www.googleapis.com/auth/gmail.compose",
+    );
     expect(manifest.oauthScopes).not.toContain(
       "https://www.googleapis.com/auth/gmail.send",
     );
     expect(manifest.oauthScopes).not.toContain(
-      "https://www.googleapis.com/auth/gmail.compose",
+      "https://www.googleapis.com/auth/gmail.modify",
     );
-    expect(code).not.toMatch(/GmailApp|MailApp|\.Messages\.send\(/);
+    expect(manifest.oauthScopes).not.toContain("https://mail.google.com/");
+    expect(code).not.toMatch(/GmailApp|MailApp|\.(?:Drafts|Messages)\.send\(/);
   });
 });
 

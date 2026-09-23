@@ -25,9 +25,9 @@ describe("Studio custom-step deployment contract", () => {
     expect(elements[0].workflowTrigger).toBeUndefined();
   });
 
-  it("preserves the private deployment and exact reviewed runtime scopes", () => {
+  it("exposes only the approved fixed-rejection public endpoint and exact runtime scopes", () => {
     expect(manifest.webapp).toEqual({
-      access: "MYSELF",
+      access: "ANYONE_ANONYMOUS",
       executeAs: "USER_DEPLOYING",
     });
     expect(manifest.oauthScopes).toEqual([

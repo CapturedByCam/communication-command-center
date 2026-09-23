@@ -487,3 +487,39 @@ second sweep was performed. Intake was restored to false immediately. The
 capability with all six automatic flags false and `MANUAL_WRITES` alone true.
 The unfiltered Triggers page showed zero. No Google message or draft was sent
 or created; the 30-day window remains incomplete.
+
+## 2026-09-22 approved public Shortcut endpoint
+
+Cam explicitly approved a separate endpoint with anonymous access after the
+specific access question was surfaced. The reviewed change leaves Version 9's
+owner-only deployment intact and adds Version 10 as a separate
+`ANYONE_ANONYMOUS` / `USER_DEPLOYING` deployment. Its GET handler returns only
+`{"status":"rejected","error_code":"method_not_allowed"}`. Shortcut intake,
+Gmail intake, Studio processing, draft creation/replacement, and briefing
+delivery remain false; manual Queue controls remain the sole enabled flag.
+No token was created or entered, no Shortcut was configured, and no source
+content was submitted.
+
+The minimum manifest and bundle checks passed (18 tests across two files),
+`pnpm build` passed, and the approved bundle was pushed. `clasp deployments`
+confirmed the separate Version 10 deployment while Version 9 remains listed as
+owner-only. An unauthenticated GET followed to the fixed rejection JSON. A
+synthetic unauthenticated POST with all intake disabled returned the expected
+`{"status":"rejected","error_code":"disabled"}` after following Google's
+one-time content redirect; no Queue or audit mutation occurred. At 20:39:47 EDT editor health
+passed all ten headers, New York time, no send capability, and the expected
+flags. The trigger count was not rechecked in this step. No Google email,
+message, or Gmail draft was sent or created.
+
+## 2026-09-23 anonymous Shortcut pre-authentication guard
+
+Independent review found that Version 10 wired only the authenticated request
+quota. The Apps Script wrapper now adds a lock-protected global cap of 10
+requests per minute before parsing an anonymous POST, separate from the
+30-per-minute authenticated quota. The global bucket also counts valid requests,
+so it sets the effective single-user capture ceiling at 10 per minute. Apps
+Script does not expose a trustworthy caller address to this handler, so the
+global cap limits request cost but does not eliminate denial-of-service risk.
+The focused deployed-bundle regression passed (17 tests); the change is not yet
+merged or deployed. Shortcut intake remains disabled, and no Google message or
+draft was sent or created.

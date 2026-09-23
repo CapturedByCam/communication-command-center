@@ -16,6 +16,16 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
   `America/New_York`, `MANUAL_WRITES:true`, the other six flags false, and
   `send_capability:false`. The unfiltered Triggers page showed zero triggers.
   Only previously accepted guarded manual Queue controls are enabled.
+- Cam explicitly approved anonymous access for a separate Shortcut endpoint.
+  Version 10 is deployed as `ANYONE_ANONYMOUS` / `USER_DEPLOYING`; the existing
+  owner-only Version 9 remains unchanged. Unauthenticated GET returns only the
+  fixed method-not-allowed rejection. At 20:39:47 EDT, editor health passed all
+  ten headers, New York time, no send capability, Gmail/Studio/Shortcut/draft/
+  briefing flags false and `MANUAL_WRITES` true. A synthetic unauthenticated
+  POST returned the expected `disabled` response after following Google's
+  content redirect, with intake off and no mutation. No token was configured
+  and no Shortcut/device acceptance occurred. The
+  endpoint deployment URL is in the ignored private `.local/PILOT_RESOURCES.md`.
 - At 17:53:21 EDT, the Version 8 editor `cccHealth` again returned `ok:true`:
   all ten sheet headers valid, `America/New_York`, `send_capability:false`,
   and all automatic processing, intake, draft, replacement, and delivery flags
@@ -113,10 +123,11 @@ All Google messages remain unsent; Codex coordination is authorized.
    promise extraction and the guarded writer still need a verified
    interpretation/runtime binding and live acceptance; local integration tests alone do not establish
    that product behavior.
-3. The native Shortcut is a setup-blocked two-action template, with a verified local
-   setup-only export and no endpoint/token configuration, network request or device acceptance. Complete
-   device setup and prove the write-only authentication path without exposing Queue
-   reads. Owner-only web access is not proof of phone compatibility.
+3. The native Shortcut remains a setup-blocked two-action template. Version 10
+   now has a separately deployed anonymous endpoint whose GET is fixed rejection;
+   its synthetic POST returns `disabled` with intake off. No token is provisioned,
+   no Shortcut endpoint/token configuration or device acceptance exists. Complete
+   device setup and prove the authenticated write-only path without exposing Queue reads.
 4. Collect real model observations, usefulness ratings and the required working
    week after accepted bindings. Fifty synthetic policy fixtures are implementation
    evidence, not real model accuracy or pilot completion.

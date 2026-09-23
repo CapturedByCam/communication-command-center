@@ -23,7 +23,7 @@
     "https://www.googleapis.com/auth/script.scriptapp"
   ],
   "webapp": {
-    "access": "MYSELF",
+    "access": "ANYONE_ANONYMOUS",
     "executeAs": "USER_DEPLOYING"
   },
   "addOns": {

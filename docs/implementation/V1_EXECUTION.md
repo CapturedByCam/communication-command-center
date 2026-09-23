@@ -590,5 +590,26 @@ so this run is incomplete. The cursor was not reset after the failure.
 and zero mutations. `cccHealth` then passed all ten workbook headers,
 `America/New_York` and `send_capability=false`; every automatic flag was false
 and only `MANUAL_WRITES` was true. No Google email, message, or draft was sent
-or created. Do not resume the reconciliation until the failed per-message API
-call is understood; do not start the 30-day backfill.
+or created. Do not resume reconciliation until the Google API failure is
+understood; do not start the 30-day backfill.
+
+## 2026-09-23 07:00 EDT read-only failure triage
+
+The 01:33:19 editor execution's Cloud log contains only the controlled
+`failure_stage=reconciliation` and `failure_kind=google_api_failure` result.
+Source tracing narrows that label: Gmail profile, list and message exceptions
+are converted to `GmailReadError` inside `GmailMetadataReader`, and Sheets batch
+exceptions become `sheet_commit_uncertain`. A direct `GoogleJsonResponseException`
+reaching the outer handler can arise from a Sheets values read or spreadsheet
+metadata lookup. Thus the earlier per-message Gmail API attribution was
+unsupported; the Sheets read path is the stronger diagnosis. The precise
+provider response and whether the failure was transient remain unknown.
+
+A separate source branch adds fixed, content-free labels for Sheets values and
+metadata read failures, with bundle tests covering both paths and redaction.
+It has not been synced to Apps Script or used to resume reconciliation. Two
+07:02 read-only `clasp run cccHealth` attempts failed before script execution
+with Apps Script storage `NOT_FOUND`; the Executions page shows zero-second
+failed Execution API entries. No cursor, Queue, flags, trigger or deployment was
+changed. The last confirmed live flag posture remains the 01:35:56 editor
+health check. Keep intake off and preserve the cursor.

@@ -231,5 +231,15 @@ message's metadata within the seven-day bound, with no raw content stored and
 zero mutations. A subsequent health check passed all ten workbook headers,
 `America/New_York`, and `send_capability=false`; all automatic flags were off
 and only `MANUAL_WRITES` was on. No Google email, message, or draft was sent or
-created. Diagnose the failed per-message API call before resuming; keep the
-seven-day pilot bound and do not start the 30-day backfill yet.
+created. Diagnose the Google API failure before resuming; keep the seven-day
+pilot bound and do not start the 30-day backfill yet.
+
+At 07:00 EDT read-only triage found that the Apps Script execution log retains
+only the sanitized failure result. Source tracing shows Gmail API errors are
+converted to controlled read errors and Sheets batch errors to
+`sheet_commit_uncertain`; the escaped Google API exception is most consistent
+with a Sheets values or spreadsheet metadata read. The exact provider response
+remains unknown. A separate diagnostic source branch distinguishes those two
+paths but is not deployed. Two read-only CLI health attempts failed before
+script execution with Apps Script storage `NOT_FOUND`; they changed no state.
+The 01:35 editor health check remains the latest confirmed live posture.

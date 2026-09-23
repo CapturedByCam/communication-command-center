@@ -658,3 +658,38 @@ the Milestone 3 exit condition and closes Phase 1. The separate 30-day backfill
 remains deferred. This does not complete V1 or authorize unattended daily use;
 the remaining provider, device, recovery, draft, and working-week gates remain
 tracked in issue #32.
+
+## 2026-09-23 optional 30-day backfill stop
+
+PRs #65, #66, and #67 added the bounded batch runner, six-second inter-step
+pacing, and transient Sheets read retries. Their focused tests and required CI
+passed, and the reviewed source was deployed to the approved Apps Script
+project. The fixed 30-day window enumerated 12 immutable reference shards with
+193 unique threads. Manually invoked bounded batches advanced the version 2
+checkpoint to `nextThread=135`.
+
+The last invocation recovered from one transient spreadsheet metadata-read
+failure and returned
+`{"ok":true,"status":"more","steps":8,"processed":6,"excluded":2,"failed":0}`.
+Cam then accepted stopping the optional backfill there. Config readback showed
+`phase=processing`, `nextThread=135`, 12 shards,
+`completedThrough=2026-09-23T04:55:06.000Z`, `retry=null`, and
+`error_code=null`. `CCC_GMAIL_INTAKE` was saved as false. No Google message,
+Gmail draft, or trigger was created. The checkpoint is retained only for an
+explicit future resume request.
+
+## 2026-09-23 populated-data recovery verification
+
+A new private workbook copy was created from the populated active workbook
+without copying collaborators or comments. Direct settings and sharing readback
+showed Restricted access with Cam as sole owner, United States locale, and
+Eastern time. Fresh XLSX exports of the active and recovery workbooks contained
+the same 11 sheets. Normalized cell/formula data, merged ranges, freeze panes,
+and dimensions produced identical per-sheet fingerprints.
+
+The recovery export includes 145 Queue rows, 171 Audit_Log rows, the current
+Briefing projection and Config checkpoint, and the 17-column Commitments table.
+The active workbook was not overwritten or rebound. The private resource ID and
+evidence location are recorded only in ignored `.local/PILOT_RESOURCES.md`.
+This closes the populated-data copy-and-verify gate; the older-runtime recovery
+path remains an incident-only procedure that requires coordinated binding.

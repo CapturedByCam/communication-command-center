@@ -1,8 +1,24 @@
 # Current State
 
-Updated 2026-09-22 (evening EDT). V1 is not accepted for unattended daily use.
+Updated 2026-09-23 (midday EDT). V1 is not accepted for unattended daily use.
 
 ## Verified position
+
+- A new private populated-data recovery workbook was created without copying
+  collaborators or comments. Direct UI readback showed Restricted access with
+  Cam as the sole owner, United States locale, and Eastern time. Fresh XLSX
+  exports of the active and recovery workbooks contained the same 11 sheets;
+  normalized cell/formula data, merged ranges, freeze panes, and dimensions
+  matched on every sheet. The active workbook was not overwritten or rebound.
+  The private recovery resource ID is recorded only in ignored
+  `.local/PILOT_RESOURCES.md`.
+- Cam accepted stopping the optional 30-day metadata backfill at 135 of 193
+  unique threads. Its version 2 checkpoint remains intentionally resumable at
+  `phase=processing`, `nextThread=135`, across 12 shards, with
+  `completedThrough=2026-09-23T04:55:06.000Z` and no retry or error. The last
+  bounded batch recovered from one transient spreadsheet metadata-read failure
+  and returned `status=more`, eight steps, six processed, two excluded, and zero
+  failed. `CCC_GMAIL_INTAKE` is false. Do not resume unless Cam asks.
 
 - The separate Shortcut deployment is now active as Version 11 with the reviewed
   pre-authentication rate guard; PR #55 merged at `7229003` after independent
@@ -270,5 +286,27 @@ automatic flag is false and only the previously accepted `MANUAL_WRITES` control
 is true. No Google email, Chat message, or Gmail draft was sent or created. This
 accepts the bounded Gmail pilot for Milestone 3 / Phase 1. It does not accept V1
 for unattended daily use: Studio source/model binding, create-only draft
-acceptance, Shortcut device authentication, populated-data recovery, the
-separate 30-day backfill, and the working-week usefulness evaluation remain open.
+acceptance, Shortcut device authentication, and the working-week usefulness
+evaluation remain open. The optional 30-day backfill is intentionally partial at
+`nextThread=135` by owner decision; populated-data recovery is verified.
+
+## 2026-09-23 optional backfill stop and populated recovery
+
+PRs #65 through #67 added the bounded batch runner, six-second pacing, and
+transient Sheets read retries used for the optional 30-day metadata backfill.
+After 12 reference shards identified 193 unique threads, manual bounded batches
+advanced the durable cursor to `nextThread=135`. The last batch returned
+`status=more`, with eight steps, six processed, two excluded, and zero failed
+after recovering one transient spreadsheet metadata-read failure. Cam then
+accepted stopping there. The checkpoint remains in processing without a retry
+or error, and Gmail intake is false. No message, draft, or trigger was created.
+
+The populated-data recovery gate is verified independently. A new private copy
+was made without collaborators or comments; its sharing remained Restricted to
+Cam as sole owner and its locale/time zone remained United States/Eastern. Fresh
+exports of the active and recovery workbooks had the same 11 sheet names and
+identical normalized fingerprints for cell/formula values, merged ranges,
+freeze panes, and dimensions. The recovery copy includes 145 Queue rows, 171
+Audit_Log rows, the current Briefing projection and Config checkpoint, and the
+17-column Commitments table. The active workbook was untouched. This closes the
+populated-data copy-and-verify gate without changing any runtime binding.

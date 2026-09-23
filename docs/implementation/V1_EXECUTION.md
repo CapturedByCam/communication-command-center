@@ -559,3 +559,17 @@ unfiltered Apps Script Triggers page showed zero triggers. A fresh clone of the
 active project matched the repository bundle and manifest after normalizing
 build-root comments; no deployment or configuration change was made during
 that readback. No Google email, message or Gmail draft was sent or created.
+
+Later that evening, one additional bounded `cccReconcileGmail` invocation
+returned `status=more`, with one item processed and zero excluded or failed.
+The version 2 checkpoint advanced from `nextThread=8` to `nextThread=9` across
+12 reference shards, still in `processing` with no retry or error. Intake was
+restored to false immediately afterward. The following `cccHealth` run again
+passed all ten workbook headers, New York time, and no-send capability; every
+automatic feature flag was false and only guarded manual Queue controls were
+enabled. No message or draft was sent or created.
+
+A fresh Google Admin page readback is waiting at the account's required passkey
+step-up. The earlier Chrome site-details read showed Insecure content set to
+Allow, and the Version 11 browser GET reached the content host and returned its
+fixed safe rejection. No Shortcut write or device capture has been tested.

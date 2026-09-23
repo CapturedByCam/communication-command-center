@@ -70,10 +70,11 @@ Subsequent accepted decisions supersede the proposed path in this historical sna
 
 ## Remaining gates and next actions
 
-1. Keep `CCC_STUDIO_PROCESSING` disabled while the private custom step is unavailable in the account UI and its starter-variable binding and model acceptance remain unproven.
-2. When the account exposes the custom step, verify one actual bounded Gmail resource ID stages exactly one metadata-only record atomically. The Studio step must never create a Gmail draft.
-3. Complete the separately gated native create-only draft acceptance only after a trusted interpreted context, compose authorization, runtime binding, and provider evidence exist. It must not replace or delete drafts.
-4. Milestone 4 completes after the Studio custom-step acceptance proves its bounded staging behavior. Native draft behavior is a separate provider gate.
+1. Keep `CCC_STUDIO_PROCESSING` disabled while actual starter-variable binding, model acceptance, and exact resolved-input/source retention remain unproven.
+2. Literal-source acceptance is complete: one eligible Gmail resource ID staged exactly one metadata-only record, identical replay and changed-immutable-input replay made no further write, and the final disabled run left the workbook unchanged.
+3. Bind the actual Gmail starter message-ID variable and separately bind the bounded interpretation string. Prove useful real-message interpretation only after retention is accepted.
+4. Complete the separately gated native create-only draft acceptance only after a trusted interpreted context, compose authorization, runtime binding, and provider evidence exist. It must not replace or delete drafts.
+5. Milestone 4 completes after starter binding, model usefulness, retention, and the remaining live flag-transition path pass. Native draft behavior is a separate provider gate.
 
 ## Implementation rulings
 

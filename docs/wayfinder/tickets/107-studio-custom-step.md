@@ -2,9 +2,10 @@
 
 ## Status
 
-Accepted implementation decision. The private test add-on is installed and the
-custom step is visible and configurable. Actual starter-variable binding and
-real-model acceptance remain gated.
+Accepted implementation decision. The private test add-on is installed, the
+custom step is visible and configurable, and literal-source metadata staging is
+accepted. Actual starter-variable binding, real-model acceptance, and exact
+resolved-input/source retention remain gated.
 
 ## Decision
 
@@ -18,9 +19,10 @@ schema failures are rejected without truncation or persistence.
 
 One bounded action invocation validates owner, workbook, approved mailbox,
 requested/fetched message identity, and a non-future 30-day metadata window. It
-requests Gmail metadata only, selecting `From` and `Subject`; it never reads or
-persists a body, snippet, attachment, thread history, raw model JSON, or private
-prompt. It uses the unchanged staging `1.0` contract.
+requests Gmail metadata only, selecting `From` and `Subject`; it does not fetch
+or persist a body, snippet, attachment, thread history, or private prompt. It
+parses the bounded interpretation JSON but does not persist the raw JSON. It
+uses the unchanged staging `1.0` contract.
 
 The existing `TableGateway` lock and atomic commit are the persistence boundary.
 Inside that transaction, the handler rechecks the owner, workbook binding, and
@@ -64,23 +66,33 @@ authenticated Apps Script editor was updated with the exact field removal and
 reported Saved to Drive. Reopening the Studio step then rendered both bounded
 input fields with no permission error. No run of the new step, source binding,
 Gmail action, or send occurred; CCC_STUDIO_PROCESSING remains false. The
-existing owner-only deployment was later updated to Version 8 for the separately
-reviewed Shortcut authorization/kill-switch fix; this Studio flow remains
-unrun and unbound.
+existing owner-only deployment was later updated for separately reviewed
+runtime work. On 2026-09-23 the private step passed a disabled synthetic run,
+one literal eligible Gmail-resource staging run, an identical replay, and a
+changed-immutable-input replay. The first live run appended exactly one
+metadata-only `Studio_Inbox` row; the two replays changed neither that row nor
+`Audit_Log`. The flag was restored to false, the live resource ID was removed
+from the saved flow, and a final disabled run made no further change. The custom
+step received and parsed the bounded interpretation JSON but did not persist the
+raw JSON. No Gmail body, snippet, attachment, thread history, draft, or send was
+used. Studio-side input and output retention remains unresolved.
 
 The current app-owned flow is Start manually → Ask Gemini, with Web
-search and Workspace sources off, no skills, Text output, and no Google
-mutation step. The private custom step is now present but unconfigured and unrun.
+search and Workspace sources off, no skills, Text output, and the private
+metadata-only custom step. Its saved Gmail-ID input is synthetic and processing
+is disabled outside deliberate checks.
 One synthetic-only manual run succeeded at 12:26:22 EDT.
 `StudioInterpretationSchema` accepted all 12 required fields with no extras; a pure
 `prepareStudioStaging` call with wholly synthetic metadata and `knownContact:false`
 returned `review_only` without persistence or provider calls. The synthetic details are
 in [Studio synthetic probe](../../evaluation/STUDIO_SYNTHETIC_PROBE.md). The proposal's
 `active_project`, `routine`, confidence `1.0`, and synthetic `No rush` deadline text lack
-project evidence, so semantic review and model usefulness acceptance remain open. No
-Gmail starter, message ID, or private content was bound. Activity says Data available for
+project evidence, so semantic review and model usefulness acceptance remain open. In
+that earlier synthetic run, no Gmail starter, message ID, or private content was bound.
+Activity says Data available for
 40 days and exposes stored synthetic output; exact resolved-input/source retention remains
-unknown.
+unknown. The literal-source run above did not expose or persist message content,
+but it does not establish starter binding or model usefulness.
 
 ## Sources
 

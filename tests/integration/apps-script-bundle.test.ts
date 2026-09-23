@@ -1240,4 +1240,71 @@ describe("native Studio callback", () => {
     expect(r.logs).not.toHaveBeenCalled();
     expect(r.lock.releaseLock).toHaveBeenCalledTimes(1);
   });
+
+  it("returns duplicate and conflict without a second native write", () => {
+    const r = createRuntime({
+      properties: {
+        CCC_STUDIO_PROCESSING: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      gmail: {
+        metadata: {
+          id: "studio-message-replay",
+          threadId: "studio-thread-replay",
+          internalDate: String(Date.now() - 86_400_000),
+          labelIds: ["INBOX"],
+          payload: {
+            headers: [
+              { name: "From", value: "Known Person <known@example.com>" },
+              { name: "Subject", value: "Replay request" },
+            ],
+          },
+        },
+      },
+      applyBatchWrites: true,
+    });
+    const model = {
+      requires_response: true,
+      direct_response_requested: true,
+      draft_risk: "routine",
+      category_hint: "client_lead",
+      project_hint: null,
+      deadline_text: null,
+      next_action_hint: "Review availability.",
+      summary_hint: "A short request.",
+      confidence_hint: 0.8,
+      message_kind: null,
+      consequences: [],
+      model_uncertain: false,
+    };
+    const invoke = (value: typeof model) =>
+      r.context.cccExecuteStudioStep({
+        workflow: {
+          actionInvocation: {
+            inputs: {
+              gmail_message_id: {
+                stringValues: ["studio-message-replay"],
+              },
+              model_json: { stringValues: [JSON.stringify(value)] },
+            },
+          },
+        },
+      });
+
+    expect(invoke(model)).toEqual({
+      status: ["staged"],
+      ingest_id: ["studio:gmail:studio-message-replay"],
+    });
+    expect(invoke(model)).toEqual({
+      status: ["duplicate"],
+      ingest_id: ["studio:gmail:studio-message-replay"],
+    });
+    expect(invoke({ ...model, category_hint: "aviation" })).toEqual({
+      status: ["conflict"],
+      ingest_id: ["studio:gmail:studio-message-replay"],
+    });
+    expect(r.batchUpdate).toHaveBeenCalledTimes(1);
+    expect(r.tables.get("Studio_Inbox")!.rows).toHaveLength(1);
+    expect(r.lock.releaseLock).toHaveBeenCalledTimes(3);
+  });
 });

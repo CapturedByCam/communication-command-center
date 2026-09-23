@@ -1,6 +1,6 @@
 # Morning handoff — Communication Command Center V1
 
-Updated 2026-09-23 (midday EDT). V1 is not yet accepted for daily unattended use.
+Updated 2026-09-23 (14:32 EDT). V1 is not yet accepted for daily unattended use.
 
 ## Working now
 
@@ -94,17 +94,16 @@ unbound. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
 
 ## Remaining work and user action
 
-- Workspace Studio custom-step availability is resolved. On 2026-09-22 Cam
-  approved turning ON Custom steps access for the CapturedByCam root OU while
-  retaining unpublished test steps. The private CCC step appeared in the picker.
-  PR #45 removed an unused locale permission option; the same manifest field
-  was removed in the authenticated script editor and saved. The configuration
-  card now opens with Gmail ID and bounded JSON fields. The manual synthetic
-  flow includes that unconfigured Step 3 but has not run it. CCC_STUDIO_PROCESSING
-  is false. Real source binding, model usefulness, and exact resolved-input/source
-  retention remain open; do not feed real private content until that gate is
-  resolved. The existing owner-only web deployment is now Version 9; the
-  Studio step remains unrun.
+- Workspace Studio custom-step availability and literal-source staging are
+  resolved. The private CCC step passed a disabled run, one eligible literal
+  Gmail-resource staging run, an identical replay, and a changed-immutable-input
+  replay. Exactly one metadata-only `Studio_Inbox` row exists from these checks;
+  duplicate and conflict runs added nothing, and `Audit_Log` stayed unchanged.
+  `CCC_STUDIO_PROCESSING` is false again, the live resource ID was removed from
+  the saved flow, and the final disabled run made no further write. Actual Gmail
+  starter-variable binding, useful real-message interpretation, the
+  mid-invocation flag-off path, and exact resolved-input/source retention remain
+  open. Do not feed real message content into Studio until retention is accepted.
 - Bind a privacy-compatible interpretation provider within an existing permitted
   entitlement. Prove real source IDs, strict validation, outbound-promise
   Commitments, draft eligibility and useful output. The create-only native draft
@@ -160,8 +159,8 @@ manifest, and the existing owner-only deployment points to it. Only previously
 accepted manual Queue controls remain enabled. Final editor health passed, and
 no trigger or send capability is active.
 
-Remaining blockers are the privacy-compatible real interpretation provider and
-Workspace Studio retention/source-binding decision, compose authorization and draft
+Remaining blockers are Workspace Studio starter binding, useful real-message
+interpretation and retention, compose authorization and draft
 acceptance, then a real working-week pilot. The Mac Shortcut gate is closed. See
 [Current State](Current%20State.md) and
 [V1 execution](../docs/implementation/V1_EXECUTION.md).
@@ -245,7 +244,7 @@ No Google message or Gmail draft was sent or created.
 Phase 1 / Milestone 3 is closed. The later optional 30-day backfill is preserved
 at `nextThread=135` and intentionally stopped. Populated-data recovery is
 verified. The Mac Shortcut token/device gate is now also closed. The remaining
-issue #32 gates are Studio source/model acceptance, create-only draft
+issue #32 gates are Studio starter/model acceptance, create-only draft
 authorization and acceptance, and the real working-week evaluation. The current
 briefing and its same-input duplicate behavior are accepted. Do not enable
 automatic processing or any send path for those phases.

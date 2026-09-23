@@ -187,6 +187,7 @@ function createRuntime(
     readonly promptText?: string;
     readonly failBatch?: boolean;
     readonly failValuesRead?: boolean;
+    readonly failValuesReadTimes?: number;
     readonly failMetadataRead?: boolean;
     readonly applyBatchWrites?: boolean;
     readonly onPrompt?: (
@@ -196,6 +197,7 @@ function createRuntime(
   } = {},
 ) {
   const properties = new Map(Object.entries(options.properties ?? {}));
+  let remainingValuesReadFailures = options.failValuesReadTimes ?? 0;
   const batchUpdate = vi.fn();
   if (options.failBatch)
     batchUpdate.mockImplementation(() => {
@@ -373,7 +375,10 @@ function createRuntime(
         batchUpdate,
         Values: {
           get: (_id: string, range: string) => {
-            if (options.failValuesRead)
+            const failThisRead =
+              options.failValuesRead || remainingValuesReadFailures > 0;
+            if (remainingValuesReadFailures > 0) remainingValuesReadFailures--;
+            if (failThisRead)
               throw new Error("private provider failure detail");
             reads.push(range);
             const match = /'([A-Za-z_]+)'!A([12])/u.exec(range);
@@ -862,6 +867,63 @@ describe("deployable Apps Script bundle", () => {
     expect(runtime.batchUpdate).toHaveBeenCalledTimes(2);
     expect(runtime.sleep).toHaveBeenCalledOnce();
     expect(runtime.sleep).toHaveBeenCalledWith(6000);
+  });
+
+  it("retries transient Sheets reads before advancing the durable Gmail step", async () => {
+    const runtime = createRuntime({
+      applyBatchWrites: true,
+      failValuesReadTimes: 1,
+      properties: {
+        CCC_GMAIL_INTAKE: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      gmail: {
+        messages: [{ id: "synthetic-message", threadId: "synthetic-thread" }],
+        metadata: {
+          id: "synthetic-message",
+          threadId: "synthetic-thread",
+          internalDate: String(Date.now() - 60_000),
+          labelIds: ["INBOX"],
+          payload: {
+            headers: [
+              { name: "From", value: "SANITIZED-SENDER@example.com" },
+              { name: "To", value: "contact@elev8mediaky.com" },
+            ],
+          },
+        },
+      },
+    });
+
+    await expect(runtime.context.cccReconcileGmailBatch()).resolves.toEqual({
+      ok: true,
+      status: "complete",
+      steps: 2,
+      processed: 1,
+      excluded: 0,
+      failed: 0,
+    });
+    expect(runtime.batchUpdate).toHaveBeenCalledTimes(2);
+    expect(runtime.sleep.mock.calls).toEqual([[30_000], [6000]]);
+  });
+
+  it("returns a persistent Sheets read failure after bounded backoff", async () => {
+    const runtime = createRuntime({
+      properties: {
+        CCC_GMAIL_INTAKE: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      failValuesRead: true,
+    });
+
+    await expect(runtime.context.cccReconcileGmailBatch()).resolves.toEqual({
+      ok: false,
+      error_code: "RECONCILIATION_FAILED",
+      failure_stage: "reconciliation",
+      failure_kind: "sheet_values_read_failure",
+      failure_target: "Config:headers",
+    });
+    expect(runtime.sleep.mock.calls).toEqual([[30_000], [60_000]]);
+    expect(runtime.batchUpdate).not.toHaveBeenCalled();
   });
 
   it("returns only a controlled diagnostic when a Sheets batch outcome is uncertain", async () => {

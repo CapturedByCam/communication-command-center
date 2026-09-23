@@ -723,8 +723,9 @@ export function cccReconcileGmail() {
 }
 /**
  * Advances at most eight durable Gmail steps in one operator invocation.
- * Every step persists independently; controlled retry, block, disable, and
- * completion states stop the batch immediately.
+ * Every step persists independently. Transient Sheets reads share two bounded
+ * backoffs across the invocation; all other controlled retry, block, disable,
+ * and completion states stop the batch immediately.
  */
 export async function cccReconcileGmailBatch() {
   const total = {
@@ -735,14 +736,31 @@ export async function cccReconcileGmailBatch() {
     excluded: 0,
     failed: 0,
   };
+  let readRetriesUsed = 0;
   for (let step = 0; step < 8; step++) {
-    const result = (await reconcile(false)) as {
+    let result: {
       ok: boolean;
       status?: string;
       processed?: number;
       excluded?: number;
       failed?: number;
+      failure_stage?: string;
+      failure_kind?: string;
     };
+    let retryableReadFailure: boolean;
+    do {
+      result = (await reconcile(false)) as typeof result;
+      retryableReadFailure =
+        !result.ok &&
+        result.failure_stage === "reconciliation" &&
+        (result.failure_kind === "sheet_values_read_failure" ||
+          result.failure_kind === "sheet_metadata_read_failure") &&
+        readRetriesUsed < 2;
+      if (retryableReadFailure) {
+        readRetriesUsed++;
+        Utilities.sleep(30_000 * readRetriesUsed);
+      }
+    } while (retryableReadFailure);
     if (!result.ok || result.status === "disabled") return result;
     total.steps++;
     total.processed += result.processed ?? 0;

@@ -132,7 +132,8 @@ pilot. See [Current State](Current%20State.md) and
 
 Cam subsequently approved a separate anonymous Shortcut endpoint. Version 10
 is deployed alongside the retained owner-only Version 9. Its unauthenticated
-GET was verified to return only a fixed rejection, and the latest editor health
-kept Shortcut intake and other automatic flags off. POST behavior, token setup,
-phone configuration and device acceptance remain unverified; see the latest
-dated evidence in [V1 execution](../docs/implementation/V1_EXECUTION.md).
+GET was verified to return only a fixed rejection, and a synthetic anonymous
+POST returned `disabled` while Shortcut intake remained off. The latest editor
+health kept other automatic flags off. Token setup, phone configuration and
+device acceptance remain unverified; see the latest dated evidence in
+[V1 execution](../docs/implementation/V1_EXECUTION.md).

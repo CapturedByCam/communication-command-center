@@ -21,9 +21,10 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
   owner-only Version 9 remains unchanged. Unauthenticated GET returns only the
   fixed method-not-allowed rejection. At 20:39:47 EDT, editor health passed all
   ten headers, New York time, no send capability, Gmail/Studio/Shortcut/draft/
-  briefing flags false and `MANUAL_WRITES` true. A synthetic public POST did not
-  yield a verifiable application response, so POST behavior remains unverified.
-  No token was configured and no Shortcut/device acceptance occurred. The
+  briefing flags false and `MANUAL_WRITES` true. A synthetic unauthenticated
+  POST returned the expected `disabled` response after following Google's
+  content redirect, with intake off and no mutation. No token was configured
+  and no Shortcut/device acceptance occurred. The
   endpoint deployment URL is in the ignored private `.local/PILOT_RESOURCES.md`.
 - At 17:53:21 EDT, the Version 8 editor `cccHealth` again returned `ok:true`:
   all ten sheet headers valid, `America/New_York`, `send_capability:false`,
@@ -124,9 +125,9 @@ All Google messages remain unsent; Codex coordination is authorized.
    that product behavior.
 3. The native Shortcut remains a setup-blocked two-action template. Version 10
    now has a separately deployed anonymous endpoint whose GET is fixed rejection;
-   its POST response was not verified. No token is provisioned, no Shortcut
-   endpoint/token configuration or device acceptance exists. Complete device
-   setup and prove the authenticated write-only path without exposing Queue reads.
+   its synthetic POST returns `disabled` with intake off. No token is provisioned,
+   no Shortcut endpoint/token configuration or device acceptance exists. Complete
+   device setup and prove the authenticated write-only path without exposing Queue reads.
 4. Collect real model observations, usefulness ratings and the required working
    week after accepted bindings. Fifty synthetic policy fixtures are implementation
    evidence, not real model accuracy or pilot completion.

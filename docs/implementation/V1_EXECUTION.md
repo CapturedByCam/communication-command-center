@@ -504,9 +504,9 @@ The minimum manifest and bundle checks passed (18 tests across two files),
 `pnpm build` passed, and the approved bundle was pushed. `clasp deployments`
 confirmed the separate Version 10 deployment while Version 9 remains listed as
 owner-only. An unauthenticated GET followed to the fixed rejection JSON. A
-synthetic unauthenticated POST was attempted with all intake disabled, but the
-Google response redirect did not yield a verifiable application JSON response;
-POST behavior is not claimed as live-verified. At 20:39:47 EDT editor health
+synthetic unauthenticated POST with all intake disabled returned the expected
+`{"status":"rejected","error_code":"disabled"}` after following Google's
+one-time content redirect; no Queue or audit mutation occurred. At 20:39:47 EDT editor health
 passed all ten headers, New York time, no send capability, and the expected
 flags. The trigger count was not rechecked in this step. No Google email,
 message, or Gmail draft was sent or created.

@@ -4,6 +4,15 @@ Updated 2026-09-23 (midday EDT). V1 is not accepted for unattended daily use.
 
 ## Verified position
 
+- The current populated Queue now has fresh on-demand briefing acceptance. At
+  12:34 EDT on 2026-09-23, a single `cccBuildBriefing` call generated the same
+  eight deterministic sections with `deliveryChannel=none`; an immediate replay
+  returned `duplicate` with the same briefing ID. Fresh pre/post workbook exports
+  showed exactly 153 appended `Briefing_View` rows and one appended
+  `Briefing_History` row, while all other sheets were unchanged. The history row
+  records 144 unique items, `generated`, no delivery channel, and no error. The
+  final 12:36 health run passed all ten headers, New York time, no send capability,
+  every automatic flag false, and `MANUAL_WRITES` as the sole enabled control.
 - A new private populated-data recovery workbook was created without copying
   collaborators or comments. Direct UI readback showed Restricted access with
   Cam as the sole owner, United States locale, and Eastern time. Fresh XLSX
@@ -310,3 +319,16 @@ freeze panes, and dimensions. The recovery copy includes 145 Queue rows, 171
 Audit_Log rows, the current Briefing projection and Config checkpoint, and the
 17-column Commitments table. The active workbook was untouched. This closes the
 populated-data copy-and-verify gate without changing any runtime binding.
+
+## 2026-09-23 current briefing acceptance
+
+The current populated Queue passed the on-demand briefing gate. One controlled
+`cccBuildBriefing` call generated eight sections with
+`deliveryChannel=none`; the immediate same-input call returned `duplicate` with
+the same briefing ID. Fresh workbook exports before and after the two calls show
+that only `Briefing_View` and `Briefing_History` changed: 153 projection rows and
+one history row were appended once. The history record covers 144 unique items,
+uses delivery status `generated`, and has no delivery channel or error. The
+briefing flag was restored to false, and a final health run confirmed all ten
+headers, New York time, every automatic flag false, and no send capability.
+No Google message, Gmail draft, or trigger was created.

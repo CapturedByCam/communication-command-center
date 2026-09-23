@@ -15,7 +15,17 @@ time, and matches the active workbook across all 11 normalized sheet
 fingerprints. The active workbook was not overwritten or rebound. Its private
 resource ID is recorded only in ignored `.local/PILOT_RESOURCES.md`.
 
-The private Queue has five metadata-pilot items. The existing owner-only
+The current populated Queue has fresh briefing acceptance. A 12:34 EDT
+on-demand run generated eight sections for 144 unique items with delivery set to
+none; its immediate replay returned `duplicate` with the same briefing ID.
+Pre/post exports show one append only: 153 projection rows and one history row,
+with every other sheet unchanged. Briefing delivery is off again, and the 12:36
+health check passed all headers with no send capability and all automatic flags
+false.
+
+The private Queue now has 144 metadata items after the accepted Gmail pilot and
+partial optional backfill. The five-item manual-control evidence below is the
+earlier acceptance baseline. The existing owner-only
 deployment now points to immutable Version 9, with the 1.1
 Commitments workbook migration complete. At 15:07:25 EDT editor health passed
 all ten headers, New York time and no send capability, with only
@@ -229,5 +239,6 @@ Phase 1 / Milestone 3 is closed. The later optional 30-day backfill is preserved
 at `nextThread=135` and intentionally stopped. Populated-data recovery is
 verified. The remaining issue #32 gates are Studio source/model acceptance,
 create-only draft authorization and acceptance, Shortcut token/device testing,
-and the real working-week evaluation. Do not enable automatic processing or any
-send path for those phases.
+and the real working-week evaluation. The current briefing and its same-input
+duplicate behavior are accepted. Do not enable automatic processing or any send
+path for those phases.

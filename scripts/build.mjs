@@ -17,6 +17,7 @@ const entrypoints = [
   "cccStartGmailReconciliationWindow",
   "cccGmailReadProbe",
   "cccReconcileGmail",
+  "cccReconcileGmailBatch",
   "cccProcessStudio",
   "cccConfigureStudioStep",
   "cccExecuteStudioStep",

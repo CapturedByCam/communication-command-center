@@ -459,3 +459,31 @@ enabled root Custom steps access with unpublished test steps still allowed; this
 does not change the Gmail runtime. Keep intake disabled and the checkpoint
 untouched until the exact merged bundle is synced and a single bounded diagnostic
 invocation confirms a safe continuation point.
+
+## 2026-09-22 authenticated source sync and Version 9 diagnostic
+
+Cam completed the `clasp` OAuth login in Terminal. The authorized user matched
+the approved owner. The exact bundle from reviewed commit `379474d` (including
+PR #52's controlled failure stage/kind labels and PR #53's documentation) was
+built and synced to the existing private Apps Script project at 19:55 EDT.
+An independent readback matched the built code after line-ending normalization
+and matched the manifest semantically. No new OAuth scope or deployment endpoint
+was created.
+
+The existing owner-only deployment was updated from Version 8 to immutable
+Version 9. A Version 9 clone matched the reviewed code and manifest, including
+`MYSELF` access and `USER_DEPLOYING` execution. Editor `cccHealth` at 20:02:38
+EDT passed all ten headers, New York time and no send capability; the six
+automatic flags were false and only accepted `MANUAL_WRITES` was true.
+
+After confirming the previously verified private backup remained recorded,
+`CCC_GMAIL_INTAKE` alone was
+enabled for one manual diagnostic invocation. At 20:04:06 EDT,
+`cccReconcileGmail` returned `{"ok":true,"status":"more","processed":0,"excluded":0,"failed":0}`.
+It advanced enumeration by one bounded page without reproducing the previous
+generic failure; the underlying cause remains unknown. No checkpoint reset or
+second sweep was performed. Intake was restored to false immediately. The
+20:05:02 editor health run passed all ten headers, New York time and no send
+capability with all six automatic flags false and `MANUAL_WRITES` alone true.
+The unfiltered Triggers page showed zero. No Google message or draft was sent
+or created; the 30-day window remains incomplete.

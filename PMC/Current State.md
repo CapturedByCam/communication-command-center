@@ -4,11 +4,12 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
 
 ## Verified position
 
-- Existing owner-only Apps Script deployment now points to immutable Version 8
-  (2026-09-22 17:52 EDT), after PR #47 hardened Shortcut quota and kill-switch
-  checks under the shared lock. Execution remains as the owner and access stays
-  `MYSELF`; the deployment URL and access scope were unchanged. The previous
-  Version 7 source/manifest verification remains in the execution history.
+- Existing owner-only Apps Script deployment now points to immutable Version 9
+  (2026-09-22, about 20:02 EDT), with PR #52's controlled Gmail diagnostic
+  labels. The immutable code and manifest match reviewed commit `379474d`.
+  Execution remains as the owner and access stays `MYSELF`; the deployment URL
+  and access scope were unchanged. Earlier Version 7 and 8 releases remain in
+  the execution history.
   Version 6 cannot directly run against the migrated 1.1 workbook; see the
   recovery gate below.
 - At 15:07:25 EDT, editor `cccHealth` returned `ok:true`: ten valid headers,
@@ -45,14 +46,17 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
   [V1 execution](../docs/implementation/V1_EXECUTION.md).
 - A bounded Gmail metadata sweep on 2026-09-22 advanced six enumeration pages
   with zero processed, excluded, or failed rows, then returned only the generic
-  `RECONCILIATION_FAILED` result. The checkpoint remains in enumeration; exact
-  Queue and Dead_Letter values still match the private pre-sweep backup. Intake
-  is off and the live cause is unresolved. PR #52 merged with fixed failure
-  stage/category labels that do not expose provider messages or stacks. The
-  reviewed bundle has not been synchronized to Apps Script: local `clasp` has
-  no saved credentials, and the large bundled file cannot be safely patched in
-  the authenticated editor. Do not retry until the exact merged bundle is
-  synced and one bounded diagnostic call confirms a safe continuation point.
+  `RECONCILIATION_FAILED` result. Queue and Dead_Letter matched the private
+  pre-sweep backup at that point. After Cam authorized and completed `clasp`
+  login, the reviewed bundle was synced and deployed as Version 9. One further
+  bounded manual invocation at 20:04 EDT returned `status:more` with zero
+  processed, excluded, or failed rows; it did not reproduce the error or identify
+  its cause. The checkpoint remains in enumeration and the initial window is
+  incomplete. Gmail intake was immediately restored to false. At 20:05:02 EDT,
+  editor health passed all ten headers, New York time, no send capability, all
+  six automatic flags false and `MANUAL_WRITES` as the sole true flag. The
+  unfiltered Triggers page showed zero. Do not reset the checkpoint or claim
+  the earlier failure resolved without a bounded continuation plan.
 - PR #34, #35 and #37 are merged. PR #37 merged at
   `60beecf5f76a77edd99daf99fad3917462cdf4cf` after required CI and review. The create-only draft provider PR #36 merged at
   `8f97b6b43b260534a9ee10c2f77aa403f08d3d95`; its factory remains uninvoked and is
@@ -67,7 +71,7 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
 
 ## Commitment storage released; provider integration pending
 
-The repository and private Version 8 deployment include strict 1.1 Commitment
+The repository and private Version 9 deployment include strict 1.1 Commitment
 storage, bounded outbound chronology, a guarded observation writer, and
 briefing provenance validation. After a verified empty-table preflight and private
 backup, `cccMigrateEmptyCommitments` returned `migrated` with schema 1.1 at
@@ -101,7 +105,7 @@ All Google messages remain unsent; Codex coordination is authorized.
    starter binding, real-model usefulness, and resolved-input/source retention
    remain open. Studio reports stored synthetic output available for 40 days.
    No real private content or Google mutation was used. The existing owner-only
-   deployment was later updated to Version 8 for the separately reviewed
+   deployment was later updated to Version 9 for the controlled Gmail diagnostic;
    Shortcut gate fix; the Studio flow remains unrun.
 2. Draft creation needs compose authorization, a trusted eligible context resolver
    and bounded live acceptance. Native replacement/deletion return unsupported to
@@ -148,7 +152,7 @@ range. The 15:00:42 editor health check passed all ten manifest headers,
 New York time, all seven flags off and no send capability.
 
 Immutable Version 7 exactly matched the reviewed build and private manifest.
-The existing owner-only deployment was later updated to Version 8 after PR #47;
+The existing owner-only deployment was later updated to Version 9 after PR #52;
 the 17:53:21 health check verified all ten headers, no send capability, all
 automatic flags false, and the accepted manual-control flag as the sole true
 flag. Queue and Audit_Log populated rows matched the private backup exactly.

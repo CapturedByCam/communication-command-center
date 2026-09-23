@@ -5,7 +5,7 @@ Updated 2026-09-22. V1 is not yet accepted for daily unattended use.
 ## Working now
 
 The private Queue has five metadata-pilot items. The existing owner-only
-deployment now points to immutable Version 8, with the 1.1
+deployment now points to immutable Version 9, with the 1.1
 Commitments workbook migration complete. At 15:07:25 EDT editor health passed
 all ten headers, New York time and no send capability, with only
 `CCC_MANUAL_WRITES` enabled. The unfiltered trigger check found zero.
@@ -17,11 +17,12 @@ manual-override preservation and atomic audit. Waiting input accepts exactly
 restoration passed at 11:56 EDT; five Queue and thirteen audit rows remain. The
 first row is restored to open / unknown / manual override, with no snooze.
 
-PR #47's reviewed Shortcut quota and kill-switch transaction guards are now in
-the existing owner-only deployment as Version 8 (17:52 EDT). The 17:53:21 EDT
-health check passed all ten headers and confirmed no send capability; every
-automatic feature remains off and only the previously accepted manual Queue
-controls are enabled. Version 8 does not make the endpoint available to a phone.
+PR #47's reviewed Shortcut guards and PR #52's controlled Gmail diagnostics are
+now in the existing owner-only deployment as Version 9. Its immutable code and
+manifest match reviewed commit `379474d`. The 20:05:02 EDT editor health check
+passed all ten headers and confirmed no send capability; every automatic
+feature remains off and only the accepted manual Queue controls are enabled.
+Version 9 does not make the endpoint available to a phone.
 
 The disable-first deployment drill switched Version 6 to retained Version 5 and
 back, verifying each immutable build and unchanged owner-only access. Queue/Audit
@@ -35,13 +36,13 @@ Use [Run comms](../docs/runbooks/RUN_COMMS.md) for private source review and uns
 reply text. A fresh eight-section `Briefing_View` was generated on 2026-09-22 for
 the five current Queue items with `delivery_channel=none`; the briefing flag is
 off again. A later bounded Gmail sweep advanced six enumeration pages, then
-returned a generic failure before processing. Queue and Dead_Letter exactly
-match the private pre-sweep backup. PR #52 merged a fixed stage/category
-diagnostic, but its bundle is not synced to Apps Script: local `clasp` has no
-saved credentials, and patching the large bundle in the authenticated editor is
-unsafe. Gmail intake is off; leave the checkpoint in place until the exact
-merged bundle is synced, then use one bounded invocation to confirm a safe
-continuation point. The initial 30-day window remains incomplete.
+returned a generic failure before processing. Queue and Dead_Letter matched the
+private pre-sweep backup at that point. Cam completed `clasp` login; the exact
+reviewed bundle was synced and deployed. One bounded diagnostic invocation at
+20:04 EDT returned `status:more`, with zero processed, excluded or failed rows.
+It advanced the enumeration but did not reproduce or explain the earlier error.
+Gmail intake is off again, the checkpoint is preserved, and the initial 30-day
+window remains incomplete. The unfiltered Triggers page showed zero.
 
 ## Commitment storage release
 
@@ -65,7 +66,7 @@ unbound. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
   flow includes that unconfigured Step 3 but has not run it. CCC_STUDIO_PROCESSING
   is false. Real source binding, model usefulness, and exact resolved-input/source
   retention remain open; do not feed real private content until that gate is
-  resolved. The existing owner-only web deployment is now Version 8; the
+  resolved. The existing owner-only web deployment is now Version 9; the
   Studio step remains unrun.
 - Bind a privacy-compatible interpretation provider within an existing permitted
   entitlement. Prove real source IDs, strict validation, outbound-promise
@@ -118,9 +119,9 @@ and required CI. The fresh pre-migration backup is verified and retained
 privately. On 2026-09-22, all controls and managed triggers were disabled;
 the complete Commitment data range was empty. The reviewed source was pushed,
 the guarded 1.1 migration succeeded once, and the exact header plus empty rows
-were verified directly. Immutable Version 7 matches the reviewed source and
+were verified directly. Immutable Version 9 matches the reviewed source and
 manifest, and the existing owner-only deployment points to it. Only previously
-accepted manual Queue controls were restored. Final editor health passed, and
+accepted manual Queue controls remain enabled. Final editor health passed, and
 no trigger or send capability is active.
 
 Remaining blockers are the privacy-compatible real interpretation provider and

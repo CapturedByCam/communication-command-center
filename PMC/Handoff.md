@@ -258,3 +258,32 @@ issue #32 gates are Studio starter/model acceptance, create-only draft
 authorization and acceptance, and the real working-week evaluation. The current
 briefing and its same-input duplicate behavior are accepted. Do not enable
 automatic processing or any send path for those phases.
+
+## 2026-09-23 selected-row draft release
+
+PR #74 merged at `a95e914`. The reviewed selected-row draft runtime and
+`gmail.compose` manifest scope are deployed as Version 14 on the existing
+owner-only Gmail deployment. Live Script Properties readback shows
+`CCC_DRAFT_CREATION=true`, `CCC_GMAIL_LOOKBACK_DAYS=7`, and
+`CCC_GMAIL_INTAKE=false`; automatic Studio processing, draft replacement,
+Shortcut intake, and briefing delivery remain off. The unfiltered Apps Script
+Triggers page shows zero triggers. The separate Version 11 public Shortcut
+deployment was not changed.
+
+The Version 14 deployment was confirmed as `Execute as Me` / `Only myself`.
+During redeployment, Apps Script briefly applied the manifest's `Anyone`
+setting; it was immediately restored and the final live readback confirmed
+`Only myself`. No action in this workflow called the endpoint or performed an
+outbound communication. At the Google OAuth layer, `gmail.compose` permits
+sending as well as draft management, but the reviewed runtime has no send
+operation. No Gmail draft, email, or message has been created or sent. Cam must
+review and grant the Google consent prompt if it appears at first invocation.
+
+Next for the first live draft: in the pilot spreadsheet, select exactly one
+eligible row on `Queue`, choose **Communication Command Center → Create unsent
+draft for selected Queue row**, paste the strict bounded interpretation JSON,
+then paste the reviewed plain-text draft. The final OK creates only one unsent
+draft if the runtime's eligibility and kill-switch checks still pass. Keep the
+30-day backfill paused and leave Gmail intake, Studio processing, triggers, and
+all send paths off. Studio/model acceptance and the real working-week usefulness
+evaluation remain open; V1 is not accepted for unattended daily use.

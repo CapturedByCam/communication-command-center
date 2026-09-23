@@ -1,8 +1,26 @@
 # Current State
 
-Updated 2026-09-23 (15:36 EDT). V1 is not accepted for unattended daily use.
+Updated 2026-09-23 (after the selected-row draft release). V1 is not accepted for unattended daily use.
 
 ## Verified position
+
+- The selected-row draft runtime is now deployed as Apps Script Version 14 from
+  merged PR #74 (`a95e914`). The existing Gmail web-app deployment was checked
+  as `Execute as Me` / `Only myself`; the separate Version 11 Shortcut
+  deployment was not changed. The manifest includes `gmail.compose`, and the
+  owner-only `CCC_DRAFT_CREATION` flag is enabled for deliberate, manual draft
+  creation. The Gmail window is 7 days; `CCC_GMAIL_INTAKE` remains false, the
+  optional 30-day backfill remains stopped at `nextThread=135`, all other
+  automatic processing/delivery/replacement flags remain off, and the Triggers
+  page shows zero triggers. No draft, email, or message has been created or
+  sent. The compose scope technically authorizes send operations at Google's
+  permission layer, but the reviewed runtime has no send operation. If Google
+  requests consent on first use, Cam must review and grant it in Google's UI.
+- During the Version 14 redeploy, the deployment UI briefly showed `Anyone`
+  after Apps Script applied the manifest's web-app default. Access was
+  immediately restored, and a fresh deployment readback confirmed Version 14
+  is `Only myself`. Do not change the owner-only deployment access; the
+  separately authorized public Shortcut endpoint remains separate.
 
 - The Mac Shortcut and authenticated write-only endpoint gate passed at about
   13:40 EDT on 2026-09-23. A private 256-bit token now exists only in Script
@@ -190,9 +208,14 @@ All Google messages remain unsent; Codex coordination is authorized.
    resolution, real-model usefulness, the mid-invocation flag-off path, and exact
    resolved-input/source retention remain open. Studio reports stored synthetic
    output available for 40 days. No draft or send occurred.
-2. Draft creation needs compose authorization, a trusted eligible context resolver
-   and bounded live acceptance. Native replacement/deletion return unsupported to
-   protect human edits. The new Commitment storage schema is migrated and deployed; outbound
+2. The reviewed create-only draft binding and compose scope are deployed, and
+   `CCC_DRAFT_CREATION` is enabled only for the owner-invoked selected-row path.
+   The first live create acceptance remains open: select one eligible Queue row,
+   supply strict interpretation JSON and reviewed plain-text draft content, and
+   complete Google's consent prompt if shown. The scope formally permits send,
+   but no send operation exists in the runtime and nothing has been sent.
+   Native replacement/deletion return unsupported to protect human edits. The
+   new Commitment storage schema is migrated and deployed; outbound
    promise extraction and the guarded writer still need a verified
    interpretation/runtime binding and live acceptance; local integration tests alone do not establish
    that product behavior.

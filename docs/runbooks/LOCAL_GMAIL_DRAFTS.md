@@ -93,10 +93,19 @@ replacement or deletion; those operations remain unsupported and make no Gmail
 provider call. Do not enable them unless a provider-supported full-envelope
 conditional-write contract is accepted and verified.
 
-## Remaining integration work
+## Live integration status and remaining work
 
-- Add only the approved compose scope, deploy the reviewed selected-row binding,
-  and complete one bounded live create acceptance without sending.
+The reviewed selected-row binding and `gmail.compose` manifest scope are deployed
+as Version 14 on the owner-only pilot. `CCC_DRAFT_CREATION` is enabled for manual
+owner-invoked use, and the initial Gmail window is seven days. Gmail intake remains
+off, no trigger is installed, and no draft or message has been created or sent.
+The owner must approve Google's OAuth consent if prompted. Note that Google defines
+`gmail.compose` as permission to manage drafts and send email; the reviewed
+runtime exposes no send operation.
+
+- Complete one bounded live create acceptance using an eligible Queue row, strict
+  interpretation JSON, and reviewed plain text. The native flow has two explicit
+  UI prompts; cancelling either creates no draft.
 - Maintain the trusted resolver's current source/risk facts and preserve Queue
   draft IDs, stale status, and human review through reconciliation.
 - Implement reviewed uncertain-write recovery against exact mailbox/thread/provider

@@ -271,6 +271,7 @@ function createRuntime(
     };
   });
   const gmailGets = vi.fn();
+  const sleep = vi.fn();
   const menu = {
     addItem: vi.fn().mockReturnThis(),
     addSeparator: vi.fn().mockReturnThis(),
@@ -356,6 +357,7 @@ function createRuntime(
         getBytes: () => Array.from(Buffer.from(value)),
       }),
       getUuid: () => "00000000-0000-4000-8000-000000000000",
+      sleep,
     },
     Sheets: {
       Spreadsheets: {
@@ -420,6 +422,7 @@ function createRuntime(
     menu,
     toast,
     gmailGets,
+    sleep,
     studioInputs: studio.inputs,
   };
 }
@@ -857,6 +860,8 @@ describe("deployable Apps Script bundle", () => {
       failed: 0,
     });
     expect(runtime.batchUpdate).toHaveBeenCalledTimes(2);
+    expect(runtime.sleep).toHaveBeenCalledOnce();
+    expect(runtime.sleep).toHaveBeenCalledWith(6000);
   });
 
   it("returns only a controlled diagnostic when a Sheets batch outcome is uncertain", async () => {

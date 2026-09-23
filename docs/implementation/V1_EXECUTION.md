@@ -449,12 +449,18 @@ false and verified; all other automatic flags remain false and
 `MANUAL_WRITES` remains enabled. No messages or drafts were sent or created.
 Do not retry or reset the checkpoint until the failure is diagnosed.
 
+This stop instruction records the state before the reviewed bundle was synced
+to the authenticated project. It was superseded by the later Version 9
+diagnostic and bounded Gmail continuation below; the original failure cause is
+still unknown, and the current checkpoint remains incomplete.
+
 The live cause remains unresolved. PR #52 merged the reviewed change that adds
 only fixed failure stage and category values to the controlled error result; it
 never exposes provider messages or stack traces. The exact bundle was built and
-passed required local and CI checks, but it is not synchronized to Apps Script:
-local `clasp` has no saved credentials, and the authenticated editor contains a
-large bundled file that cannot be safely patched by hand. Workspace Admin has
+passed required local and CI checks, but at the time of this record it was not
+synchronized to Apps Script: local `clasp` had no saved credentials, and the
+authenticated editor contained a large bundled file that could not be safely
+patched by hand. Workspace Admin had
 enabled root Custom steps access with unpublished test steps still allowed; this
 does not change the Gmail runtime. Keep intake disabled and the checkpoint
 untouched until the exact merged bundle is synced and a single bounded diagnostic
@@ -536,3 +542,20 @@ sent. Shortcut intake and every other automatic feature remain disabled;
 `MANUAL_WRITES` is the only true flag, `cccHealth` passed the ten-header and
 New York time checks with no send capability, and the unfiltered trigger check
 showed zero triggers. No Google message or draft was sent or created.
+
+## 2026-09-22 Gmail checkpoint continuation
+
+After the browser reachability check, a single manually invoked
+`cccReconcileGmail` call returned `status=more`, with one item processed and
+zero excluded or failed. The durable version 2 checkpoint advanced to
+`nextThread=8` across 12 reference shards; it remains in `processing` with no
+retry or error. This is one bounded step, not completion of the 30-day sweep.
+`CCC_GMAIL_INTAKE` was restored to false immediately after the invocation.
+
+The following editor health run passed all ten sheet headers, New York time,
+and no-send capability. Gmail, Studio, Shortcut, drafting and briefing flags
+were false; only the accepted manual Queue controls remained enabled. The
+unfiltered Apps Script Triggers page showed zero triggers. A fresh clone of the
+active project matched the repository bundle and manifest after normalizing
+build-root comments; no deployment or configuration change was made during
+that readback. No Google email, message or Gmail draft was sent or created.

@@ -79,12 +79,14 @@ Updated 2026-09-22 (evening EDT). V1 is not accepted for unattended daily use.
   login, the reviewed bundle was synced and deployed as Version 9. One further
   bounded manual invocation at 20:04 EDT returned `status:more` with zero
   processed, excluded, or failed rows; it did not reproduce the error or identify
-  its cause. The checkpoint remains in enumeration and the initial window is
-  incomplete. Gmail intake was immediately restored to false. At 20:05:02 EDT,
+  its cause. At that time the checkpoint remained in enumeration and the
+  initial window was incomplete. Gmail intake was immediately restored to
+  false. At 20:05:02 EDT,
   editor health passed all ten headers, New York time, no send capability, all
   six automatic flags false and `MANUAL_WRITES` as the sole true flag. The
   unfiltered Triggers page showed zero. Do not reset the checkpoint or claim
-  the earlier failure resolved without a bounded continuation plan.
+  the earlier failure's cause is known. A later bounded continuation advanced
+  the checkpoint and is recorded at the end of this file and in [V1 execution](../docs/implementation/V1_EXECUTION.md).
 - PR #34, #35 and #37 are merged. PR #37 merged at
   `60beecf5f76a77edd99daf99fad3917462cdf4cf` after required CI and review. The create-only draft provider PR #36 merged at
   `8f97b6b43b260534a9ee10c2f77aa403f08d3d95`; its factory remains uninvoked and is
@@ -188,3 +190,20 @@ the 17:53:21 health check verified all ten headers, no send capability, all
 automatic flags false, and the accepted manual-control flag as the sole true
 flag. Queue and Audit_Log populated rows matched the private backup exactly.
 Automatic provider features remain disabled pending the gates above.
+
+## 2026-09-22 live acceptance continuation
+
+The Google Admin insecure-content allowlist for `script.googleusercontent.com`
+is locally applied for the CapturedByCam OU. Chrome reaches the active Version 11
+content endpoint and receives only the fixed `method_not_allowed` GET response.
+This verifies browser reachability, not an authenticated Shortcut write or
+device capture.
+
+One manually invoked bounded Gmail reconciliation step processed one item with
+zero exclusions or failures. The version 2 checkpoint advanced to `nextThread=8`
+across 12 reference shards and remains in processing without retry or error;
+the 30-day window is incomplete. Gmail intake was restored to false. Post-run
+health passed all ten workbook headers, New York time, and no-send capability;
+all automated flags were false and only `MANUAL_WRITES` remained true. The
+unfiltered trigger list is empty. No Google message or Gmail draft was sent or
+created. See [V1 execution](../docs/implementation/V1_EXECUTION.md).

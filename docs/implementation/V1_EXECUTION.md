@@ -693,3 +693,26 @@ The active workbook was not overwritten or rebound. The private resource ID and
 evidence location are recorded only in ignored `.local/PILOT_RESOURCES.md`.
 This closes the populated-data copy-and-verify gate; the older-runtime recovery
 path remains an incident-only procedure that requires coordinated binding.
+
+## 2026-09-23 current briefing acceptance
+
+Fresh XLSX exports bracketed two controlled `cccBuildBriefing` calls against the
+current populated workbook. The first call at 12:34:41 EDT returned
+`{"ok":true,"status":"generated","briefingId":"brief_1cfcefad02fa4311f4b47d53","sections":8,"deliveryChannel":"none"}`.
+The immediate replay at 12:34:59 EDT returned `status=duplicate` with the same
+briefing ID, eight sections, and no delivery channel.
+
+The post-run export differs from the pre-run export only in `Briefing_View` and
+`Briefing_History`. The generator appended 153 projection rows once across all
+eight required sections and one history row for 144 unique items. The history
+row records `delivery_status=generated`, `delivery_channel=none`, and no error.
+All other sheets were unchanged, which confirms that the duplicate call did not
+append a second projection or history record.
+
+`CCC_BRIEFING_DELIVERY` was restored to false immediately after the calls. At
+12:36:42 EDT, `cccHealth` returned `ok=true`, all ten exact workbook headers
+valid, `America/New_York`, all six automatic flags false,
+`MANUAL_WRITES=true`, and `send_capability=false`. No Google message, Gmail
+draft, trigger, or other delivery action was created. This closes the current
+briefing generation and same-input duplicate gate without enabling unattended
+delivery.

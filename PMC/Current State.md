@@ -216,3 +216,20 @@ error; the 30-day window remains incomplete. Gmail intake was immediately
 restored to false, and a fresh health run again confirmed all automatic flags
 off and no send capability. A fresh Admin page readback is waiting on Google's
 passkey step-up; the earlier Chrome site-details and safe GET checks passed.
+
+## 2026-09-23 seven-day Gmail pilot
+
+Cam confirmed the initial pilot is limited to seven days; the separate 30-day
+backfill remains deferred until the pilot is working and accepted. The runtime
+lookback defaults to seven days. Several manually invoked bounded reconciliation
+batches returned `status=more`, then a later batch stopped with the sanitized
+`google_api_failure`. The underlying Google API response is not known, so the
+seven-day run is incomplete. The cursor was not reset after the failure.
+
+`CCC_GMAIL_INTAKE` is off again. A read-only Gmail probe verified one sampled
+message's metadata within the seven-day bound, with no raw content stored and
+zero mutations. A subsequent health check passed all ten workbook headers,
+`America/New_York`, and `send_capability=false`; all automatic flags were off
+and only `MANUAL_WRITES` was on. No Google email, message, or draft was sent or
+created. Diagnose the failed per-message API call before resuming; keep the
+seven-day pilot bound and do not start the 30-day backfill yet.

@@ -169,3 +169,19 @@ retention question, bind and verify draft creation without enabling send, finish
 Shortcut token/device acceptance, and collect the required real working-week
 observations and human usefulness ratings. Synthetic results do not satisfy
 those live gates. Keep automatic features off.
+
+## 2026-09-23 Gmail pilot handoff
+
+Cam confirmed the initial pilot window is seven days. Defer the separate
+30-day backfill until this pilot is working and accepted. Multiple bounded
+manual batches returned `status=more`; a later batch stopped with sanitized
+`google_api_failure`. The precise failing Google API response is unknown, and
+the seven-day run is incomplete. A read-only one-message metadata probe passed
+within the seven-day bound, stored no raw content, and made zero mutations.
+Post-run `cccHealth` passed all ten headers, New York time and no-send checks;
+all automatic flags are off and only `MANUAL_WRITES` is on. No message or draft
+was sent or created.
+
+Next: diagnose the failed per-message API request from safe metadata/logging,
+without resuming writes until the cause is understood. Do not reset the cursor
+or start a 30-day backfill. Preserve the all-automatic-flags-off state.

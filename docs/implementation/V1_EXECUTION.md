@@ -575,3 +575,20 @@ A fresh Google Admin page readback is waiting at the account's required passkey
 step-up. The earlier Chrome site-details read showed Insecure content set to
 Allow, and the Version 11 browser GET reached the content host and returned its
 fixed safe rejection. No Shortcut write or device capture has been tested.
+
+## 2026-09-23 seven-day Gmail pilot attempt
+
+Cam confirmed the initial pilot is limited to seven days; defer the separate
+30-day backfill until the pilot is working and accepted. The configured default
+lookback is seven days. Several bounded `cccReconcileGmail` invocations returned
+`status=more`; a later invocation stopped with sanitized
+`failure_kind=google_api_failure`. The underlying Google API response is unknown,
+so this run is incomplete. The cursor was not reset after the failure.
+
+`CCC_GMAIL_INTAKE` was restored to false. Read-only `cccGmailReadProbe` passed with
+`bounded_days=7`, one sampled message, verified metadata, no raw content stored
+and zero mutations. `cccHealth` then passed all ten workbook headers,
+`America/New_York` and `send_capability=false`; every automatic flag was false
+and only `MANUAL_WRITES` was true. No Google email, message, or draft was sent
+or created. Do not resume the reconciliation until the failed per-message API
+call is understood; do not start the 30-day backfill.

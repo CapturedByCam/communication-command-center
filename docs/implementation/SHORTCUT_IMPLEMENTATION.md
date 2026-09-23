@@ -55,7 +55,9 @@ a global pre-authentication cap of 10 requests per minute before parsing, then
 apply the separate authenticated write cap of 30 requests per minute. Apps
 Script does not supply a trustworthy caller address to this handler, so the
 pre-authentication cap is intentionally global and bounds rather than
-eliminates public request cost.
+eliminates public request cost. Because that global bucket also counts valid
+requests, it sets the effective manual-capture limit at 10 requests per minute;
+the second quota remains an independent upper bound on authenticated writes.
 
 Apply the authenticated write quota before either a Queue create or an
 authenticated malformed-request audit row. Recheck the current kill switch and

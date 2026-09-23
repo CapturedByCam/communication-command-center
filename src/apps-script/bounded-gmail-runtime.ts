@@ -28,14 +28,58 @@ import { RuntimeSheetAdapter, type TableGateway } from "./sheet-adapter.js";
 
 export const BOUNDED_GMAIL_CHECKPOINT_KEY = "gmail.reconciliation.v2";
 const shardKey = (i: number) => `gmail.references.v1.${i}`;
+export type GmailLookbackDays = 7 | 30;
 class Disabled extends Error {}
 class InvalidEvidence extends Error {}
 class LimitExceeded extends Error {}
 export interface BoundedGmailResult {
-  status: "more" | "complete" | "blocked" | "retry" | "disabled";
+  status:
+    | "more"
+    | "complete"
+    | "blocked"
+    | "retry"
+    | "disabled"
+    | "configuration_mismatch";
   processed: number;
   excluded: number;
   failed: number;
+}
+
+export interface BoundedGmailWindowStartResult {
+  status: "started" | "restarted" | "already_current" | "blocked" | "disabled";
+  lookbackDays: GmailLookbackDays;
+  previousLookbackDays: number | null;
+}
+
+function checkpointForWindow(
+  now: string,
+  lookbackDays: GmailLookbackDays,
+  completedThrough: string | null,
+): BoundedGmailCheckpoint {
+  const to = new Date(Math.floor(Date.parse(now) / 1000) * 1000).toISOString();
+  return {
+    schema_version: "2.0",
+    mailbox: APPROVED_GMAIL_MAILBOX,
+    window: {
+      from: new Date(Date.parse(to) - lookbackDays * 86_400_000).toISOString(),
+      to,
+    },
+    phase: "enumerating",
+    pageToken: null,
+    seenPageTokenHashes: [],
+    shardCount: 0,
+    nextThread: 0,
+    completedThrough,
+    retry: null,
+    error_code: null,
+  };
+}
+
+function windowLengthDays(checkpoint: BoundedGmailCheckpoint): number {
+  return (
+    (Date.parse(checkpoint.window.to) - Date.parse(checkpoint.window.from)) /
+    86_400_000
+  );
 }
 
 /** One reference page or one complete bounded thread per atomic invocation. */
@@ -46,7 +90,10 @@ export async function runBoundedGmailReconciliation(
   at: string,
   sha256: (value: string) => string,
   authorize: () => boolean,
+  lookbackDays: GmailLookbackDays = 7,
 ): Promise<BoundedGmailResult> {
+  if (lookbackDays !== 7 && lookbackDays !== 30)
+    throw new Error("INVALID_GMAIL_LOOKBACK_DAYS");
   const now = new Date(
     z.string().datetime({ offset: true }).parse(at),
   ).toISOString();
@@ -84,6 +131,14 @@ export async function runBoundedGmailReconciliation(
         return { ...empty, status: "blocked" };
       }
       if (
+        checkpoint &&
+        checkpoint.phase !== "complete" &&
+        windowLengthDays(checkpoint) !== lookbackDays
+      ) {
+        check();
+        return { ...empty, status: "configuration_mismatch" };
+      }
+      if (
         checkpoint?.retry &&
         Date.parse(checkpoint.retry.nextAttemptAt) > Date.parse(now)
       ) {
@@ -92,30 +147,18 @@ export async function runBoundedGmailReconciliation(
       }
       if (
         checkpoint?.phase === "complete" &&
-        checkpoint.window.to === secondNow
+        checkpoint.window.to === secondNow &&
+        windowLengthDays(checkpoint) === lookbackDays
       ) {
         check();
         return empty;
       }
       if (!checkpoint || checkpoint.phase === "complete")
-        checkpoint = {
-          schema_version: "2.0",
-          mailbox: APPROVED_GMAIL_MAILBOX,
-          window: {
-            from: new Date(
-              Date.parse(secondNow) - 30 * 86_400_000,
-            ).toISOString(),
-            to: secondNow,
-          },
-          phase: "enumerating",
-          pageToken: null,
-          seenPageTokenHashes: [],
-          shardCount: 0,
-          nextThread: 0,
-          completedThrough: checkpoint?.completedThrough ?? null,
-          retry: null,
-          error_code: null,
-        };
+        checkpoint = checkpointForWindow(
+          secondNow,
+          lookbackDays,
+          checkpoint?.completedThrough ?? null,
+        );
       const cp = checkpoint;
       const save = async () => {
         check();
@@ -304,6 +347,89 @@ export async function runBoundedGmailReconciliation(
     });
   } catch (error) {
     if (error instanceof Disabled) return { ...empty, status: "disabled" };
+    throw error;
+  }
+}
+
+/**
+ * Explicitly begins the configured Gmail window while intake is off. Existing
+ * Queue and audit rows are untouched; only the bounded reference cursor resets.
+ */
+export async function resetBoundedGmailReconciliation(
+  gateway: TableGateway,
+  spreadsheetId: string,
+  at: string,
+  lookbackDays: GmailLookbackDays,
+  authorize: () => boolean,
+): Promise<BoundedGmailWindowStartResult> {
+  if (lookbackDays !== 7 && lookbackDays !== 30)
+    throw new Error("INVALID_GMAIL_LOOKBACK_DAYS");
+  const now = new Date(
+    z.string().datetime({ offset: true }).parse(at),
+  ).toISOString();
+  const secondNow = new Date(
+    Math.floor(Date.parse(now) / 1000) * 1000,
+  ).toISOString();
+  const disabled = (): BoundedGmailWindowStartResult => ({
+    status: "disabled",
+    lookbackDays,
+    previousLookbackDays: null,
+  });
+  const check = () => {
+    if (!authorize()) throw new Disabled();
+  };
+  const adapter = new RuntimeSheetAdapter(gateway);
+  const sync = new GmailSyncRepository(adapter, spreadsheetId);
+  try {
+    check();
+    return await adapter.runTransaction(spreadsheetId, async () => {
+      check();
+      await sync.verifyHeaders();
+      const saved = await sync.load(BOUNDED_GMAIL_CHECKPOINT_KEY);
+      const previous =
+        saved === null ? null : BoundedGmailCheckpointSchema.parse(saved);
+      const previousLookbackDays = previous ? windowLengthDays(previous) : null;
+      if (previous && Date.parse(previous.window.to) > Date.parse(secondNow))
+        throw Error("RECONCILIATION_CLOCK_BACKWARD");
+      if (
+        previous &&
+        (previous.phase === "blocked" ||
+          previous.retry !== null ||
+          previous.error_code !== null)
+      ) {
+        check();
+        return {
+          status: "blocked",
+          lookbackDays,
+          previousLookbackDays,
+        };
+      }
+      if (previousLookbackDays === lookbackDays) {
+        check();
+        return {
+          status: "already_current",
+          lookbackDays,
+          previousLookbackDays,
+        };
+      }
+      const next = BoundedGmailCheckpointSchema.parse(
+        checkpointForWindow(
+          secondNow,
+          lookbackDays,
+          previous?.completedThrough ?? null,
+        ),
+      );
+      check();
+      await sync.save(BOUNDED_GMAIL_CHECKPOINT_KEY, next, now);
+      check();
+      return {
+        status: previous ? "restarted" : "started",
+        lookbackDays,
+        previousLookbackDays,
+      };
+    });
+  } catch (error) {
+    if (error instanceof Disabled) return disabled();
     throw error;
   }
 }

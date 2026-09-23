@@ -305,6 +305,7 @@ it("keeps a bounded overdue commitment when Studio replays its current message",
     window.to,
     hash,
     () => true,
+    30,
   );
   let queue = tables.get("Queue")!;
   expect(rowToRecord(queue.headers, queue.rows[0]!)).toMatchObject({

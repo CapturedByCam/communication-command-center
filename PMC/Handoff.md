@@ -152,11 +152,14 @@ Chrome reachability is now verified after the Admin allowlist change: the
 Version 11 endpoint returns its fixed safe rejection for a browser GET. This
 does not establish authenticated Shortcut acceptance. One bounded manual Gmail
 reconciliation call processed one item; the durable version 2 checkpoint is
-still in processing at `nextThread=8` across 12 reference shards, with no
-retry or error. The Gmail feature flag is off again. The post-run health check
-passed all ten workbook headers, New York time and no-send capability, and the
-Apps Script Triggers page showed zero triggers. Only guarded manual Queue
-controls are enabled. No Google email, message or draft was sent or created.
+still in processing at `nextThread=9` across 12 reference shards, with no
+retry or error. A later single call processed one item with zero exclusions or
+failures; the Gmail feature flag is off again. The post-run health check passed
+all ten workbook headers, New York time and no-send capability, and the Apps
+Script Triggers page showed zero triggers. Only guarded manual Queue controls
+are enabled. No Google email, message or draft was sent or created. The fresh
+Admin UI readback is paused at Google's passkey step-up; earlier Chrome site
+details showed Insecure content allowed, and the safe browser GET passed.
 
 Continue the bounded Gmail window only one manual invocation at a time, checking
 the checkpoint before each run and returning `CCC_GMAIL_INTAKE` to false after

@@ -207,3 +207,11 @@ health passed all ten workbook headers, New York time, and no-send capability;
 all automated flags were false and only `MANUAL_WRITES` remained true. The
 unfiltered trigger list is empty. No Google message or Gmail draft was sent or
 created. See [V1 execution](../docs/implementation/V1_EXECUTION.md).
+
+Later that evening, another single bounded Gmail invocation processed one item
+with zero exclusions or failures. The version 2 checkpoint is now at
+`nextThread=9` across 12 reference shards, still processing without retry or
+error; the 30-day window remains incomplete. Gmail intake was immediately
+restored to false, and a fresh health run again confirmed all automatic flags
+off and no send capability. A fresh Admin page readback is waiting on Google's
+passkey step-up; the earlier Chrome site-details and safe GET checks passed.

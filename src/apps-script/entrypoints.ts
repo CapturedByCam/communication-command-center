@@ -711,6 +711,9 @@ async function reconcile(studio: boolean) {
       error_code: "RECONCILIATION_FAILED",
       failure_stage: failureStage,
       failure_kind: failureKind,
+      ...(error instanceof SheetApiReadError && error.target
+        ? { failure_target: error.target }
+        : {}),
     }));
   }
 }

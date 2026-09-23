@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 import { expect, it } from "vitest";
-import { runBoundedGmailReconciliation } from "../../src/apps-script/bounded-gmail-runtime.js";
+import {
+  resetBoundedGmailReconciliation,
+  runBoundedGmailReconciliation,
+} from "../../src/apps-script/bounded-gmail-runtime.js";
 import { WORKBOOK_MANIFEST } from "../../src/adapters/sheets/workbook-manifest.js";
 import {
   rowToRecord,
@@ -67,7 +70,7 @@ function setup() {
       throw Error("Unbounded history must not be read");
     },
   };
-  const run = (authorize = () => true) =>
+  const run = (authorize = () => true, lookbackDays: 7 | 30 = 7) =>
     runBoundedGmailReconciliation(
       gateway,
       gmail,
@@ -75,6 +78,7 @@ function setup() {
       now,
       hash,
       authorize,
+      lookbackDays,
     );
   return {
     tables,
@@ -107,6 +111,97 @@ it("enumerates cross-page thread references before one atomic review-only reconc
   const counts = s.counts();
   expect(await s.run()).toMatchObject({ status: "complete", processed: 0 });
   expect(s.counts()).toEqual({ ...counts, reads: expect.any(Number) });
+  const config = s.tables.get("Config")!;
+  const checkpoint = config.rows
+    .map((r) => rowToRecord(config.headers, r))
+    .find((r) => r.key === "gmail.reconciliation.v2")!;
+  expect(JSON.parse(String(checkpoint.value)).window.from).toBe(
+    "2026-09-15T12:00:00.000Z",
+  );
+});
+
+it("refuses to continue a pinned window whose length differs from configuration", async () => {
+  const s = setup();
+  await s.run(() => true, 30);
+  const before = structuredClone([...s.tables]);
+  const counts = s.counts();
+  expect(await s.run(() => true, 7)).toMatchObject({
+    status: "configuration_mismatch",
+    processed: 0,
+    excluded: 0,
+    failed: 0,
+  });
+  expect(s.counts().gets).toBe(counts.gets);
+  expect(s.counts().commits).toBe(counts.commits);
+  expect([...s.tables]).toEqual(before);
+});
+
+it("restarts a mismatched pinned window without changing Queue or Audit rows", async () => {
+  const s = setup();
+  await s.run(() => true, 30);
+  await s.run(() => true, 30);
+  expect(await s.run(() => true, 30)).toMatchObject({ status: "complete" });
+  const queueBefore = structuredClone(s.tables.get("Queue"));
+  const auditBefore = structuredClone(s.tables.get("Audit_Log"));
+  const oldShard = structuredClone(s.tables.get("Config"));
+  const result = await resetBoundedGmailReconciliation(
+    s.gateway,
+    "sheet",
+    now,
+    7,
+    () => true,
+  );
+  expect(result).toMatchObject({ status: "restarted", lookbackDays: 7 });
+  expect(s.tables.get("Queue")).toEqual(queueBefore);
+  expect(s.tables.get("Audit_Log")).toEqual(auditBefore);
+  const config = s.tables.get("Config")!;
+  const checkpoint = config.rows
+    .map((r) => rowToRecord(config.headers, r))
+    .find((r) => r.key === "gmail.reconciliation.v2")!;
+  expect(JSON.parse(String(checkpoint.value))).toMatchObject({
+    phase: "enumerating",
+    shardCount: 0,
+    nextThread: 0,
+    window: {
+      from: "2026-09-15T12:00:00.000Z",
+      to: "2026-09-22T12:00:00.000Z",
+    },
+  });
+  expect(config.rows.length).toBe(oldShard!.rows.length);
+});
+
+it("does not reset a checkpoint when intake authorization is active", async () => {
+  const s = setup();
+  await s.run(() => true, 30);
+  const before = structuredClone([...s.tables]);
+  expect(
+    await resetBoundedGmailReconciliation(
+      s.gateway,
+      "sheet",
+      now,
+      7,
+      () => false,
+    ),
+  ).toMatchObject({ status: "disabled" });
+  expect([...s.tables]).toEqual(before);
+});
+it("rejects a backward window-reset timestamp without mutating workbook rows", async () => {
+  const s = setup();
+  await s.run(() => true, 30);
+  await s.run(() => true, 30);
+  await s.run(() => true, 30);
+  expect(await s.run(() => true, 30)).toMatchObject({ status: "complete" });
+  const before = structuredClone([...s.tables]);
+  await expect(
+    resetBoundedGmailReconciliation(
+      s.gateway,
+      "sheet",
+      "2026-09-21T12:00:00Z",
+      7,
+      () => true,
+    ),
+  ).rejects.toThrow("RECONCILIATION_CLOCK_BACKWARD");
+  expect([...s.tables]).toEqual(before);
 });
 it("does not read or write when disabled and aborts staged work on lost authorization", async () => {
   const s = setup();

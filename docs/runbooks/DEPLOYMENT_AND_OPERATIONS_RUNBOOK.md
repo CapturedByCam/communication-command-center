@@ -37,7 +37,7 @@ Open the existing private bound project and workbook. Confirm the approved owner
 | Capability | Required boundary |
 | --- | --- |
 | Queue controls | Owner-only, flag-gated, selected single row, complete snapshot recheck, shared lock, atomic Queue/Audit commit. Direct grid edits can still race the final provider write. |
-| Gmail reconciliation | Approved mailbox only; bounded 30-day selected-message metadata reads; no bodies, subjects, older thread history, or automatic trigger. |
+| Gmail reconciliation | Approved mailbox only; seven-day initial pilot, with a separate 30-day backfill deferred until acceptance; selected-message metadata only, no bodies, subjects, older thread history, or automatic trigger. |
 | Briefing | Private Sheet projection/history only; no delivery transport. |
 | Drafts | Create-only provider preparation requires fresh approved source/context and separate acceptance. No send, replacement, or deletion call. |
 | Studio | Keep disabled until account availability, starter binding, strict source validation, and model usefulness are separately proven. |

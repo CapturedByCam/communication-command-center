@@ -22,7 +22,11 @@ import { literalCell } from "./google-sheet-gateway.js";
 import { migrateEmptyCommitments } from "./commitment-migration.js";
 import { runBriefing } from "./briefing-runtime.js";
 import { runtimeReconciler } from "./gmail-runtime.js";
-import { runBoundedGmailReconciliation } from "./bounded-gmail-runtime.js";
+import {
+  resetBoundedGmailReconciliation,
+  runBoundedGmailReconciliation,
+  type GmailLookbackDays,
+} from "./bounded-gmail-runtime.js";
 import { SheetCommitUncertainError } from "./sheet-adapter.js";
 import {
   replaySelectedGmailQueueItem,
@@ -45,6 +49,15 @@ const FLAGS = [
   "BRIEFING_DELIVERY",
   "MANUAL_WRITES",
 ] as const;
+function gmailLookbackDays(): GmailLookbackDays {
+  const value =
+    PropertiesService.getScriptProperties().getProperty(
+      "CCC_GMAIL_LOOKBACK_DAYS",
+    ) ?? "7";
+  if (value === "7") return 7;
+  if (value === "30") return 30;
+  throw new Error("INVALID_GMAIL_LOOKBACK_DAYS");
+}
 function json(value: unknown) {
   return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(
     ContentService.MimeType.JSON,
@@ -676,6 +689,7 @@ async function reconcile(studio: boolean) {
             assertOwner();
             return flag("GMAIL_INTAKE") && workbookId() === id;
           },
+          gmailLookbackDays(),
         );
     // The domain result contains only fixed statuses and numeric counts.
     return codeResult(() => ({ ok: true, ...result }));
@@ -701,15 +715,38 @@ export function cccProcessStudio() {
   return reconcile(true);
 }
 
+/** Starts the configured bounded Gmail window; requires Gmail intake to be off. */
+export async function cccStartGmailReconciliationWindow() {
+  try {
+    assertOwner();
+    const gateway = googleGateway(),
+      id = workbookId(),
+      result = await resetBoundedGmailReconciliation(
+        gateway,
+        id,
+        new Date().toISOString(),
+        gmailLookbackDays(),
+        () => {
+          assertOwner();
+          return !flag("GMAIL_INTAKE") && workbookId() === id;
+        },
+      );
+    return codeResult(() => ({ ok: true, ...result }));
+  } catch {
+    return codeResult(() => ({ ok: false, error_code: "WINDOW_START_FAILED" }));
+  }
+}
+
 export function cccGmailReadProbe() {
   return codeResult(() => {
     assertOwner();
     const profile = Gmail!.Users!.getProfile("me");
     if (profile.emailAddress?.toLowerCase() !== "contact@elev8mediaky.com")
       throw new Error("ACCOUNT_MISMATCH");
+    const lookbackDays = gmailLookbackDays();
     const now = Math.floor(Date.now() / 1000);
     const page = Gmail!.Users!.Messages!.list("me", {
-      q: `after:${now - 30 * 86400} before:${now} -category:promotions -category:forums -in:spam -in:trash`,
+      q: `after:${now - lookbackDays * 86400} before:${now} -category:promotions -category:forums -in:spam -in:trash`,
       maxResults: 1,
       fields: "messages/id,nextPageToken",
     });
@@ -726,7 +763,7 @@ export function cccGmailReadProbe() {
     return {
       ok: true,
       mailbox_verified: true,
-      bounded_days: 30,
+      bounded_days: lookbackDays,
       sampled_messages: first ? 1 : 0,
       metadata_verified: verified,
       raw_content_stored: false,

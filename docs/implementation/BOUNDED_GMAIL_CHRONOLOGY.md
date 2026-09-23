@@ -5,7 +5,12 @@ Decision: [111](../wayfinder/tickets/111-bounded-gmail-chronology.md).
 ## Source deployed privately; provider activation pending
 
 The native intake candidate enumerates eligible ID/thread ID references in a
-fixed 30-day window, twenty per invocation. Only after enumeration finishes does
+fixed, configured window: seven days for the initial live pilot and 30 days only
+for a separate backfill after pilot acceptance. `CCC_GMAIL_LOOKBACK_DAYS` accepts
+only `7` or `30` and defaults to `7`; each scan pins its start and end. A
+configuration change never silently changes an incomplete scan. The owner-run
+window-start operation requires Gmail intake to be off and preserves existing
+Queue and Audit rows. Enumeration reads twenty references per invocation. Only after enumeration finishes does
 it read one complete enumerated thread, at most fifty metadata messages per
 invocation. It never calls Threads.get. Query enumeration is not an immutable
 Gmail snapshot and does not establish older message history.

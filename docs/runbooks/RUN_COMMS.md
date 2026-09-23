@@ -13,14 +13,15 @@ the Apps Script Triggers page showed `Showing 0 triggers` with no filters set.
    `.local/PILOT_RESOURCES.md`. Keep the resource link private; do not post it in public
    Git, a pull request, or another public record.
 2. Use the authorized connected Sheet and Gmail sources with exact Queue source
-   IDs. Gmail source review is limited to the approved mailbox and the fixed
-   30-day window. Do not request a whole inbox, an account history scan, Apple
-   Messages database access, or thread context older than 30 days.
+   IDs. The current Gmail pilot is limited to the approved mailbox and its fixed
+   seven-day window. A separate 30-day backfill is deferred until pilot
+   acceptance. Do not request a whole inbox, an account history scan, Apple
+   Messages database access, or thread context older than the active window.
 3. Ask ChatGPT:
 
    > Run comms. Read the current private Queue and the latest matching
    > Briefing_View projection in its stored order. Use the exact source IDs for
-   > any Gmail context within the 30-day window. Explain priorities, then draft
+   > any Gmail context within the active seven-day pilot window. Explain priorities, then draft
    > only unsent reply text for items I select. For a selected Queue item, use only
    > the supported guarded Resolve, Reopen, Snooze, or Set waiting state action I explicitly request.
    > Do not send, create a Gmail draft, infer missing source context, or directly
@@ -51,8 +52,8 @@ transport.
 Queue and briefing rows contain bounded metadata and source links, not message
 bodies. The native Gmail metadata pilot emits generic needs-review records; it is
 not an actionable classification or full-thread interpretation. Fetch only the
-selected source identified by the Queue row, within the 30-day limit. If the
-needed context is older, unavailable, or ambiguous, leave the item for review
+selected source identified by the Queue row, within the active seven-day pilot
+window. If the needed context is older, unavailable, or ambiguous, leave the item for review
 and state that limitation.
 
 ChatGPT may write proposed reply text in the conversation. Leave it unsent. Do

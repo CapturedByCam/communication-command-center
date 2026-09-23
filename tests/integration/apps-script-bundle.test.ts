@@ -391,6 +391,7 @@ describe("deployable Apps Script bundle", () => {
       "cccDisableAll",
       "cccBuildBriefing",
       "cccReconcileGmail",
+      "cccStartGmailReconciliationWindow",
       "cccProcessStudio",
       "cccConfigureStudioStep",
       "cccExecuteStudioStep",
@@ -935,7 +936,7 @@ describe("deployable Apps Script bundle", () => {
     expect(result).toEqual({
       ok: true,
       mailbox_verified: true,
-      bounded_days: 30,
+      bounded_days: 7,
       sampled_messages: 1,
       metadata_verified: true,
       raw_content_stored: false,

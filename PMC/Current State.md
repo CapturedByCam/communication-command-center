@@ -117,7 +117,8 @@ reconciliation and real working-week acceptance remain open.
 
 Standing authorization covers private deployment, in-scope tests and independently
 reviewed protected merges. Sole mailbox: `contact@elev8mediaky.com`; initial
-lookback: 30 days; relative dates: America/New_York. Code owns state and validates
+pilot lookback: 7 days; a separate 30-day backfill is deferred until the pilot
+is accepted. Relative dates: America/New_York. Code owns state and validates
 model suggestions. Manual overrides win. Sheets hold metadata, not message bodies.
 All Google messages remain unsent; Codex coordination is authorized.
 

@@ -6,9 +6,11 @@ Updated 2026-09-22. This record distinguishes implementation from live acceptanc
 
 Cam authorized implementation through Milestone 7, independent review, protected
 merges, minimum Google Workspace/Cloud permissions, private resources and scoped
-pilot tests. Sole mailbox: contact@elev8mediaky.com; initial lookback: 30 days;
-time zone: America/New_York. No purchases, billing upgrades, paid infrastructure,
-source deletion, automatic Calendar events, or unrelated account changes.
+pilot tests. Sole mailbox: contact@elev8mediaky.com; initial lookback: seven
+days; time zone: America/New_York. On 2026-09-23 Cam set a separate 30-day
+backfill to occur only after the pilot is accepted. No purchases, billing
+upgrades, paid infrastructure, source deletion, automatic Calendar events, or
+unrelated account changes.
 
 The later instruction prohibits **all Google emails and messages**, including the
 earlier self-only Chat notification. Codex coordination remains authorized.
@@ -251,7 +253,7 @@ required checks. The Studio branch passed full local verification: 370 tests in 
 | --- | --- | --- |
 | Queue/Sheets | Actual adapter and atomic bounded commits | Ten tabs initialized; live health passed; five metadata-pilot Queue rows persisted with no raw content |
 | Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 after health passed, without a source or Queue mutation |
-| Gmail | Native read-only metadata worker, five messages per invocation, 30-day cursor | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
+| Gmail | Native read-only metadata worker with a configurable seven-day initial pilot and deferred 30-day backfill | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
 | Drafts | Domain lifecycle, operation ledger and reviewed create-only provider merged in PR #36 | Uninvoked and absent from the emitted runtime; no compose scope or live create acceptance; replacement/deletion unsupported |
 | Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. It remains unrun and unbound; source binding, strict semantic acceptance, resolved-input retention meaning, and model usefulness remain unverified; processing disabled |
 | Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Safe setup-blocked template exists in [Shortcut installation](../../shortcuts/SHORTCUT_INSTALLATION.md); no export, network request, token, or phone Shortcut installation; disabled |

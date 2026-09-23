@@ -14,6 +14,7 @@ const entrypoints = [
   "cccHealth",
   "cccDisableAll",
   "cccBuildBriefing",
+  "cccStartGmailReconciliationWindow",
   "cccGmailReadProbe",
   "cccReconcileGmail",
   "cccProcessStudio",

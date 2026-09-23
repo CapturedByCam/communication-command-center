@@ -1,8 +1,19 @@
 # Morning handoff — Communication Command Center V1
 
-Updated 2026-09-22 (evening EDT). V1 is not yet accepted for daily unattended use.
+Updated 2026-09-23 (midday EDT). V1 is not yet accepted for daily unattended use.
 
 ## Working now
+
+The optional 30-day metadata backfill was stopped at Cam's direction after 135
+of 193 unique threads. Its preserved checkpoint is `phase=processing`,
+`nextThread=135`, across 12 shards, with no retry or error. Gmail intake is off.
+Do not resume the checkpoint unless Cam asks.
+
+A new private populated-data recovery workbook is verified. It copied no
+collaborators or comments, remains Restricted to Cam as sole owner, uses Eastern
+time, and matches the active workbook across all 11 normalized sheet
+fingerprints. The active workbook was not overwritten or rebound. Its private
+resource ID is recorded only in ignored `.local/PILOT_RESOURCES.md`.
 
 The private Queue has five metadata-pilot items. The existing owner-only
 deployment now points to immutable Version 9, with the 1.1
@@ -214,8 +225,9 @@ The 10:11 EDT health run passed all ten headers, New York time, all automatic
 flags off, and no send capability; `MANUAL_WRITES` is the only enabled control.
 No Google message or Gmail draft was sent or created.
 
-Phase 1 / Milestone 3 can be closed after this evidence merges. Continue with
-the still-open V1 gates tracked in issue #32: Studio source/model acceptance,
+Phase 1 / Milestone 3 is closed. The later optional 30-day backfill is preserved
+at `nextThread=135` and intentionally stopped. Populated-data recovery is
+verified. The remaining issue #32 gates are Studio source/model acceptance,
 create-only draft authorization and acceptance, Shortcut token/device testing,
-populated-data recovery, the deferred 30-day backfill, and the real working-week
-evaluation. Do not enable automatic processing or any send path for those phases.
+and the real working-week evaluation. Do not enable automatic processing or any
+send path for those phases.

@@ -13,9 +13,11 @@ the Apps Script Triggers page showed `Showing 0 triggers` with no filters set.
    `.local/PILOT_RESOURCES.md`. Keep the resource link private; do not post it in public
    Git, a pull request, or another public record.
 2. Use the authorized connected Sheet and Gmail sources with exact Queue source
-   IDs. The current Gmail pilot is limited to the approved mailbox and its fixed
-   seven-day window. A separate 30-day backfill is deferred until pilot
-   acceptance. Do not request a whole inbox, an account history scan, Apple
+   IDs. The accepted Gmail pilot used the approved mailbox and its fixed
+   seven-day window. A later optional 30-day metadata backfill was stopped by
+   owner direction at 135 of 193 unique threads; its checkpoint is preserved and
+   intake is off. Do not resume it as part of review, request a whole inbox, an
+   account history scan, Apple
    Messages database access, or thread context older than the active window.
 3. Ask ChatGPT:
 

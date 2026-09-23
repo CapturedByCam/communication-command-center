@@ -750,6 +750,7 @@ export async function cccReconcileGmailBatch() {
     total.failed += result.failed ?? 0;
     total.status = result.status ?? "blocked";
     if (total.status !== "more") break;
+    if (step < 7) Utilities.sleep(6000);
   }
   return codeResult(() => total);
 }

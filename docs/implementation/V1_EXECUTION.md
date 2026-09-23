@@ -255,7 +255,7 @@ required checks. The Studio branch passed full local verification: 370 tests in 
 | Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 after health passed, without a source or Queue mutation |
 | Gmail | Native read-only metadata worker with a configurable seven-day initial pilot and deferred 30-day backfill | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
 | Drafts | Domain lifecycle, operation ledger and reviewed create-only provider merged in PR #36 | Uninvoked and absent from the emitted runtime; no compose scope or live create acceptance; replacement/deletion unsupported |
-| Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. Literal-source staging, identical replay, and changed-immutable-input replay passed. Actual starter binding, strict semantic acceptance, resolved-input retention meaning, model usefulness, and the mid-invocation flag-off path remain unverified; processing disabled |
+| Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. Literal-source staging and both replay paths passed. A separate disabled draft flow persistently binds the Gmail starter's `Email ID` variable to the private step. Live variable resolution, strict semantic acceptance, resolved-input retention meaning, model usefulness, and the mid-invocation flag-off path remain unverified; processing disabled |
 | Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Private macOS Shortcut and token are installed; authenticated write-only capture, duplicate, invalid-token, size, rate-limit, and kill-switch checks passed with synthetic input; intake is disabled again. iPhone/iPad installation is not accepted |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
 | Calendar | Reviewable candidates only | No Calendar mutation or runtime scope |
@@ -791,7 +791,22 @@ draft was created or sent. Studio-side input and output retention remains
 unresolved.
 
 This closes the literal-source, atomic staging, duplicate, conflict, and
-rollback portions of the Studio custom-step checklist. It does not prove the
-actual Gmail starter-variable binding, real-message model usefulness, exact
+rollback portions of the Studio custom-step checklist. It does not prove live
+Gmail starter-variable resolution, real-message model usefulness, exact
 resolved-input/source retention, or the mid-invocation flag-off path. Those
 remain acceptance gates before unattended Studio processing.
+
+## 2026-09-23 Workspace Studio disabled starter binding
+
+A separate **CCC V1 — Gmail starter binding (disabled)** flow was created with
+`When I get an email` as its starter and `Validate Gmail interpretation` as its
+only action. The action's Gmail message ID input was set through Studio's
+variable picker to `Step 1: Email ID`; the interpretation input contains a
+synthetic schema-valid placeholder. Reopening the saved flow displayed the
+same variable chip and placeholder.
+
+The flow remains `Draft` and was not tested or turned on. This verifies that
+the current account accepts and persists the actual Gmail starter-to-custom-step
+field binding. It does not prove the variable's resolved runtime value, useful
+real-message interpretation, or retention behavior. No Gmail data was read, no
+Sheet was changed, and no message or draft was created or sent.

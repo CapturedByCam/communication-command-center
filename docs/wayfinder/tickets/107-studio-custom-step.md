@@ -4,7 +4,8 @@
 
 Accepted implementation decision. The private test add-on is installed, the
 custom step is visible and configurable, and literal-source metadata staging is
-accepted. Actual starter-variable binding, real-model acceptance, and exact
+accepted. The Gmail starter's `Email ID` variable is configured in a separate
+disabled draft flow. Live variable resolution, real-model acceptance, and exact
 resolved-input/source retention remain gated.
 
 ## Decision
@@ -45,9 +46,11 @@ for the runtime behavior and evidence checklist.
 
 A literal existing message inside the window verifies requested-message metadata
 identity and one atomic staging result. It does **not** prove that a Studio
-starter supplies the intended Gmail ID. A separate actual starter-variable run
-must prove that binding. Real model usefulness requires its own strict-schema and
-review acceptance; installation alone does not establish model acceptance.
+starter supplies the intended Gmail ID. A saved draft-flow binding establishes
+that the UI accepts the starter's `Email ID` variable, but a separate controlled
+run must prove the resolved value. Real model usefulness requires its own
+strict-schema and review acceptance; installation alone does not establish
+model acceptance.
 
 On 2026-09-22, test add-on installation was verified in Test deployments: Application
 shows Workspace Studio, the button is Uninstall, and Installed add-ons is present. No
@@ -93,6 +96,15 @@ Activity says Data available for
 40 days and exposes stored synthetic output; exact resolved-input/source retention remains
 unknown. The literal-source run above did not expose or persist message content,
 but it does not establish starter binding or model usefulness.
+
+Later on 2026-09-23, a separate flow named **CCC V1 — Gmail starter binding
+(disabled)** was saved with `When I get an email` as its starter and the private
+custom step as its only action. Reopening the flow showed the Gmail message ID
+input still bound to `Step 1: Email ID` and the interpretation input still set
+to a synthetic schema-valid placeholder. The flow remained `Draft`; it was not
+tested or turned on. This accepts the saved starter-binding configuration only.
+It made no Gmail read, Sheet write, draft, send, or Activity run, and does not
+resolve retention or prove the variable's live value.
 
 ## Sources
 

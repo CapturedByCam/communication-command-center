@@ -1,6 +1,6 @@
 # Morning handoff — Communication Command Center V1
 
-Updated 2026-09-23 (14:32 EDT). V1 is not yet accepted for daily unattended use.
+Updated 2026-09-23 (14:55 EDT). V1 is not yet accepted for daily unattended use.
 
 ## Working now
 
@@ -100,8 +100,10 @@ unbound. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
   replay. Exactly one metadata-only `Studio_Inbox` row exists from these checks;
   duplicate and conflict runs added nothing, and `Audit_Log` stayed unchanged.
   `CCC_STUDIO_PROCESSING` is false again, the live resource ID was removed from
-  the saved flow, and the final disabled run made no further write. Actual Gmail
-  starter-variable binding, useful real-message interpretation, the
+  the saved flow, and the final disabled run made no further write. A separate
+  disabled draft flow now binds the Gmail starter's `Email ID` variable to the
+  private step and retains that binding after reopen. It was not run or turned
+  on. Live starter-variable resolution, useful real-message interpretation, the
   mid-invocation flag-off path, and exact resolved-input/source retention remain
   open. Do not feed real message content into Studio until retention is accepted.
 - Bind a privacy-compatible interpretation provider within an existing permitted
@@ -159,8 +161,8 @@ manifest, and the existing owner-only deployment points to it. Only previously
 accepted manual Queue controls remain enabled. Final editor health passed, and
 no trigger or send capability is active.
 
-Remaining blockers are Workspace Studio starter binding, useful real-message
-interpretation and retention, compose authorization and draft
+Remaining blockers are Workspace Studio live starter resolution, useful
+real-message interpretation and retention, compose authorization and draft
 acceptance, then a real working-week pilot. The Mac Shortcut gate is closed. See
 [Current State](Current%20State.md) and
 [V1 execution](../docs/implementation/V1_EXECUTION.md).

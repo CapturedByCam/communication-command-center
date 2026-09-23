@@ -100,6 +100,20 @@ export function doPost(e: GoogleAppsScript.Events.DoPost) {
       now: () => new Date(),
       hash: sha256,
       byteLength: (body) => Utilities.newBlob(body).getBytes().length,
+      allowPreAuthRequest: () => {
+        const lock = LockService.getScriptLock();
+        if (!lock.tryLock(500)) return false;
+        try {
+          const cache = CacheService.getScriptCache(),
+            key = "shortcut_preauth_rate_" + Math.floor(Date.now() / 60000);
+          const count = Number(cache.get(key) ?? "0");
+          if (!Number.isFinite(count) || count >= 10) return false;
+          cache.put(key, String(count + 1), 120);
+          return true;
+        } finally {
+          lock.releaseLock();
+        }
+      },
       allowRequest: () => {
         const lock = LockService.getScriptLock();
         if (!lock.tryLock(500)) return false;

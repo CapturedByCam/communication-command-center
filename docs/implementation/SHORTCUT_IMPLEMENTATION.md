@@ -50,7 +50,12 @@ with MIME type JSON. `doPost` must not return a Promise. Read the token and the
 lock-protected ledger keyed by `idempotency_key` for the atomic storage contract.
 Apply the rate limit using transport metadata where Apps Script makes it
 available; if no trustworthy address exists, use a conservative single-user
-bucket without recording request content.
+bucket without recording request content. For the anonymous deployment, apply
+a global pre-authentication cap of 10 requests per minute before parsing, then
+apply the separate authenticated write cap of 30 requests per minute. Apps
+Script does not supply a trustworthy caller address to this handler, so the
+pre-authentication cap is intentionally global and bounds rather than
+eliminates public request cost.
 
 Apply the authenticated write quota before either a Queue create or an
 authenticated malformed-request audit row. Recheck the current kill switch and

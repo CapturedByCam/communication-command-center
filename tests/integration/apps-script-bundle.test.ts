@@ -243,6 +243,10 @@ function createRuntime(
     createMenu: vi.fn(() => menu),
   };
   const lock = { tryLock: vi.fn(() => true), releaseLock: vi.fn() };
+  const cacheValues = new Map<string, string>();
+  const cachePut = vi.fn((key: string, value: string) => {
+    cacheValues.set(key, value);
+  });
   const studio = studioServices();
   const context = vm.createContext({
     CardService: studio.CardService,
@@ -284,7 +288,12 @@ function createRuntime(
       getUi: () => ui,
     },
     LockService: { getScriptLock: () => lock },
-    CacheService: { getScriptCache: () => ({ get: () => null, put: vi.fn() }) },
+    CacheService: {
+      getScriptCache: () => ({
+        get: (key: string) => cacheValues.get(key) ?? null,
+        put: cachePut,
+      }),
+    },
     ScriptApp: {
       getProjectTriggers: () =>
         triggers.map(({ handler }) => ({
@@ -357,6 +366,8 @@ function createRuntime(
     batchUpdate,
     deleted,
     lock,
+    cacheValues,
+    cachePut,
     logs,
     reads,
     prompt,
@@ -398,6 +409,33 @@ describe("deployable Apps Script bundle", () => {
     expect(
       JSON.parse(context.doPost({ postData: { contents: "private" } }).value),
     ).toEqual({ status: "rejected", error_code: "unavailable" });
+  });
+
+  it("rate limits unauthenticated Shortcut requests before parsing their body", () => {
+    const runtime = createRuntime({
+      properties: {
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+        CCC_SHORTCUT_INTAKE: "true",
+      },
+    });
+    const post = () =>
+      JSON.parse(
+        runtime.context.doPost({ postData: { contents: "not JSON" } }).value,
+      );
+
+    for (let request = 0; request < 10; request++)
+      expect(post()).toEqual({
+        status: "rejected",
+        error_code: "invalid_payload",
+      });
+    expect(post()).toEqual({
+      status: "rejected",
+      error_code: "rate_limited",
+    });
+    expect(runtime.cacheValues.size).toBe(1);
+    expect(runtime.cachePut).toHaveBeenCalledTimes(10);
+    expect(runtime.reads).toEqual([]);
+    expect(runtime.batchUpdate).not.toHaveBeenCalled();
   });
 
   it("bootstraps with every feature flag false and makes no workbook mutation when headers drift", () => {

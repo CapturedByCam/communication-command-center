@@ -510,3 +510,14 @@ one-time content redirect; no Queue or audit mutation occurred. At 20:39:47 EDT 
 passed all ten headers, New York time, no send capability, and the expected
 flags. The trigger count was not rechecked in this step. No Google email,
 message, or Gmail draft was sent or created.
+
+## 2026-09-23 anonymous Shortcut pre-authentication guard
+
+Independent review found that Version 10 wired only the authenticated request
+quota. The Apps Script wrapper now adds a lock-protected global cap of 10
+requests per minute before parsing an anonymous POST, separate from the
+30-per-minute authenticated quota. Apps Script does not expose a trustworthy
+caller address to this handler, so the global cap limits request cost but does
+not eliminate denial-of-service risk. The focused deployed-bundle regression
+passed (17 tests); the change is not yet merged or deployed. Shortcut intake
+remains disabled, and no Google message or draft was sent or created.

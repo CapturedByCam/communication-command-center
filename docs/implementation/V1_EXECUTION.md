@@ -511,7 +511,7 @@ passed all ten headers, New York time, no send capability, and the expected
 flags. The trigger count was not rechecked in this step. No Google email,
 message, or Gmail draft was sent or created.
 
-## 2026-09-23 anonymous Shortcut pre-authentication guard
+## 2026-09-22 evening EDT anonymous Shortcut guard and Chrome reachability
 
 Independent review found that Version 10 wired only the authenticated request
 quota. The Apps Script wrapper now adds a lock-protected global cap of 10
@@ -520,6 +520,19 @@ requests per minute before parsing an anonymous POST, separate from the
 so it sets the effective single-user capture ceiling at 10 per minute. Apps
 Script does not expose a trustworthy caller address to this handler, so the
 global cap limits request cost but does not eliminate denial-of-service risk.
-The focused deployed-bundle regression passed (17 tests); the change is not yet
-merged or deployed. Shortcut intake remains disabled, and no Google message or
-draft was sent or created.
+The focused deployed-bundle regression passed (17 tests). PR #55 merged at
+`7229003`; repository verification and CodeQL checks passed. The active separate
+Shortcut deployment is Version 11, with `ANYONE` access and owner execution;
+the Version 9 owner-only deployment remains unchanged.
+
+Cam applied the Google Admin `script.googleusercontent.com` insecure-content
+allowlist for the CapturedByCam organizational unit. Chrome's site details then
+showed Insecure content set to Allow. Opening the active Version 11 URL in
+Chrome reached Google's content host and returned only the fixed
+`{"status":"rejected","error_code":"method_not_allowed"}` response to a
+browser GET. This verifies the browser route and safe GET rejection, not the
+authenticated Shortcut POST path or a device capture. No write request was
+sent. Shortcut intake and every other automatic feature remain disabled;
+`MANUAL_WRITES` is the only true flag, `cccHealth` passed the ten-header and
+New York time checks with no send capability, and the unfiltered trigger check
+showed zero triggers. No Google message or draft was sent or created.

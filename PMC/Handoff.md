@@ -1,6 +1,6 @@
 # Morning handoff — Communication Command Center V1
 
-Updated 2026-09-22. V1 is not yet accepted for daily unattended use.
+Updated 2026-09-22 (evening EDT). V1 is not yet accepted for daily unattended use.
 
 ## Working now
 
@@ -18,11 +18,14 @@ restoration passed at 11:56 EDT; five Queue and thirteen audit rows remain. The
 first row is restored to open / unknown / manual override, with no snooze.
 
 PR #47's reviewed Shortcut guards and PR #52's controlled Gmail diagnostics are
-now in the existing owner-only deployment as Version 9. Its immutable code and
-manifest match reviewed commit `379474d`. The 20:05:02 EDT editor health check
-passed all ten headers and confirmed no send capability; every automatic
-feature remains off and only the accepted manual Queue controls are enabled.
-Version 9 does not make the endpoint available to a phone.
+in the existing owner-only deployment as Version 9. Its immutable code and
+manifest match reviewed commit `379474d`. The separate Shortcut deployment is
+now Version 11, after PR #55 merged at `7229003` with repository verification
+and CodeQL checks passing. Version 11 has `ANYONE` access and owner execution;
+Version 9 remains owner-only. Its lock-protected pre-authentication cap limits
+requests to ten per minute globally (including valid requests); Apps Script
+does not expose a trustworthy caller address, so this does not eliminate
+denial-of-service risk.
 
 The disable-first deployment drill switched Version 6 to retained Version 5 and
 back, verifying each immutable build and unchanged owner-only access. Queue/Audit
@@ -130,10 +133,13 @@ acceptance, local Shortcut endpoint/device setup, then a real working-week
 pilot. See [Current State](Current%20State.md) and
 [V1 execution](../docs/implementation/V1_EXECUTION.md).
 
-Cam subsequently approved a separate anonymous Shortcut endpoint. Version 10
-is deployed alongside the retained owner-only Version 9. Its unauthenticated
-GET was verified to return only a fixed rejection, and a synthetic anonymous
-POST returned `disabled` while Shortcut intake remained off. The latest editor
-health kept other automatic flags off. Token setup, phone configuration and
-device acceptance remain unverified; see the latest dated evidence in
-[V1 execution](../docs/implementation/V1_EXECUTION.md).
+Cam's Google Admin allowlist change for `script.googleusercontent.com` is locally
+applied. Chrome's site details show Insecure content set to Allow; opening the
+active Version 11 endpoint in Chrome now returns only the fixed
+`method_not_allowed` response for a read-only GET. This clears the browser
+reachability check but does not test an authenticated Shortcut POST. No write
+request was sent. The previous synthetic anonymous POST returned `disabled`
+while Shortcut intake was off. No token is provisioned, no Shortcut endpoint or
+device capture has been configured, and device acceptance remains open. Keep
+intake and all other automatic features disabled. See the latest dated evidence
+in [V1 execution](../docs/implementation/V1_EXECUTION.md).

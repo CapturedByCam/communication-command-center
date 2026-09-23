@@ -1,9 +1,26 @@
 # Current State
 
-Updated 2026-09-22. V1 is not accepted for unattended daily use.
+Updated 2026-09-22 (evening EDT). V1 is not accepted for unattended daily use.
 
 ## Verified position
 
+- The separate Shortcut deployment is now active as Version 11 with the reviewed
+  pre-authentication rate guard; PR #55 merged at `7229003` after independent
+  review and passing repository verification and CodeQL checks. Version 11 is
+  `ANYONE` / `USER_DEPLOYING`; the original Version 9 owner-only deployment is
+  still separate and unchanged. The global lock-protected cap rejects after
+  ten requests per minute before parsing, including valid requests, which also
+  limits one user's capture rate; Apps Script does not expose a trustworthy
+  caller address, so this is not full denial-of-service protection.
+  After Cam's Google Admin allowlist change for `script.googleusercontent.com`,
+  Chrome's site details showed Insecure content set to Allow. Opening the
+  Version 11 URL in Chrome reached the content host and returned only the fixed
+  `method_not_allowed` JSON for GET. This confirms the browser route and safe
+  GET rejection; it does not validate authenticated Shortcut POST or device
+  acceptance. No write request was sent. A live `cccHealth` check passed all
+  ten headers, New York time and no send capability; all six automatic flags
+  were false, `MANUAL_WRITES` alone was true, and the unfiltered Triggers page
+  showed zero triggers.
 - Existing owner-only Apps Script deployment now points to immutable Version 9
   (2026-09-22, about 20:02 EDT), with PR #52's controlled Gmail diagnostic
   labels. The immutable code and manifest match reviewed commit `379474d`.
@@ -17,8 +34,9 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
   `send_capability:false`. The unfiltered Triggers page showed zero triggers.
   Only previously accepted guarded manual Queue controls are enabled.
 - Cam explicitly approved anonymous access for a separate Shortcut endpoint.
-  Version 10 is deployed as `ANYONE_ANONYMOUS` / `USER_DEPLOYING`; the existing
-  owner-only Version 9 remains unchanged. Unauthenticated GET returns only the
+  Historical Version 10 was deployed as `ANYONE_ANONYMOUS` / `USER_DEPLOYING`;
+  Version 11 now supersedes it, while the existing owner-only Version 9 remains
+  unchanged. Unauthenticated GET returns only the
   fixed method-not-allowed rejection. At 20:39:47 EDT, editor health passed all
   ten headers, New York time, no send capability, Gmail/Studio/Shortcut/draft/
   briefing flags false and `MANUAL_WRITES` true. A synthetic unauthenticated
@@ -81,7 +99,7 @@ Updated 2026-09-22. V1 is not accepted for unattended daily use.
 
 ## Commitment storage released; provider integration pending
 
-The repository and private Version 9 deployment include strict 1.1 Commitment
+The repository and private owner-only Version 9 deployment include strict 1.1 Commitment
 storage, bounded outbound chronology, a guarded observation writer, and
 briefing provenance validation. After a verified empty-table preflight and private
 backup, `cccMigrateEmptyCommitments` returned `migrated` with schema 1.1 at
@@ -123,11 +141,13 @@ All Google messages remain unsent; Codex coordination is authorized.
    promise extraction and the guarded writer still need a verified
    interpretation/runtime binding and live acceptance; local integration tests alone do not establish
    that product behavior.
-3. The native Shortcut remains a setup-blocked two-action template. Version 10
-   now has a separately deployed anonymous endpoint whose GET is fixed rejection;
-   its synthetic POST returns `disabled` with intake off. No token is provisioned,
-   no Shortcut endpoint/token configuration or device acceptance exists. Complete
-   device setup and prove the authenticated write-only path without exposing Queue reads.
+3. The native Shortcut remains a setup-blocked two-action template. Version 11
+   is a separately deployed anonymous endpoint; Chrome can now reach its host
+   after Cam's Admin allowlist change, and GET returns the fixed rejection.
+   A synthetic POST previously returned `disabled` with intake off. No token is
+   provisioned, no Shortcut endpoint/token configuration or device acceptance
+   exists. Complete device setup and prove the authenticated write-only path
+   without exposing Queue reads.
 4. Collect real model observations, usefulness ratings and the required working
    week after accepted bindings. Fifty synthetic policy fixtures are implementation
    evidence, not real model accuracy or pilot completion.

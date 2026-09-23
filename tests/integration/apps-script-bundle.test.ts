@@ -188,6 +188,7 @@ function createRuntime(
     readonly failBatch?: boolean;
     readonly failValuesRead?: boolean;
     readonly failMetadataRead?: boolean;
+    readonly applyBatchWrites?: boolean;
     readonly onPrompt?: (
       properties: Map<string, string>,
       reads: readonly string[],
@@ -208,6 +209,43 @@ function createRuntime(
       { headers: [...sheet.headers], rows: [] as unknown[][] },
     ]),
   );
+  if (options.applyBatchWrites)
+    batchUpdate.mockImplementation(
+      (body: {
+        requests: {
+          updateCells: {
+            start: { sheetId: number; rowIndex: number };
+            rows: {
+              values: {
+                userEnteredValue?: {
+                  stringValue?: string;
+                  numberValue?: number;
+                  boolValue?: boolean;
+                };
+              }[];
+            }[];
+          };
+        }[];
+      }) => {
+        for (const request of body.requests) {
+          const change = request.updateCells;
+          const sheet = WORKBOOK_MANIFEST[change.start.sheetId - 1]!;
+          const rows = change.rows.map((row) =>
+            row.values.map(
+              (cell) =>
+                cell.userEnteredValue?.stringValue ??
+                cell.userEnteredValue?.numberValue ??
+                cell.userEnteredValue?.boolValue ??
+                "",
+            ),
+          );
+          tables
+            .get(sheet.name)!
+            .rows.splice(change.start.rowIndex - 1, rows.length, ...rows);
+        }
+        return {};
+      },
+    );
   const queue = tables.get("Queue")!;
   queue.headers = [...(options.queueHeaders ?? queue.headers)];
   queue.rows = (options.queueRows ?? []).map((row) =>
@@ -399,6 +437,7 @@ describe("deployable Apps Script bundle", () => {
       "cccDisableAll",
       "cccBuildBriefing",
       "cccReconcileGmail",
+      "cccReconcileGmailBatch",
       "cccStartGmailReconciliationWindow",
       "cccProcessStudio",
       "cccConfigureStudioStep",
@@ -783,6 +822,41 @@ describe("deployable Apps Script bundle", () => {
     expect(JSON.stringify(runtime.batchUpdate.mock.calls)).not.toContain(
       privateMarker,
     );
+  });
+
+  it("runs bounded Gmail steps until the durable cursor completes", async () => {
+    const runtime = createRuntime({
+      applyBatchWrites: true,
+      properties: {
+        CCC_GMAIL_INTAKE: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      gmail: {
+        messages: [{ id: "synthetic-message", threadId: "synthetic-thread" }],
+        metadata: {
+          id: "synthetic-message",
+          threadId: "synthetic-thread",
+          internalDate: String(Date.now() - 60_000),
+          labelIds: ["INBOX"],
+          payload: {
+            headers: [
+              { name: "From", value: "SANITIZED-SENDER@example.com" },
+              { name: "To", value: "contact@elev8mediaky.com" },
+            ],
+          },
+        },
+      },
+    });
+
+    await expect(runtime.context.cccReconcileGmailBatch()).resolves.toEqual({
+      ok: true,
+      status: "complete",
+      steps: 2,
+      processed: 1,
+      excluded: 0,
+      failed: 0,
+    });
+    expect(runtime.batchUpdate).toHaveBeenCalledTimes(2);
   });
 
   it("returns only a controlled diagnostic when a Sheets batch outcome is uncertain", async () => {

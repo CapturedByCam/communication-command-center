@@ -327,6 +327,7 @@ export function cccDisableAll() {
       for (const name of FLAGS) props.setProperty("CCC_" + name, "false");
       const managed = new Set([
         "cccReconcileGmail",
+        "cccReconcileGmailBatch",
         "cccProcessStudio",
         "cccBuildBriefing",
       ]);
@@ -719,6 +720,38 @@ async function reconcile(studio: boolean) {
 }
 export function cccReconcileGmail() {
   return reconcile(false);
+}
+/**
+ * Advances at most eight durable Gmail steps in one operator invocation.
+ * Every step persists independently; controlled retry, block, disable, and
+ * completion states stop the batch immediately.
+ */
+export async function cccReconcileGmailBatch() {
+  const total = {
+    ok: true,
+    status: "more",
+    steps: 0,
+    processed: 0,
+    excluded: 0,
+    failed: 0,
+  };
+  for (let step = 0; step < 8; step++) {
+    const result = (await reconcile(false)) as {
+      ok: boolean;
+      status?: string;
+      processed?: number;
+      excluded?: number;
+      failed?: number;
+    };
+    if (!result.ok || result.status === "disabled") return result;
+    total.steps++;
+    total.processed += result.processed ?? 0;
+    total.excluded += result.excluded ?? 0;
+    total.failed += result.failed ?? 0;
+    total.status = result.status ?? "blocked";
+    if (total.status !== "more") break;
+  }
+  return codeResult(() => total);
 }
 export function cccProcessStudio() {
   return reconcile(true);

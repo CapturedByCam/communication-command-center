@@ -25,6 +25,7 @@ const entrypoints = [
   "cccReopenSelectedQueueRow",
   "cccSnoozeSelectedQueueRow",
   "cccSetSelectedQueueWaiting",
+  "cccCreateDraftForSelectedQueueRow",
   "cccRetrySelectedGmailSnapshotFailure",
   "cccReplaySelectedGmailQueueItem",
 ];

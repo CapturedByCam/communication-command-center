@@ -14,7 +14,8 @@ unrelated account changes.
 
 The later instruction prohibits **all Google emails and messages**, including the
 earlier self-only Chat notification. Codex coordination remains authorized.
-No email or Chat send transport exists in this runtime. No draft is created by it.
+No email or Chat send transport exists. The deployed runtime cannot create a draft;
+the local candidate described below remains unscoped, undeployed, and uninvoked.
 
 ## Implemented
 
@@ -22,7 +23,8 @@ No email or Chat send transport exists in this runtime. No draft is created by i
   deduplication and manual preservation merged at 0c9c497.
 - PR24 disabled Studio blueprint merged; issue23 remains open for real acceptance.
 - PR28 draft lifecycle with ownership, stale detection and uncertain-write recovery
-  merged at 4765c7c. These are domain services; a live draft provider is unbound.
+  merged at 4765c7c. The deployed provider remains inactive; the local selected-row
+  candidate described below is bound but unscoped, undeployed and uninvoked.
 - Release work integrates actual Advanced Sheets/Gmail bindings, atomic Sheet
   batches, synchronous write-only HTTP handling, guarded bootstrap and kill switch,
   conservative metadata reconciliation, commitments, date normalization,
@@ -182,8 +184,8 @@ The initial 30-day Gmail window is incomplete. The prior briefing projection
 predates these Queue items and must not be treated as current.
 
 PR #36 merged at `8f97b6b43b260534a9ee10c2f77aa403f08d3d95` after independent review
-and required CI. Its create-only native provider remains uninvoked and absent
-from the emitted runtime. The integrated waiting candidate passed 392 tests in
+and required CI. At that point its create-only native provider remained uninvoked
+and absent from the emitted runtime. The integrated waiting candidate passed 392 tests in
 39 files plus schema, formatting, lint, type, build and planning checks. Independent
 review verified prompt cancellation, lost authorization, exact enum validation,
 unchanged legacy audit hashes and atomic Queue/Audit batch coverage.
@@ -254,7 +256,7 @@ required checks. The Studio branch passed full local verification: 370 tests in 
 | Queue/Sheets | Actual adapter and atomic bounded commits | Ten tabs initialized; live health passed; five metadata-pilot Queue rows persisted with no raw content |
 | Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 after health passed, without a source or Queue mutation |
 | Gmail | Native read-only metadata worker with a configurable seven-day initial pilot and deferred 30-day backfill | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
-| Drafts | Domain lifecycle, operation ledger and reviewed create-only provider merged in PR #36 | Uninvoked and absent from the emitted runtime; no compose scope or live create acceptance; replacement/deletion unsupported |
+| Drafts | Domain lifecycle, operation ledger, reviewed create-only provider, and local owner-only selected-row runtime | Runtime validates the exact Queue row, curated contact, bounded interpretation, fresh reply recipient, source and flags. It is not deployed, has no compose scope or live create acceptance, and replacement/deletion remain unsupported |
 | Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. Literal-source staging and both replay paths passed. A separate disabled draft flow persistently binds the Gmail starter's `Email ID` variable to the private step. Live variable resolution, strict semantic acceptance, resolved-input retention meaning, model usefulness, and the mid-invocation flag-off path remain unverified; processing disabled |
 | Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Private macOS Shortcut and token are installed; authenticated write-only capture, duplicate, invalid-token, size, rate-limit, and kill-switch checks passed with synthetic input; intake is disabled again. iPhone/iPad installation is not accepted |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
@@ -277,7 +279,8 @@ source IDs and strict pre-persistence validation.
    unpublished test steps. The private action is visible and configurable, but has not
    run. Starter binding, strict semantic acceptance, retention meaning, and model
    usefulness remain pending.
-   Draft ownership/revision data remains unbound. The inspected
+   The local selected-row draft candidate is bound to Queue and its operation ledger,
+   but compose authorization, deployment and live acceptance remain open. The inspected
    Cloud project showed an expired free trial and a free-trial billing account;
    Vertex requires enabled billing. No billing upgrade was made. Free Gemini API
    terms are unsuitable for private-message processing here. An eligible existing
@@ -315,6 +318,29 @@ files, lint, typecheck, three JSON/Zod contracts and a callable Apps Script buil
 `pnpm validate:planning` also passed. Existing lifecycle tests retain reservation,
 uncertain-write, duplicate and manual-edit protections. These are synthetic/local
 results, not a live Gmail create. Native replacement/deletion make no provider calls.
+
+## Selected-row draft runtime candidate — 2026-09-23
+
+The local candidate adds `cccCreateDraftForSelectedQueueRow` as the only invokable
+draft path. It requires the owner to select exactly one current Queue row and
+provide strict bounded interpretation JSON plus reviewed plain text. Before a
+create, it rechecks the row snapshot, active curated contact, matching fresh Gmail
+reply recipient, exact message/thread identity, source age, owner, workbook and
+`CCC_DRAFT_CREATION`. Draft text and interpretation are not stored in Sheets or
+logs; the existing operation ledger retains only bounded metadata and a body hash.
+The entrypoint exposes no send, update or delete call.
+
+The candidate revalidates the Queue snapshot, expected recipient, kill switch and
+pending ledger at the final provider boundary. After a successful create, it
+projects `generated` plus the draft ID into the same unchanged Queue row; a
+projection conflict returns recovery-required and the durable ledger prevents a
+duplicate create. The manifest still omits `gmail.compose`; no code was deployed
+or invoked, no flag changed, and no Gmail draft or message was created.
+After the review fixes, `pnpm verify` passed 446 tests in 46 files plus formatting,
+lint, typecheck, three schema checks and the callable Apps Script build. Planning
+validation and `git diff --check` also passed. The final independent review found
+no remaining merge blocker; focused regression coverage then passed for explicit
+stale-success recovery messaging.
 
 ## Bounded chronology source merged — 2026-09-22
 

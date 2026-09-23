@@ -1,6 +1,6 @@
 # Morning handoff — Communication Command Center V1
 
-Updated 2026-09-23 (14:55 EDT). V1 is not yet accepted for daily unattended use.
+Updated 2026-09-23 (15:36 EDT). V1 is not yet accepted for daily unattended use.
 
 ## Working now
 
@@ -108,9 +108,17 @@ unbound. See [storage release](../docs/implementation/COMMITMENT_STORAGE.md).
   open. Do not feed real message content into Studio until retention is accepted.
 - Bind a privacy-compatible interpretation provider within an existing permitted
   entitlement. Prove real source IDs, strict validation, outbound-promise
-  Commitments, draft eligibility and useful output. The create-only native draft
-  provider is merged in PR #36 but unbound; compose authorization/live acceptance
-  remain open. Replacement and deletion stay unsupported to preserve human edits.
+  Commitments, draft eligibility and useful output. A local selected-row runtime
+  now binds the create-only provider to the exact Queue row, curated contact and
+  bounded interpretation, with fresh source, recipient, kill-switch and pending
+  reservation rechecks at the provider boundary. A successful create projects
+  `generated` and the draft ID to the unchanged Queue row. It is not deployed and
+  the manifest still has no compose scope. Minimum compose authorization and one
+  live unsent-draft acceptance remain open. Replacement and deletion stay
+  unsupported to preserve human edits.
+  The remediated candidate passed 446 tests in 46 files and every required local
+  verification check. Final independent review found no remaining merge blocker;
+  hosted checks remain before merge.
 - The local Mac [Shortcut installation](../shortcuts/SHORTCUT_INSTALLATION.md)
   is accepted. Keep its token private and `CCC_SHORTCUT_INTAKE` off outside
   deliberate captures. The working Shortcut must not be exported or shared.

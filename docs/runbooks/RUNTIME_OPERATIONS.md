@@ -60,9 +60,11 @@ seven flags off and zero managed triggers.
 
 Keep automatic intake, drafting, Shortcut capture, and briefing delivery disabled. The
 owner may use only the accepted guarded Queue controls under `CCC_MANUAL_WRITES`; do not
-install a trigger or enable drafting from this pilot. The create-only draft-provider
-slice merged in PR #36 after independent review and full checks; it remains unbound
-and unscoped, pending a trusted context resolver and separate live provider acceptance.
+install a trigger or enable drafting from this pilot. The deployed create-only
+draft-provider slice from PR #36 remains inactive and unscoped. A local, uninvoked
+candidate now binds the selected-Queue-row resolver and final recipient, context,
+flag, and reservation checks; it still requires merge plus separate compose-scope,
+deployment, and live provider acceptance.
 
 ## Offline deployment-drift check
 

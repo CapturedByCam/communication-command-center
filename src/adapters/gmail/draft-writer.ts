@@ -79,13 +79,20 @@ export interface DraftTarget {
   readonly sourceMessageId: string;
 }
 
+export interface DraftCreateRequest extends DraftTarget {
+  readonly body: string;
+  readonly expectedRecipient: string | null;
+  /** Revalidates the live context, kill switch, and pending reservation at the provider boundary. */
+  readonly authorizeWrite: () => Promise<boolean>;
+}
+
 /** No send operation. Conflict/unsupported MUST guarantee no external mutation.
  * Revisions must cover the entire draft, including recipients, subject, and body.
  * Compare-and-write must be atomic relative to human edits, or return unsupported.
  * A real Gmail implementation satisfying this contract has NOT been supplied.
  */
 export interface DraftTransport {
-  create(request: DraftTarget & { readonly body: string }): Promise<unknown>;
+  create(request: DraftCreateRequest): Promise<unknown>;
   replaceIfUnchanged(
     request: DraftTarget & {
       readonly draftId: string;
@@ -395,8 +402,9 @@ export class DraftWriter {
     body?: string,
   ): Promise<DraftWriteResult> {
     // Re-read after committing the reservation; a kill switch or newer source may have arrived.
+    let current: DraftContext | null = null;
     try {
-      const current = await this.context(item.item_id);
+      current = await this.context(item.item_id);
       if (
         !current ||
         !(reserved.operation === "delete"
@@ -438,7 +446,33 @@ export class DraftWriter {
     try {
       const result =
         reserved.operation === "create"
-          ? await this.dependencies.transport.create({ ...target, body: body! })
+          ? await this.dependencies.transport.create({
+              ...target,
+              body: body!,
+              expectedRecipient: current!.item.contact?.email ?? null,
+              authorizeWrite: async () => {
+                try {
+                  const latest = await this.context(item.item_id);
+                  if (!latest || !this.eligible(latest, item)) return false;
+                  if (
+                    latest.item.contact?.email?.toLowerCase() !==
+                    current!.item.contact?.email?.toLowerCase()
+                  )
+                    return false;
+                  if (!(await this.enabled())) return false;
+                  const pending = await this.dependencies.repository.get(
+                    item.item_id,
+                  );
+                  return (
+                    pending?.operation_id === reserved.operation_id &&
+                    pending.status === "pending" &&
+                    !pending.stale_requested
+                  );
+                } catch {
+                  return false;
+                }
+              },
+            })
           : reserved.operation === "replace"
             ? await this.dependencies.transport.replaceIfUnchanged({
                 ...target,

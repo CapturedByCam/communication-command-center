@@ -487,3 +487,26 @@ second sweep was performed. Intake was restored to false immediately. The
 capability with all six automatic flags false and `MANUAL_WRITES` alone true.
 The unfiltered Triggers page showed zero. No Google message or draft was sent
 or created; the 30-day window remains incomplete.
+
+## 2026-09-22 approved public Shortcut endpoint
+
+Cam explicitly approved a separate endpoint with anonymous access after the
+specific access question was surfaced. The reviewed change leaves Version 9's
+owner-only deployment intact and adds Version 10 as a separate
+`ANYONE_ANONYMOUS` / `USER_DEPLOYING` deployment. Its GET handler returns only
+`{"status":"rejected","error_code":"method_not_allowed"}`. Shortcut intake,
+Gmail intake, Studio processing, draft creation/replacement, and briefing
+delivery remain false; manual Queue controls remain the sole enabled flag.
+No token was created or entered, no Shortcut was configured, and no source
+content was submitted.
+
+The minimum manifest and bundle checks passed (18 tests across two files),
+`pnpm build` passed, and the approved bundle was pushed. `clasp deployments`
+confirmed the separate Version 10 deployment while Version 9 remains listed as
+owner-only. An unauthenticated GET followed to the fixed rejection JSON. A
+synthetic unauthenticated POST was attempted with all intake disabled, but the
+Google response redirect did not yield a verifiable application JSON response;
+POST behavior is not claimed as live-verified. At 20:39:47 EDT editor health
+passed all ten headers, New York time, no send capability, and the expected
+flags. The trigger count was not rechecked in this step. No Google email,
+message, or Gmail draft was sent or created.

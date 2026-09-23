@@ -117,7 +117,6 @@ export async function runBoundedGmailReconciliation(
     check();
     return await adapter.runTransaction(spreadsheetId, async () => {
       check();
-      await sync.verifyHeaders();
       const saved = await sync.load(BOUNDED_GMAIL_CHECKPOINT_KEY);
       let checkpoint: BoundedGmailCheckpoint | null =
         saved === null ? null : BoundedGmailCheckpointSchema.parse(saved);

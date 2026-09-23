@@ -733,6 +733,7 @@ describe("deployable Apps Script bundle", () => {
       processed: 0,
       failed: 0,
     });
+    expect(runtime.reads).not.toContain("'Studio_Inbox'!A1:ZZ1");
     expect(runtime.gmailGets).not.toHaveBeenCalled();
     // Apply the first Config batch so the next invocation sees persisted enumeration.
     for (const request of runtime.batchUpdate.mock.calls[0]![0].requests) {

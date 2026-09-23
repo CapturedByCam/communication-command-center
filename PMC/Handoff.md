@@ -182,6 +182,18 @@ Post-run `cccHealth` passed all ten headers, New York time and no-send checks;
 all automatic flags are off and only `MANUAL_WRITES` is on. No message or draft
 was sent or created.
 
-Next: diagnose the failed per-message API request from safe metadata/logging,
+Next: diagnose the Google API failure from safe metadata/logging,
 without resuming writes until the cause is understood. Do not reset the cursor
 or start a 30-day backfill. Preserve the all-automatic-flags-off state.
+
+07:00 EDT triage corrected the likely origin: the outer `google_api_failure`
+cannot be attributed to the per-message Gmail read from this label. The reader
+converts Gmail provider exceptions; Sheets values and spreadsheet metadata reads
+can escape with that label. The 01:33:19 execution log has no raw error. A
+content-free source diagnostic is prepared separately and passes focused bundle
+tests, but is not deployed. `clasp run cccHealth` currently fails before script
+execution with storage `NOT_FOUND`; browser editor health at 01:35 remains the
+last confirmed live check. Preserve the seven-day cursor and all automatic
+features off. Resolve the execution access issue, verify exact deployed source
+and current flags, then use read-only Sheets probes or the reviewed fixed
+diagnostic before considering another reconciliation invocation.

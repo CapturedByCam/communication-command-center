@@ -17,6 +17,7 @@ import {
   sha256,
   googleGateway,
   googleSheetServices,
+  SheetApiReadError,
 } from "./google-services.js";
 import { literalCell } from "./google-sheet-gateway.js";
 import { migrateEmptyCommitments } from "./commitment-migration.js";
@@ -697,9 +698,14 @@ async function reconcile(studio: boolean) {
     const failureKind =
       error instanceof SheetCommitUncertainError
         ? "sheet_commit_uncertain"
-        : error instanceof Error && error.name === "GoogleJsonResponseException"
-          ? "google_api_failure"
-          : "unexpected_failure";
+        : error instanceof SheetApiReadError
+          ? error.operation === "values"
+            ? "sheet_values_read_failure"
+            : "sheet_metadata_read_failure"
+          : error instanceof Error &&
+              error.name === "GoogleJsonResponseException"
+            ? "google_api_failure"
+            : "unexpected_failure";
     return codeResult(() => ({
       ok: false,
       error_code: "RECONCILIATION_FAILED",

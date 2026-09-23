@@ -44,8 +44,10 @@ private pre-sweep backup at that point. Cam completed `clasp` login; the exact
 reviewed bundle was synced and deployed. One bounded diagnostic invocation at
 20:04 EDT returned `status:more`, with zero processed, excluded or failed rows.
 It advanced the enumeration but did not reproduce or explain the earlier error.
-Gmail intake is off again, the checkpoint is preserved, and the initial 30-day
-window remains incomplete. The unfiltered Triggers page showed zero.
+At 20:05 EDT, Gmail intake was off, the checkpoint remained in enumeration, and
+the initial 30-day window was incomplete. The unfiltered Triggers page showed
+zero. The later bounded continuation is recorded below and in [V1 execution](../docs/implementation/V1_EXECUTION.md);
+the original error cause remains unknown and the checkpoint must not be reset.
 
 ## Commitment storage release
 

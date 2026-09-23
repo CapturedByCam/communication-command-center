@@ -536,3 +536,20 @@ sent. Shortcut intake and every other automatic feature remain disabled;
 `MANUAL_WRITES` is the only true flag, `cccHealth` passed the ten-header and
 New York time checks with no send capability, and the unfiltered trigger check
 showed zero triggers. No Google message or draft was sent or created.
+
+## 2026-09-22 Gmail checkpoint continuation
+
+After the browser reachability check, a single manually invoked
+`cccReconcileGmail` call returned `status=more`, with one item processed and
+zero excluded or failed. The durable version 2 checkpoint advanced to
+`nextThread=8` across 12 reference shards; it remains in `processing` with no
+retry or error. This is one bounded step, not completion of the 30-day sweep.
+`CCC_GMAIL_INTAKE` was restored to false immediately after the invocation.
+
+The following editor health run passed all ten sheet headers, New York time,
+and no-send capability. Gmail, Studio, Shortcut, drafting and briefing flags
+were false; only the accepted manual Queue controls remained enabled. The
+unfiltered Apps Script Triggers page showed zero triggers. A fresh clone of the
+active project matched the repository bundle and manifest after normalizing
+build-root comments; no deployment or configuration change was made during
+that readback. No Google email, message or Gmail draft was sent or created.

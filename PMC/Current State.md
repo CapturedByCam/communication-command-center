@@ -188,3 +188,20 @@ the 17:53:21 health check verified all ten headers, no send capability, all
 automatic flags false, and the accepted manual-control flag as the sole true
 flag. Queue and Audit_Log populated rows matched the private backup exactly.
 Automatic provider features remain disabled pending the gates above.
+
+## 2026-09-22 live acceptance continuation
+
+The Google Admin insecure-content allowlist for `script.googleusercontent.com`
+is locally applied for the CapturedByCam OU. Chrome reaches the active Version 11
+content endpoint and receives only the fixed `method_not_allowed` GET response.
+This verifies browser reachability, not an authenticated Shortcut write or
+device capture.
+
+One manually invoked bounded Gmail reconciliation step processed one item with
+zero exclusions or failures. The version 2 checkpoint advanced to `nextThread=8`
+across 12 reference shards and remains in processing without retry or error;
+the 30-day window is incomplete. Gmail intake was restored to false. Post-run
+health passed all ten workbook headers, New York time, and no-send capability;
+all automated flags were false and only `MANUAL_WRITES` remained true. The
+unfiltered trigger list is empty. No Google message or Gmail draft was sent or
+created. See [V1 execution](../docs/implementation/V1_EXECUTION.md).

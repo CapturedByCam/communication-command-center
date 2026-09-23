@@ -143,3 +143,24 @@ while Shortcut intake was off. No token is provisioned, no Shortcut endpoint or
 device capture has been configured, and device acceptance remains open. Keep
 intake and all other automatic features disabled. See the latest dated evidence
 in [V1 execution](../docs/implementation/V1_EXECUTION.md).
+
+## 2026-09-22 live acceptance continuation
+
+Chrome reachability is now verified after the Admin allowlist change: the
+Version 11 endpoint returns its fixed safe rejection for a browser GET. This
+does not establish authenticated Shortcut acceptance. One bounded manual Gmail
+reconciliation call processed one item; the durable version 2 checkpoint is
+still in processing at `nextThread=8` across 12 reference shards, with no
+retry or error. The Gmail feature flag is off again. The post-run health check
+passed all ten workbook headers, New York time and no-send capability, and the
+Apps Script Triggers page showed zero triggers. Only guarded manual Queue
+controls are enabled. No Google email, message or draft was sent or created.
+
+Continue the bounded Gmail window only one manual invocation at a time, checking
+the checkpoint before each run and returning `CCC_GMAIL_INTAKE` to false after
+each invocation. Leave the window open if a retry/error appears; do not reset
+its cursor. Before daily-use acceptance, resolve the Studio source-binding and
+retention question, bind and verify draft creation without enabling send, finish
+Shortcut token/device acceptance, and collect the required real working-week
+observations and human usefulness ratings. Synthetic results do not satisfy
+those live gates. Keep automatic features off.

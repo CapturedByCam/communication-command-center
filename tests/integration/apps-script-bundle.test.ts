@@ -824,6 +824,7 @@ describe("deployable Apps Script bundle", () => {
       error_code: "RECONCILIATION_FAILED",
       failure_stage: "reconciliation",
       failure_kind: "sheet_values_read_failure",
+      failure_target: "Config:headers",
     });
     expect(JSON.stringify(runtime.logs.mock.calls)).not.toContain(
       "private provider failure detail",

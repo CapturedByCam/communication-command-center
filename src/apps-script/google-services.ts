@@ -7,7 +7,10 @@ import { APPROVED_GMAIL_MAILBOX } from "../adapters/gmail/gmail-client.js";
 
 /** Fixed diagnostic only; never retain a provider exception or response. */
 export class SheetApiReadError extends Error {
-  constructor(readonly operation: "values" | "metadata") {
+  constructor(
+    readonly operation: "values" | "metadata",
+    readonly target: string | null = null,
+  ) {
     super("SHEET_API_READ_FAILED");
     this.name = "SheetApiReadError";
   }
@@ -45,15 +48,19 @@ export function sha256(value: string): string {
 function readTable(id: string, name: string): SheetTable {
   if (!/^[A-Za-z_]+$/.test(name)) throw new Error("SHEET_NAME_INVALID");
   const service = Sheets!.Spreadsheets!;
-  const readValues = (range: string, options: object) => {
+  const readValues = (
+    range: string,
+    phase: "headers" | "rows",
+    options: object,
+  ) => {
     try {
       return service.Values!.get(id, range, options);
     } catch {
-      throw new SheetApiReadError("values");
+      throw new SheetApiReadError("values", `${name}:${phase}`);
     }
   };
   const headers = (
-    readValues(`'${name}'!A1:ZZ1`, {
+    readValues(`'${name}'!A1:ZZ1`, "headers", {
       valueRenderOption: "UNFORMATTED_VALUE",
     }).values?.[0] ?? []
   ).map(String);
@@ -70,7 +77,7 @@ function readTable(id: string, name: string): SheetTable {
     return s;
   })();
   const rows =
-    readValues(`'${name}'!A2:${lastColumn}5002`, {
+    readValues(`'${name}'!A2:${lastColumn}5002`, "rows", {
       valueRenderOption: "UNFORMATTED_VALUE",
       dateTimeRenderOption: "FORMATTED_STRING",
     }).values ?? [];

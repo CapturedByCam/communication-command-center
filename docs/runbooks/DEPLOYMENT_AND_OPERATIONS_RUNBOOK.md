@@ -4,7 +4,7 @@
 
 This runbook describes the private V1 pilot without treating a historical deployment version or a previous feature snapshot as current. The authoritative verified state, deployment hashes, controlled live checks, and open gates are maintained in [V1 execution](../implementation/V1_EXECUTION.md) and [PMC Current State](../../PMC/Current%20State.md). Consult both before any live operation.
 
-The system never sends Google email or Chat. Sheets retain bounded operational metadata, not bodies or credentials. The native Gmail pilot remains metadata-only and generic needs-review; it cannot establish full-thread interpretation, model usefulness, or draft readiness. Native draft replacement and deletion remain refused. The private Shortcut remains a separate token/device acceptance gate.
+The system never sends Google email or Chat. Sheets retain bounded operational metadata, not bodies or credentials. The native Gmail pilot remains metadata-only and generic needs-review; it cannot establish full-thread interpretation, model usefulness, or draft readiness. Native draft replacement and deletion remain refused. The private macOS Shortcut passed its token, endpoint, and device gate; keep intake off outside deliberate captures. Mobile installation remains a separate gate.
 
 ## Safety classification
 
@@ -41,7 +41,7 @@ Open the existing private bound project and workbook. Confirm the approved owner
 | Briefing | Private Sheet projection/history only; no delivery transport. |
 | Drafts | Create-only provider preparation requires fresh approved source/context and separate acceptance. No send, replacement, or deletion call. |
 | Studio | Keep disabled until account availability, starter binding, strict source validation, and model usefulness are separately proven. |
-| Shortcut | Keep disabled until endpoint/device acceptance is complete. Use [token rotation](SHORTCUT_TOKEN_ROTATION.md) after exposure or before hardening; never expose a token in evidence. |
+| Shortcut | The accepted macOS pilot stays disabled outside deliberate captures. Use [token rotation](SHORTCUT_TOKEN_ROTATION.md) after exposure or before hardening; never expose a token in evidence. Repeat synthetic acceptance for any iPhone/iPad installation. |
 
 ## Rollback and incidents
 

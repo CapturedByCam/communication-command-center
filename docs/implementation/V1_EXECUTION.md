@@ -1,6 +1,6 @@
 # V1 execution and activation record
 
-Updated 2026-09-22. This record distinguishes implementation from live acceptance.
+Updated 2026-09-23. This record distinguishes implementation from live acceptance.
 
 ## Standing authorization and boundaries
 
@@ -255,7 +255,7 @@ required checks. The Studio branch passed full local verification: 370 tests in 
 | Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 after health passed, without a source or Queue mutation |
 | Gmail | Native read-only metadata worker with a configurable seven-day initial pilot and deferred 30-day backfill | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
 | Drafts | Domain lifecycle, operation ledger and reviewed create-only provider merged in PR #36 | Uninvoked and absent from the emitted runtime; no compose scope or live create acceptance; replacement/deletion unsupported |
-| Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. It remains unrun and unbound; source binding, strict semantic acceptance, resolved-input retention meaning, and model usefulness remain unverified; processing disabled |
+| Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. Literal-source staging, identical replay, and changed-immutable-input replay passed. Actual starter binding, strict semantic acceptance, resolved-input retention meaning, model usefulness, and the mid-invocation flag-off path remain unverified; processing disabled |
 | Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Private macOS Shortcut and token are installed; authenticated write-only capture, duplicate, invalid-token, size, rate-limit, and kill-switch checks passed with synthetic input; intake is disabled again. iPhone/iPad installation is not accepted |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
 | Calendar | Reviewable candidates only | No Calendar mutation or runtime scope |
@@ -759,3 +759,39 @@ This closes the Mac device and authenticated write-only Shortcut gate. The
 installed shell implementation is macOS-only; no iPhone/iPad installation is
 claimed. No Google email, Chat message, Gmail draft, trigger, Calendar change,
 or private source-content capture occurred.
+
+## 2026-09-23 Workspace Studio literal-source acceptance
+
+After Cam restored Chrome access to the Google user-content host, the existing
+manual **CCC V1 — bounded staging acceptance** flow successfully invoked the
+private Apps Script custom step. The first run used only synthetic inputs while
+`CCC_STUDIO_PROCESSING=false`. It completed successfully, `Studio_Inbox`
+remained headers-only, and `Audit_Log` remained at 170 data rows. This verifies
+the live disabled-before-read/write path without a Gmail or Sheet mutation.
+
+For one controlled live check, `CCC_STUDIO_PROCESSING` was enabled and the
+custom step received the exact resource ID of an existing eligible Gmail item
+inside the accepted window plus bounded schema-valid interpretation JSON. The
+flow completed successfully and appended exactly one `Studio_Inbox` data row.
+The sheet contract has no body, snippet, raw JSON, or message-body column, and
+the run did not add an `Audit_Log` row. Replaying the identical input completed
+without a second row. Replaying the same source ID with different immutable
+interpretation fields also completed without changing the stored row. Normalized
+fingerprints were unchanged across the duplicate, conflict, and final exports:
+`Studio_Inbox=521cc7d72d2fc343` and `Audit_Log=47646b2ddf7b403e`.
+
+The processing flag was restored to false. The live Gmail resource ID was
+removed from the saved flow and replaced with the synthetic disabled probe. A
+final disabled run completed with `Studio_Inbox` still at one data row and
+`Audit_Log` still at 170 data rows. The custom step fetched only the selected
+`From` and `Subject` metadata and received and parsed the bounded interpretation
+JSON. It did not fetch or persist a Gmail body, snippet, attachment, or thread
+history, and it did not persist the raw JSON. No email, Chat message, or Gmail
+draft was created or sent. Studio-side input and output retention remains
+unresolved.
+
+This closes the literal-source, atomic staging, duplicate, conflict, and
+rollback portions of the Studio custom-step checklist. It does not prove the
+actual Gmail starter-variable binding, real-message model usefulness, exact
+resolved-input/source retention, or the mid-invocation flag-off path. Those
+remain acceptance gates before unattended Studio processing.

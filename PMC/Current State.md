@@ -1,6 +1,6 @@
 # Current State
 
-Updated 2026-09-23 (midday EDT). V1 is not accepted for unattended daily use.
+Updated 2026-09-23 (14:32 EDT). V1 is not accepted for unattended daily use.
 
 ## Verified position
 
@@ -168,15 +168,16 @@ All Google messages remain unsent; Codex coordination is authorized.
    private CCC action is visible, and its configuration card now renders the
    Gmail ID and bounded JSON fields after PR #45 removed an unused locale
    permission option. The corresponding exact manifest edit is saved in the
-   authenticated Apps Script project. The manual synthetic flow now includes
-   the unconfigured, unrun private action as Step 3; CCC_STUDIO_PROCESSING
-   remains false. The earlier Ask Gemini synthetic-only run had sources off and
-   its 12-field result passed strict schema validation, but project evidence,
-   starter binding, real-model usefulness, and resolved-input/source retention
-   remain open. Studio reports stored synthetic output available for 40 days.
-   No real private content or Google mutation was used. The existing owner-only
-   deployment was later updated to Version 9 for the controlled Gmail diagnostic;
-   Shortcut gate fix; the Studio flow remains unrun.
+   authenticated Apps Script project. On 2026-09-23 the private action passed a
+   disabled synthetic invocation, one literal eligible Gmail-resource staging
+   run, an identical replay, and a changed-immutable-input replay. Exactly one
+   metadata-only `Studio_Inbox` row was added; duplicate and conflict checks
+   changed neither that row nor `Audit_Log`. `CCC_STUDIO_PROCESSING` is false
+   again, the live resource ID was removed from the saved flow, and the final
+   disabled run made no further write. Actual Gmail starter-variable binding,
+   real-model usefulness, the mid-invocation flag-off path, and exact
+   resolved-input/source retention remain open. Studio reports stored synthetic
+   output available for 40 days. No draft or send occurred.
 2. Draft creation needs compose authorization, a trusted eligible context resolver
    and bounded live acceptance. Native replacement/deletion return unsupported to
    protect human edits. The new Commitment storage schema is migrated and deployed; outbound
@@ -306,7 +307,7 @@ ten workbook headers, `America/New_York`, and `send_capability=false`; every
 automatic flag is false and only the previously accepted `MANUAL_WRITES` control
 is true. No Google email, Chat message, or Gmail draft was sent or created. This
 accepts the bounded Gmail pilot for Milestone 3 / Phase 1. It does not accept V1
-for unattended daily use: Studio source/model binding, create-only draft
+for unattended daily use: Studio starter/model binding, create-only draft
 acceptance, Shortcut device authentication, and the working-week usefulness
 evaluation remain open. The optional 30-day backfill is intentionally partial at
 `nextThread=135` by owner decision; populated-data recovery is verified.

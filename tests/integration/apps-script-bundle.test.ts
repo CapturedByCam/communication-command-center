@@ -186,6 +186,8 @@ function createRuntime(
     readonly promptButton?: "OK" | "CANCEL";
     readonly promptText?: string;
     readonly failBatch?: boolean;
+    readonly failValuesRead?: boolean;
+    readonly failMetadataRead?: boolean;
     readonly onPrompt?: (
       properties: Map<string, string>,
       reads: readonly string[],
@@ -319,14 +321,20 @@ function createRuntime(
     },
     Sheets: {
       Spreadsheets: {
-        get: () => ({
-          sheets: sheets.map(({ title, sheetId }) => ({
-            properties: { title, sheetId },
-          })),
-        }),
+        get: () => {
+          if (options.failMetadataRead)
+            throw new Error("private provider failure detail");
+          return {
+            sheets: sheets.map(({ title, sheetId }) => ({
+              properties: { title, sheetId },
+            })),
+          };
+        },
         batchUpdate,
         Values: {
           get: (_id: string, range: string) => {
+            if (options.failValuesRead)
+              throw new Error("private provider failure detail");
             reads.push(range);
             const match = /'([A-Za-z_]+)'!A([12])/u.exec(range);
             const table = match ? tables.get(match[1]!) : undefined;
@@ -725,6 +733,7 @@ describe("deployable Apps Script bundle", () => {
       processed: 0,
       failed: 0,
     });
+    expect(runtime.reads).not.toContain("'Studio_Inbox'!A1:ZZ1");
     expect(runtime.gmailGets).not.toHaveBeenCalled();
     // Apply the first Config batch so the next invocation sees persisted enumeration.
     for (const request of runtime.batchUpdate.mock.calls[0]![0].requests) {
@@ -800,6 +809,49 @@ describe("deployable Apps Script bundle", () => {
       "private provider failure detail",
     );
     expect(runtime.tables.get("Queue")!.rows).toHaveLength(0);
+  });
+
+  it("distinguishes a Sheets values read failure without logging provider detail", async () => {
+    const runtime = createRuntime({
+      properties: {
+        CCC_GMAIL_INTAKE: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      failValuesRead: true,
+    });
+    const result = await runtime.context.cccReconcileGmail();
+    expect(result).toEqual({
+      ok: false,
+      error_code: "RECONCILIATION_FAILED",
+      failure_stage: "reconciliation",
+      failure_kind: "sheet_values_read_failure",
+      failure_target: "Config:headers",
+    });
+    expect(JSON.stringify(runtime.logs.mock.calls)).not.toContain(
+      "private provider failure detail",
+    );
+    expect(runtime.batchUpdate).not.toHaveBeenCalled();
+  });
+
+  it("distinguishes a Sheets metadata read failure before any batch write", async () => {
+    const runtime = createRuntime({
+      properties: {
+        CCC_GMAIL_INTAKE: "true",
+        CCC_WORKBOOK_ID: "book_abcdefghijklmnop",
+      },
+      failMetadataRead: true,
+    });
+    const result = await runtime.context.cccReconcileGmail();
+    expect(result).toEqual({
+      ok: false,
+      error_code: "RECONCILIATION_FAILED",
+      failure_stage: "reconciliation",
+      failure_kind: "sheet_metadata_read_failure",
+    });
+    expect(JSON.stringify(runtime.logs.mock.calls)).not.toContain(
+      "private provider failure detail",
+    );
+    expect(runtime.batchUpdate).not.toHaveBeenCalled();
   });
 
   it("retries a selected Gmail snapshot failure through the URL-less native bundle in one Queue, Audit, and Dead_Letter commit", async () => {

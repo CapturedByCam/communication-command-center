@@ -216,3 +216,59 @@ error; the 30-day window remains incomplete. Gmail intake was immediately
 restored to false, and a fresh health run again confirmed all automatic flags
 off and no send capability. A fresh Admin page readback is waiting on Google's
 passkey step-up; the earlier Chrome site-details and safe GET checks passed.
+
+## 2026-09-23 seven-day Gmail pilot
+
+Cam confirmed the initial pilot is limited to seven days; the separate 30-day
+backfill remains deferred until the pilot is working and accepted. The runtime
+lookback defaults to seven days. Several manually invoked bounded reconciliation
+batches returned `status=more`, then a later batch stopped with the sanitized
+`google_api_failure`. The underlying Google API response is not known, so the
+seven-day run is incomplete. The cursor was not reset after the failure.
+
+`CCC_GMAIL_INTAKE` is off again. A read-only Gmail probe verified one sampled
+message's metadata within the seven-day bound, with no raw content stored and
+zero mutations. A subsequent health check passed all ten workbook headers,
+`America/New_York`, and `send_capability=false`; all automatic flags were off
+and only `MANUAL_WRITES` was on. No Google email, message, or draft was sent or
+created. Diagnose the Google API failure before resuming; keep the seven-day
+pilot bound and do not start the 30-day backfill yet.
+
+At 07:00 EDT read-only triage found that the Apps Script execution log retains
+only the sanitized failure result. Source tracing shows Gmail API errors are
+converted to controlled read errors and Sheets batch errors to
+`sheet_commit_uncertain`; the escaped Google API exception is most consistent
+with a Sheets values or spreadsheet metadata read. The exact provider response
+remains unknown. A separate diagnostic source branch distinguishes those two
+paths but is not deployed. Two read-only CLI health attempts failed before
+script execution with Apps Script storage `NOT_FOUND`; they changed no state.
+The 01:35 editor health check remains the latest confirmed live posture.
+
+## 2026-09-23 Phase 1 Gmail pilot acceptance
+
+The seven-day Gmail pilot is complete. PRs #60 and #61 added fixed, content-free
+Sheets failure labels and the failing table/read target; live execution identified
+the original failure as a Sheets values read rather than a Gmail message read.
+PR #62 removed the redundant all-table header preflight from every one-thread
+invocation while retaining per-table header checks at each actual repository
+read. All three PRs passed required CI, were merged into the pilot branch, and
+were pushed to the approved Apps Script project with an exact code readback.
+The owner-only manifest posture remained `MYSELF` / `USER_DEPLOYING`.
+
+The fixed window from `2026-09-16T04:55:06.000Z` through
+`2026-09-23T04:55:06.000Z` enumerated four immutable reference shards containing
+65 message references and 53 unique threads. Bounded manual invocations resumed
+the existing cursor without a reset. Rapid bursts produced two controlled,
+sanitized Sheets values-read failures; after pacing the calls, processing
+continued from the same checkpoint. The final call returned `status=complete`,
+`failed=0`. The durable checkpoint now has `phase=complete`, `nextThread=53`,
+`completedThrough=2026-09-23T04:55:06.000Z`, and no retry or error.
+
+`CCC_GMAIL_INTAKE` was returned to false. The 10:11 EDT `cccHealth` run passed all
+ten workbook headers, `America/New_York`, and `send_capability=false`; every
+automatic flag is false and only the previously accepted `MANUAL_WRITES` control
+is true. No Google email, Chat message, or Gmail draft was sent or created. This
+accepts the bounded Gmail pilot for Milestone 3 / Phase 1. It does not accept V1
+for unattended daily use: Studio source/model binding, create-only draft
+acceptance, Shortcut device authentication, populated-data recovery, the
+separate 30-day backfill, and the working-week usefulness evaluation remain open.

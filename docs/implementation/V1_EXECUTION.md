@@ -575,3 +575,86 @@ A fresh Google Admin page readback is waiting at the account's required passkey
 step-up. The earlier Chrome site-details read showed Insecure content set to
 Allow, and the Version 11 browser GET reached the content host and returned its
 fixed safe rejection. No Shortcut write or device capture has been tested.
+
+## 2026-09-23 seven-day Gmail pilot attempt
+
+Cam confirmed the initial pilot is limited to seven days; defer the separate
+30-day backfill until the pilot is working and accepted. The configured default
+lookback is seven days. Several bounded `cccReconcileGmail` invocations returned
+`status=more`; a later invocation stopped with sanitized
+`failure_kind=google_api_failure`. The underlying Google API response is unknown,
+so this run is incomplete. The cursor was not reset after the failure.
+
+`CCC_GMAIL_INTAKE` was restored to false. Read-only `cccGmailReadProbe` passed with
+`bounded_days=7`, one sampled message, verified metadata, no raw content stored
+and zero mutations. `cccHealth` then passed all ten workbook headers,
+`America/New_York` and `send_capability=false`; every automatic flag was false
+and only `MANUAL_WRITES` was true. No Google email, message, or draft was sent
+or created. Do not resume reconciliation until the Google API failure is
+understood; do not start the 30-day backfill.
+
+## 2026-09-23 07:00 EDT read-only failure triage
+
+The 01:33:19 editor execution's Cloud log contains only the controlled
+`failure_stage=reconciliation` and `failure_kind=google_api_failure` result.
+Source tracing narrows that label: Gmail profile, list and message exceptions
+are converted to `GmailReadError` inside `GmailMetadataReader`, and Sheets batch
+exceptions become `sheet_commit_uncertain`. A direct `GoogleJsonResponseException`
+reaching the outer handler can arise from a Sheets values read or spreadsheet
+metadata lookup. Thus the earlier per-message Gmail API attribution was
+unsupported; the Sheets read path is the stronger diagnosis. The precise
+provider response and whether the failure was transient remain unknown.
+
+A separate source branch adds fixed, content-free labels for Sheets values and
+metadata read failures, with bundle tests covering both paths and redaction.
+It has not been synced to Apps Script or used to resume reconciliation. Two
+07:02 read-only `clasp run cccHealth` attempts failed before script execution
+with Apps Script storage `NOT_FOUND`; the Executions page shows zero-second
+failed Execution API entries. No cursor, Queue, flags, trigger or deployment was
+changed. The last confirmed live flag posture remains the 01:35:56 editor
+health check. Keep intake off and preserve the cursor.
+
+## 2026-09-23 Phase 1 Gmail pilot completion
+
+PR #60 merged at `34ca466a0631c052f78c8f6b895b499a23ebef86`, PR #61
+merged at `e98e043cd9ee0f1d4199f21d3b498e1b5e2f6af6`, and PR #62
+merged at `1517f5579ab408753cda8857e3dc2ddd2580f1ae`. The first two
+changes preserve sanitized outer errors while distinguishing Sheets values and
+metadata reads and naming only the fixed table/read target. The live diagnostic
+identified `Studio_Inbox:headers`, showing the original generic error was a
+Sheets read failure. Source review then found the bounded Gmail entrypoint was
+reading every workbook header before each one-thread transaction even though
+the repositories already validate the tables they use. PR #62 removed only that
+redundant preflight and added a regression assertion that a Gmail run does not
+read `Studio_Inbox`.
+
+Focused integration verification passed before each merge. The final code
+change passed the 19-test Apps Script bundle suite, `pnpm typecheck`,
+`pnpm build`, and required CI. The reviewed bundle was pushed to the approved
+Apps Script project. A fresh source pull matched `dist/Code.js`; the manifest
+remained owner-only with `access=MYSELF` and `executeAs=USER_DEPLOYING`.
+
+The existing version 2 checkpoint was preserved throughout diagnosis and
+resumption. The fixed seven-day window was
+`2026-09-16T04:55:06.000Z` through `2026-09-23T04:55:06.000Z`.
+Its four reference shards contain 65 message references covering 53 unique
+threads. Rapid repeated manual calls later produced controlled
+`sheet_values_read_failure` results at `Audit_Log:rows`; those calls made no
+cursor advance and processing resumed from the same checkpoint after pacing.
+No retry record or blocked state was introduced.
+
+At 10:09:23 EDT, the last bounded call returned
+`{"ok":true,"status":"complete","processed":0,"excluded":1,"failed":0}`.
+Direct Config readback then showed `phase=complete`, `nextThread=53`,
+`completedThrough=2026-09-23T04:55:06.000Z`, `retry=null`, and
+`error_code=null`. `CCC_GMAIL_INTAKE` was saved as false. At 10:11:12 EDT,
+`cccHealth` returned `ok=true`, all ten exact headers valid,
+`America/New_York`, all six automatic flags false, `MANUAL_WRITES=true`, and
+`send_capability=false`.
+
+No Google email, Chat message, Gmail draft, trigger, Shortcut capture, Calendar
+change, or raw-content persistence was performed. The bounded Gmail pilot meets
+the Milestone 3 exit condition and closes Phase 1. The separate 30-day backfill
+remains deferred. This does not complete V1 or authorize unattended daily use;
+the remaining provider, device, recovery, draft, and working-week gates remain
+tracked in issue #32.

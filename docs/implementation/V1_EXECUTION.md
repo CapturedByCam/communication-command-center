@@ -14,8 +14,11 @@ unrelated account changes.
 
 The later instruction prohibits **all Google emails and messages**, including the
 earlier self-only Chat notification. Codex coordination remains authorized.
-No email or Chat send transport exists. The deployed runtime cannot create a draft;
-the local candidate described below remains unscoped, undeployed, and uninvoked.
+The selected-row draft path is deployed and manually enabled, but no Gmail draft
+or message has been created or sent. The deployed runtime has no send operation;
+the `gmail.compose` OAuth scope does formally permit send operations at Google's
+permission layer. A Google consent prompt may still require owner approval on
+first use.
 
 ## Implemented
 
@@ -256,7 +259,7 @@ required checks. The Studio branch passed full local verification: 370 tests in 
 | Queue/Sheets | Actual adapter and atomic bounded commits | Ten tabs initialized; live health passed; five metadata-pilot Queue rows persisted with no raw content |
 | Queue controls | Owner-only menu, manual override, row-conflict detection and atomic audit | Version 4 selected replay, Resolve, unchanged-row replay, Reopen and explicit-offset Snooze passed with manual overrides and atomic audit; direct Snoozed Reopen correctly returned `STALE_STATE`. `CCC_MANUAL_WRITES` alone was enabled at 11:24:50 after health passed, without a source or Queue mutation |
 | Gmail | Native read-only metadata worker with a configurable seven-day initial pilot and deferred 30-day backfill | Version 1 probe passed; Version 2 produced a controlled dead letter/cursor; Version 3 exposed the RFC local-part fix; Version 4 recovered it and processed four further records with zero failures. Pilot remains metadata-only and no trigger is installed |
-| Drafts | Domain lifecycle, operation ledger, reviewed create-only provider, and local owner-only selected-row runtime | Runtime validates the exact Queue row, curated contact, bounded interpretation, fresh reply recipient, source and flags. It is not deployed, has no compose scope or live create acceptance, and replacement/deletion remain unsupported |
+| Drafts | Domain lifecycle, operation ledger, reviewed create-only provider, and owner-only selected-row runtime | Version 14 is deployed with `gmail.compose`; `CCC_DRAFT_CREATION` is enabled for manual use only. A first live draft still requires one eligible Queue row, strict interpretation JSON, reviewed plain text, and Google's consent if prompted. Replacement/deletion remain unsupported; no draft or message has been created or sent |
 | Studio | Versioned disabled configuration and staging validation | Test add-on installed; root Custom steps access is ON with unpublished steps allowed and the private action is configurable. Literal-source staging and both replay paths passed. A separate disabled draft flow persistently binds the Gmail starter's `Email ID` variable to the private step. Live variable resolution, strict semantic acceptance, resolved-input retention meaning, model usefulness, and the mid-invocation flag-off path remain unverified; processing disabled |
 | Shortcut | Synchronous token-authenticated endpoint, size/schema limits, deduplication, redacted errors | Private macOS Shortcut and token are installed; authenticated write-only capture, duplicate, invalid-token, size, rate-limit, and kill-switch checks passed with synthetic input; intake is disabled again. iPhone/iPad installation is not accepted |
 | Briefing | Deterministic eight-section append-only view/history | One Version 2 generation persisted eight sections/history with no delivery; same-ID duplicate left both views unchanged |
@@ -270,18 +273,21 @@ source IDs and strict pre-persistence validation.
 
 ## Remaining access and capability gates
 
-1. Keep automatic intake, drafting, Shortcut capture, and briefing delivery disabled.
-   `CCC_MANUAL_WRITES` alone is enabled for guarded Queue controls. Do not install a
-   trigger; retain bounded controlled-code logging.
+1. Keep all automatic intake, Studio processing, Shortcut capture, briefing
+   delivery, and draft replacement disabled. `CCC_DRAFT_CREATION` is enabled
+   only for the deliberate owner-invoked selected-row create path;
+   `CCC_MANUAL_WRITES` remains enabled for guarded Queue controls. Do not install
+   a trigger; retain bounded controlled-code logging.
 2. Connect a supported interpretation provider with the required privacy behavior
    within an existing paid entitlement. The Studio test add-on is installed without
    new consent. Cam approved and Admin enabled root Custom steps access while retaining
    unpublished test steps. The private action is visible and configurable, but has not
    run. Starter binding, strict semantic acceptance, retention meaning, and model
    usefulness remain pending.
-   The local selected-row draft candidate is bound to Queue and its operation ledger,
-   but compose authorization, deployment and live acceptance remain open. The inspected
-   Cloud project showed an expired free trial and a free-trial billing account;
+   The selected-row draft binding, compose scope and owner-only deployment are
+   now live. First live create acceptance remains open until one eligible row is
+   reviewed and submitted through the manual flow; Google consent may be required
+   on first invocation. The inspected Cloud project showed an expired free trial and a free-trial billing account;
    Vertex requires enabled billing. No billing upgrade was made. Free Gemini API
    terms are unsuitable for private-message processing here. An eligible existing
    billed project or a verified Workspace binding is needed before implementation
@@ -836,3 +842,29 @@ the current account accepts and persists the actual Gmail starter-to-custom-step
 field binding. It does not prove the variable's resolved runtime value, useful
 real-message interpretation, or retention behavior. No Gmail data was read, no
 Sheet was changed, and no message or draft was created or sent.
+
+## 2026-09-23 selected-row draft deployment
+
+PR #74 (`a95e914`) merged the `gmail.compose` manifest scope and contract updates.
+The reviewed selected-row runtime is deployed as Version 14 on the existing Gmail
+web-app deployment; fresh Manage deployments readback confirmed `Execute as Me`
+and `Only myself`. A temporary `Anyone` access selection caused by Apps Script
+applying the manifest default during redeployment was immediately reversed; the
+final live access readback is owner-only. The separate Version 11 public Shortcut
+deployment was left unchanged.
+
+Fresh Script Properties readback confirms `CCC_DRAFT_CREATION=true`,
+`CCC_GMAIL_LOOKBACK_DAYS=7`, and `CCC_GMAIL_INTAKE=false`. Draft replacement,
+Studio processing, Shortcut intake, and briefing delivery remain disabled;
+`CCC_MANUAL_WRITES` remains enabled for guarded manual Queue controls. The
+unfiltered Triggers page shows zero triggers. The 30-day backfill cursor remains
+intentionally paused at `nextThread=135`.
+
+The owner-invoked entrypoint requires exactly one selected Queue data row, strict
+bounded interpretation JSON, and reviewed plain text; cancellation makes no draft.
+The owner must grant Google's OAuth consent if prompted on first use. Google's
+`gmail.compose` scope also permits send operations, although the reviewed runtime
+contains no send operation. No Gmail draft, email, or message was created or sent.
+The first live create acceptance, Studio/model acceptance, and the real
+working-week usefulness evaluation remain open. V1 is not accepted for
+unattended daily use.
